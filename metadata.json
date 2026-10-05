@@ -1,0 +1,6 @@
+{
+  "name": "Mind Merit",
+  "description": "An AI-powered mental well-being platform for teenagers, students, and working adults, featuring customized self-assessments, AI counseling, mood check-ins, educational content, certificates, gamification, support buddy matching, and emergency SOS assistance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

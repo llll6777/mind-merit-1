@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  @apply text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-pink-200 selection:text-pink-900 dark:selection:bg-pink-950 dark:selection:text-pink-200 transition-colors duration-300;
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(186, 230, 253, 0.5) 0%, transparent 45%),   /* ฟ้า - Sky Blue */
+    radial-gradient(circle at 90% 12%, rgba(254, 205, 211, 0.45) 0%, transparent 45%),  /* ชมพู - Blossom Pink */
+    radial-gradient(circle at 12% 70%, rgba(167, 243, 208, 0.45) 0%, transparent 45%),  /* เขียว - Mint Green */
+    radial-gradient(circle at 88% 75%, rgba(254, 240, 138, 0.42) 0%, transparent 45%),  /* เหลือง - Butter Yellow */
+    linear-gradient(135deg, rgba(240, 249, 255, 0.6) 0%, rgba(255, 241, 242, 0.4) 50%, rgba(254, 252, 232, 0.5) 100%);
+  background-attachment: fixed;
+}
+
+.dark body, 
+html.dark body {
+  background-color: #0b1120;
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.16) 0%, transparent 45%),
+    radial-gradient(circle at 90% 12%, rgba(244, 63, 94, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 12% 70%, rgba(16, 185, 129, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 88% 75%, rgba(245, 158, 11, 0.14) 0%, transparent 45%),
+    linear-gradient(135deg, #0b1120 0%, #0f172a 100%);
+  background-attachment: fixed;
+}
+
+/* Custom minimal scrollbar for cleaner look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors;
+}
