@@ -16,7 +16,7 @@ export const translations = {
       docs: "PRD & Architecture"
     },
     guide: {
-      title: "Mind Merit User Guide",
+      title: "MIND MERIT User Guide",
       subtitle: "Learn how to use all features to take care of your mental well-being step-by-step.",
       quickStartTitle: "Quick Start in 4 Easy Steps",
       searchPlaceholder: "Search topics or questions...",
@@ -165,7 +165,7 @@ export const translations = {
       docs: "PRD และโครงสร้างระบบ"
     },
     guide: {
-      title: "คู่มือและวิธีการใช้งาน Mind Merit",
+      title: "คู่มือและวิธีการใช้งาน MIND MERIT",
       subtitle: "เรียนรู้วิธีการใช้งานทุกฟีเจอร์เพื่อการดูแลสุขภาพใจอย่างมีประสิทธิภาพทีละขั้นตอน",
       quickStartTitle: "เริ่มต้นง่ายๆ ใน 4 ขั้นตอน",
       searchPlaceholder: "ค้นหาหัวข้อหรือคำถามที่ต้องการทราบ...",

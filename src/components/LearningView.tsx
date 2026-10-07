@@ -234,7 +234,7 @@ export default function LearningView({ user, onRewardXP, onAddCertificate, certi
               <h3 className="text-sm uppercase tracking-widest font-extrabold text-purple-600">
                 {t.academy.certificateVerified}
               </h3>
-              <p className="text-[10px] text-slate-400">Mind Merit positive Mental Well-being Academy</p>
+              <p className="text-[10px] text-slate-400">MIND MERIT positive Mental Well-being Academy</p>
             </div>
 
             <div className="space-y-2 py-4">

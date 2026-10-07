@@ -84,10 +84,10 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
   // Localized upcoming events
   const events = user.language === 'en' ? [
     { title: "Exam Preparation Stress Workshop", date: "Jul 22, 14:00", host: "Kru Paul, Psychologist" },
-    { title: "Group Breathing & Meditation Session", date: "Jul 25, 19:30", host: "Mind Merit Circle" }
+    { title: "Group Breathing & Meditation Session", date: "Jul 25, 19:30", host: "MIND MERIT Circle" }
   ] : [
     { title: "สัมมนาผ่อนคลายความเครียดเตรียมสอบ", date: "22 ก.ค. เวลา 14:00", host: "ครูพอล นักจิตวิทยา" },
-    { title: "ฝึกหายใจกลุ่มและสมาธิออนไลน์", date: "25 ก.ค. เวลา 19:30", host: "กลุ่มเพื่อน Mind Merit" }
+    { title: "ฝึกหายใจกลุ่มและสมาธิออนไลน์", date: "25 ก.ค. เวลา 19:30", host: "กลุ่มเพื่อน MIND MERIT" }
   ];
 
   return (
@@ -253,7 +253,7 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
                 {user.language === 'en' ? "Quick Start Guide" : "คู่มือแนะนำวิธีใช้"}
               </span>
               <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
-                {user.language === 'en' ? "How to use Mind Merit in 4 Simple Steps" : "วิธีการใช้งาน Mind Merit เบื้องต้น (4 ขั้นตอนง่ายๆ)"}
+                {user.language === 'en' ? "How to use MIND MERIT in 4 Simple Steps" : "วิธีการใช้งาน MIND MERIT เบื้องต้น (4 ขั้นตอนง่ายๆ)"}
               </h3>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
@@ -349,7 +349,7 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
           <div className="w-full overflow-x-auto">
             <svg 
               viewBox={`0 0 ${width} ${height}`} 
-              className="w-full min-w-[450px] overflow-visible text-slate-600 dark:text-slate-400"
+              className="w-full min-w-[300px] sm:min-w-[450px] overflow-visible text-slate-600 dark:text-slate-400"
             >
               {/* Horizontal gridlines */}
               {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => (

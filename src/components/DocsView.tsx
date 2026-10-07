@@ -48,12 +48,12 @@ export default function DocsView({ user }: DocsViewProps) {
           <div className="space-y-4">
             <div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Executive Summary</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Mind Merit Mental Well-being Platform</p>
+              <p className="text-xs text-slate-400 mt-0.5">MIND MERIT Mental Well-being Platform</p>
             </div>
             
             <div className="text-xs text-slate-600 dark:text-slate-300 space-y-3 leading-relaxed border-t border-slate-50 dark:border-slate-800 pt-3">
               <p>
-                <strong>MIND MERIT</strong> is an advanced, enterprise-ready mental wellness platform designed to bridge the gap in counseling accessibility for teenagers, students, and working adults. By pairing cognitive self-awareness logs, scientific psychometric assessments, and stateful AI-driven therapeutic coaching, Mind Merit acts as an empathetic digital first-responder, guiding users toward positivity, micro-habits, and local psychological clinics.
+                <strong>MIND MERIT</strong> is an advanced, enterprise-ready mental wellness platform designed to bridge the gap in counseling accessibility for teenagers, students, and working adults. By pairing cognitive self-awareness logs, scientific psychometric assessments, and stateful AI-driven therapeutic coaching, MIND MERIT acts as an empathetic digital first-responder, guiding users toward positivity, micro-habits, and local psychological clinics.
               </p>
 
               <h4 className="font-bold text-slate-800 dark:text-slate-200 mt-4 text-[13px]">Product Requirement Document (PRD)</h4>
@@ -151,7 +151,7 @@ export default function DocsView({ user }: DocsViewProps) {
                 <p className="mt-1">
                   <strong>Age:</strong> 19 | <strong>Problem:</strong> Exam anxiety, overthinking, social media fatigue, and loneliness.
                   <br />
-                  <strong>Journey:</strong> Alisa feels severe stress during final exam week. She logs her sleep (4 Hrs) and mood on Mind Merit. The system prompts her to try the Box Breathing guide and matches her with Pete (a support buddy). She takes a 5-minute breathing break, reducing her anxiety instantly.
+                  <strong>Journey:</strong> Alisa feels severe stress during final exam week. She logs her sleep (4 Hrs) and mood on MIND MERIT. The system prompts her to try the Box Breathing guide and matches her with Pete (a support buddy). She takes a 5-minute breathing break, reducing her anxiety instantly.
                 </p>
               </div>
 
@@ -160,7 +160,7 @@ export default function DocsView({ user }: DocsViewProps) {
                 <p className="mt-1">
                   <strong>Age:</strong> 27 | <strong>Problem:</strong> Career pressure, burnout, low motivation, and insomnia.
                   <br />
-                  <strong>Journey:</strong> Pete feels drained and takes the Mind Merit Burnout Questionnaire. His score is Moderate-High. The platform loads custom AI suggestions recommending the "Inner Critic" academy course. He passes the quiz, receives his verified E-Certificate, and regains an active, mindful sense of accomplishment.
+                  <strong>Journey:</strong> Pete feels drained and takes the MIND MERIT Burnout Questionnaire. His score is Moderate-High. The platform loads custom AI suggestions recommending the "Inner Critic" academy course. He passes the quiz, receives his verified E-Certificate, and regains an active, mindful sense of accomplishment.
                 </p>
               </div>
 
@@ -182,7 +182,7 @@ export default function DocsView({ user }: DocsViewProps) {
             </div>
 
             <div className="text-xs text-slate-600 dark:text-slate-300 space-y-4 leading-relaxed border-t border-slate-50 dark:border-slate-800 pt-3">
-              <p>Below is the structured relational SQL database schema optimized with appropriate constraints and indexing for Mind Merit:</p>
+              <p>Below is the structured relational SQL database schema optimized with appropriate constraints and indexing for MIND MERIT:</p>
               
               <pre className="p-4 bg-slate-900 text-purple-300 rounded-xl overflow-x-auto font-mono text-[10px] leading-relaxed">
 {`-- Users Table
@@ -245,7 +245,7 @@ CREATE INDEX idx_users_xp ON users(xp DESC);`}
             </div>
 
             <div className="text-xs text-slate-600 dark:text-slate-300 space-y-4 leading-relaxed border-t border-slate-50 dark:border-slate-800 pt-3">
-              <p>Mind Merit FastAPI and Express backends expose standard, clean RESTful endpoints:</p>
+              <p>MIND MERIT FastAPI and Express backends expose standard, clean RESTful endpoints:</p>
 
               <div className="space-y-3">
                 <div className="p-3 border border-slate-50 rounded-lg dark:border-slate-800">
@@ -278,7 +278,7 @@ CREATE INDEX idx_users_xp ON users(xp DESC);`}
             </div>
 
             <div className="text-xs text-slate-600 dark:text-slate-300 space-y-4 leading-relaxed border-t border-slate-50 dark:border-slate-800 pt-3">
-              <p>Mind Merit's Flutter frontend is organized using strict Clean Architecture + MVVM guidelines:</p>
+              <p>MIND MERIT's Flutter frontend is organized using strict Clean Architecture + MVVM guidelines:</p>
 
               <pre className="p-4 bg-slate-900 text-purple-300 rounded-xl overflow-x-auto font-mono text-[10px] leading-relaxed">
 {`lib/

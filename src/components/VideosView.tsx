@@ -380,7 +380,7 @@ export default function VideosView({ user, onRewardXP }: VideosViewProps) {
             <div className="flex items-center space-x-2">
               <span className="text-xl">🌊</span>
               <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                {isEn ? "Mind Merit Interactive Serene Sanctuary" : "มุมผ่อนคลายและฝึกหายใจในตัว (ไม่ต้องใช้อินเทอร์เน็ตภายนอก)"}
+                {isEn ? "MIND MERIT Interactive Serene Sanctuary" : "มุมผ่อนคลายและฝึกหายใจในตัว (ไม่ต้องใช้อินเทอร์เน็ตภายนอก)"}
               </h3>
             </div>
             <button 

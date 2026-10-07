@@ -66,21 +66,6 @@ export default function App() {
   const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
 
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
-    const saved = localStorage.getItem("mind_merit_profile_v1");
-    if (!saved) return true;
-    try {
-      const parsed = JSON.parse(saved);
-      return !parsed.avatar || parsed.name === "ผู้ใช้ใหม่" || parsed.name === "New User";
-    } catch (e) {
-      return true;
-    }
-  });
-
-  const [onboardingName, setOnboardingName] = useState("");
-  const [onboardingAvatar, setOnboardingAvatar] = useState("🧘");
-  const [onboardingRole, setOnboardingRole] = useState<'student' | 'adult'>("student");
-
   const emojiList = [
     // Mood & Care
     "🧘", "😊", "🥰", "🌸", "☀️", "🌈", "💫", "💖", "🌻", "🍀", "🍓", "☕", "🕊️", "🌿", "🍵", "✨",
@@ -286,7 +271,7 @@ export default function App() {
 
   // System Badge Definitions
   const systemBadges: Badge[] = [
-    { id: "welcome_badge", titleEn: "Mindful Starter", titleTh: "ผู้เริ่มต้นฝึกสมาธิ", descEn: "Triggered on starting Mind Merit session.", descTh: "มอบให้เมื่อเริ่มต้นใช้งาน Mind Merit", icon: "Zap" },
+    { id: "welcome_badge", titleEn: "Mindful Starter", titleTh: "ผู้เริ่มต้นฝึกสมาธิ", descEn: "Triggered on starting MIND MERIT session.", descTh: "มอบให้เมื่อเริ่มต้นใช้งาน MIND MERIT", icon: "Zap" },
     { id: "streak_champion", titleEn: "Streak Champion", titleTh: "แชมป์บันทึกอารมณ์", descEn: "Unlocked for active wellness streak.", descTh: "มอบให้เมื่อเช็คอินสุขภาพใจติดต่อกัน", icon: "Award" },
     { id: "assessment_guru", titleEn: "Assessment Guru", titleTh: "ผู้รอบรู้สุขภาพใจ", descEn: "Earned on completing psychometric checks.", descTh: "มอบให้เมื่อผ่านการวัดระดับสุขภาพใจทางวิทยาศาสตร์", icon: "BookOpen" },
     { id: "stress_warrior", titleEn: "Stress Warrior", titleTh: "ผู้พิชิตความตึงเครียด", descEn: "Earned on stress course graduation.", descTh: "มอบให้เมื่อผ่านหลักสูตรจัดการความเครียด", icon: "ShieldAlert" }
@@ -373,11 +358,11 @@ export default function App() {
 
   // Nav items definitions
   const sidebarNavItems = [
-    { id: "landing", label: user.language === 'en' ? "Home (Landing)" : "หน้าหลัก (Home)", icon: Home, color: "sky" },
     { id: "dashboard", label: t.nav.dashboard, icon: LayoutDashboard, color: "sky" },
     { id: "moodCheck", label: t.nav.moodCheck, icon: BookOpen, color: "pink" },
     { id: "videos", label: t.nav.videos, icon: Video, color: "amber" },
     { id: "aiChat", label: t.nav.aiChat, icon: Bot, color: "emerald" },
+    { id: "landing", label: user.language === 'en' ? "Home (Landing)" : "หน้าหลัก (Home)", icon: Home, color: "sky" },
     { id: "assessments", label: t.nav.assessments, icon: ClipboardList, color: "sky" },
     { id: "academy", label: t.nav.academy, icon: GraduationCap, color: "amber" },
     { id: "community", label: t.nav.community, icon: Users, color: "pink" },
@@ -439,7 +424,7 @@ export default function App() {
       />
 
       {/* 2. Full-Stack Layout Canvas */}
-      <div className="mx-auto max-w-7xl px-4 pt-6 pb-24 md:pb-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8 pt-2 sm:pt-6 pb-24 md:pb-8">
         {activeTab === "landing" ? (
           <div className="w-full animate-in fade-in duration-300">
             <LandingPageView 
@@ -561,7 +546,7 @@ export default function App() {
       </div>
 
       {/* 3. Mobile Navigation Bottom Tab Bar (With Sky Blue, Pink, Yellow, and Mint Green accents) */}
-      <nav id="mobile-tab-nav" className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-slate-100/60 bg-white/90 backdrop-blur-md dark:border-slate-800/60 dark:bg-slate-900/95 md:hidden pb-3 pt-2 flex justify-around shadow-lg transition-all duration-300">
+      <nav id="mobile-tab-nav" className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-slate-100/70 bg-white/95 backdrop-blur-lg dark:border-slate-800/70 dark:bg-slate-900/95 md:hidden pb-safe pb-2.5 pt-1.5 px-1 flex justify-around shadow-lg transition-all duration-300">
         {sidebarNavItems.slice(0, 4).map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -700,107 +685,6 @@ export default function App() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Beautiful Onboarding Overlay Modal */}
-      {showOnboarding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md transition-all duration-300">
-          <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white p-8 shadow-2xl dark:bg-slate-900 border border-purple-100 dark:border-slate-800 flex flex-col space-y-6">
-            
-            {/* Logo/Icon inside Modal */}
-            <div className="flex flex-col items-center text-center space-y-2">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-400 via-purple-400 to-pink-400 shadow-lg text-3xl">
-                {onboardingAvatar}
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 mt-2">
-                {user.language === 'en' ? "Welcome to MIND MERIT! 🌟" : "ยินดีต้อนรับสู่ MIND MERIT! 🌟"}
-              </h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm">
-                {user.language === 'en' 
-                  ? "Let's personalize your private companion. All data is securely stored on your device." 
-                  : "เริ่มต้นสร้างพื้นที่ปลอดภัยส่วนตัวของคุณ ข้อมูลทั้งหมดจะถูกเก็บอย่างปลอดภัยบนเครื่องของคุณ"}
-              </p>
-            </div>
-
-            {/* Profile Setup Forms */}
-            <div className="space-y-4">
-              {/* Name Input */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  {user.language === 'en' ? "Your Nickname" : "ชื่อเล่นหรือฉายาของคุณ"} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder={user.language === 'en' ? "e.g., Alisa, HappyMind..." : "เช่น มาริสา, บัดดี้ฟิต..."}
-                  value={onboardingName}
-                  onChange={(e) => setOnboardingName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-850 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-800 dark:text-slate-100 text-sm font-medium transition-all"
-                />
-              </div>
-
-              {/* Role Selection */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  {user.language === 'en' ? "Current Status" : "สถานะ / บทบาทปัจจุบัน"}
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setOnboardingRole("student")}
-                    className={`px-4 py-3 text-xs font-bold rounded-xl border transition-all cursor-pointer ${onboardingRole === "student" ? "bg-purple-50 border-purple-500 text-purple-600 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-600" : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700"}`}
-                  >
-                    {user.language === 'en' ? "🎓 Student" : "🎓 นักเรียน / นักศึกษา"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setOnboardingRole("adult")}
-                    className={`px-4 py-3 text-xs font-bold rounded-xl border transition-all cursor-pointer ${onboardingRole === "adult" ? "bg-purple-50 border-purple-500 text-purple-600 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-600" : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700"}`}
-                  >
-                    {user.language === 'en' ? "💼 Working Adult" : "💼 วัยทำงาน"}
-                  </button>
-                </div>
-              </div>
-
-              {/* Emoji Selection Grid */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  {user.language === 'en' ? "Choose Your Avatar Emoji" : "เลือกอิโมจิโปรไฟล์ของคุณ"}
-                </label>
-                <div className="grid grid-cols-6 gap-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-850 max-h-36 overflow-y-auto">
-                  {emojiList.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setOnboardingAvatar(emoji)}
-                      className={`h-11 w-11 flex items-center justify-center text-2xl rounded-xl hover:bg-purple-100 dark:hover:bg-purple-950/40 transition-all cursor-pointer ${onboardingAvatar === emoji ? "bg-purple-100 dark:bg-purple-900 border-2 border-purple-500 scale-110" : ""}`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Start Button */}
-            <button
-              type="button"
-              disabled={!onboardingName.trim()}
-              onClick={() => {
-                setUser(prev => ({
-                  ...prev,
-                  name: onboardingName.trim(),
-                  avatar: onboardingAvatar,
-                  role: onboardingRole,
-                }));
-                setShowOnboarding(false);
-              }}
-              className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center space-x-2"
-            >
-              <span>{user.language === 'en' ? "Start Care Journey 💫" : "เริ่มต้นดูแลใจกันเลย 💫"}</span>
-            </button>
-
           </div>
         </div>
       )}

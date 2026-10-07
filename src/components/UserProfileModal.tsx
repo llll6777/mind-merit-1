@@ -77,7 +77,7 @@ export default function UserProfileModal({
         </div>
 
         {/* Modal Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
           
           {/* Main User Card Section */}
           <div className="relative -mt-16 flex flex-col sm:flex-row items-center sm:items-end sm:space-x-4 pb-4 border-b border-slate-100 dark:border-slate-800/80">
@@ -377,7 +377,7 @@ export default function UserProfileModal({
             <div className="w-full grid grid-cols-2 gap-4 pt-6 border-t border-amber-600/20 text-left text-[10px] text-slate-500">
               <div className="space-y-1">
                 <span className="font-bold text-slate-400 uppercase block">{isEn ? "Authorized Signee" : "ผู้ออกใบรับรองดิจิทัล"}</span>
-                <span className="italic font-serif font-bold text-slate-700 dark:text-slate-300 block">Dr. Somsak P., Mind Merit Clinic</span>
+                <span className="italic font-serif font-bold text-slate-700 dark:text-slate-300 block">Dr. Somsak P., MIND MERIT Clinic</span>
                 <span className="text-[8px] text-slate-400 block font-mono">{selectedCertificate.digitalSignature.substring(0, 32)}...</span>
               </div>
               <div className="space-y-1 text-right">

@@ -35,34 +35,10 @@ interface LandingPageViewProps {
   onUpdateUser?: (updated: UserProfile) => void;
 }
 
-const EMOJI_CATEGORIES = {
-  care: {
-    labelTh: "💖 ฮีลใจ & อารมณ์",
-    labelEn: "Care & Mood",
-    emojis: ["🧘", "😊", "🥰", "🌸", "☀️", "🌈", "💫", "💖", "🌻", "🍀", "🍓", "☕", "🕊️", "🌿", "🍵", "✨", "🌺", "🥑", "🌱", "🤍"]
-  },
-  animals: {
-    labelTh: "🐱 สัตว์น่ารัก",
-    labelEn: "Animals",
-    emojis: ["🐱", "🐶", "🦊", "🐼", "🐰", "🐨", "🐬", "🐧", "🦄", "🦖", "🦁", "🦉", "🐝", "🦥", "🦦", "🐢", "🦋", "🐙", "🦆", "🐾"]
-  },
-  activities: {
-    labelTh: "🎨 กิจกรรม & ไลฟ์สไตล์",
-    labelEn: "Activities",
-    emojis: ["🎨", "🎮", "🎵", "📚", "⚽", "🛹", "🎧", "🧗", "🚴", "🎸", "📷", "🏹", "🏊", "🎬", "⛺", "🚀", "🔭", "🧩", "🥊", "🥋"]
-  },
-  cool: {
-    labelTh: "⭐ พลังบวก & เท่ๆ",
-    labelEn: "Cool & Power",
-    emojis: ["⭐", "🔥", "⚡", "💎", "👑", "🛡️", "💡", "🔮", "🌊", "🪐", "🌠", "🎯", "🏆", "🧭", "⚓", "🕶️", "🦾", "🪄", "🌟", "🎇"]
-  }
-};
-
 export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpdateUser }: LandingPageViewProps) {
   const isEn = user.language === "en";
 
   // Modals state
-  const [authModal, setAuthModal] = useState<"login" | "signup" | null>(null);
   const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactFormSubmitted, setContactFormSubmitted] = useState(false);
@@ -74,43 +50,12 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
   const [consultRole, setConsultRole] = useState<'student' | 'adult'>("student");
   const [consultDoctor, setConsultDoctor] = useState("dr_wimonchat");
   const [consultTopic, setConsultTopic] = useState("");
-  
-  // Profile Form State (No Email Required)
-  const [profileName, setProfileName] = useState(() => (user.name && user.name !== "ผู้ใช้ใหม่" && user.name !== "New User") ? user.name : "");
-  const [profileRole, setProfileRole] = useState<'student' | 'adult'>(user.role || 'student');
-  const [profileAvatar, setProfileAvatar] = useState(user.avatar || "🧘");
-  const [activeEmojiCategory, setActiveEmojiCategory] = useState<"all" | "care" | "animals" | "activities" | "cool">("all");
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: "smooth" });
     }
-  };
-
-  const handleProfileSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const finalName = profileName.trim() || (isEn ? "Mindful Friend" : "เพื่อนร่วมทาง");
-    const updatedUser: UserProfile = {
-      ...user,
-      name: finalName,
-      role: profileRole,
-      avatar: profileAvatar,
-    };
-    
-    // Save to localStorage
-    try {
-      localStorage.setItem("mind_merit_profile_v1", JSON.stringify(updatedUser));
-    } catch (e) {
-      // ignore storage error
-    }
-    
-    if (onUpdateUser) {
-      onUpdateUser(updatedUser);
-    }
-    
-    setAuthModal(null);
-    onEnterApp();
   };
 
   const handleContactSubmit = (e: React.FormEvent) => {
@@ -131,43 +76,33 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
     }, 2500);
   };
 
-  // Get all emojis or filtered by category
-  const displayedEmojis = activeEmojiCategory === "all" 
-    ? [
-        ...EMOJI_CATEGORIES.care.emojis,
-        ...EMOJI_CATEGORIES.animals.emojis,
-        ...EMOJI_CATEGORIES.activities.emojis,
-        ...EMOJI_CATEGORIES.cool.emojis
-      ]
-    : EMOJI_CATEGORIES[activeEmojiCategory].emojis;
-
   return (
-    <div className="w-full space-y-16 pb-12 font-sans transition-colors duration-300">
+    <div className="w-full space-y-8 sm:space-y-14 pb-12 font-sans transition-colors duration-300">
       
       {/* =========================================================================
           SECTION 1: Header / Navigation Bar (แถบเมนูด้านบนของหน้าหลัก)
           ========================================================================= */}
-      <header className="sticky top-0 z-30 w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-sky-100/60 dark:border-slate-800/80 transition-all rounded-3xl shadow-sm px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="relative w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border border-sky-100/60 dark:border-slate-800/80 transition-all rounded-2xl sm:rounded-3xl shadow-sm px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between mb-4 sm:mb-8">
         
         {/* ฝั่งซ้าย: โลโก้แบรนด์ */}
         <div 
           onClick={onEnterApp}
-          className="flex items-center space-x-3 cursor-pointer group"
+          className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group shrink-0"
           title={isEn ? "Go to App Dashboard" : "ไปที่แดชบอร์ดระบบ"}
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300 shadow-md shadow-sky-500/10 group-hover:scale-105 transition-transform">
-            <span className="font-sans text-xl font-extrabold text-white tracking-wider">M</span>
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300 shadow-md shadow-sky-500/10 group-hover:scale-105 transition-transform">
+            <span className="font-sans text-base sm:text-xl font-black text-white tracking-wider">M</span>
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-lg text-slate-800 dark:text-slate-100 tracking-tight">Mind Merit</span>
+              <span className="font-black text-sm sm:text-lg text-slate-800 dark:text-slate-100 tracking-tight">MIND MERIT</span>
             </div>
-            <p className="text-[10px] text-slate-400 hidden sm:block">Mental Health & Productivity Ecosystem</p>
+            <p className="text-[10px] text-slate-400 hidden md:block">Mental Health & Productivity Ecosystem</p>
           </div>
         </div>
 
         {/* ตรงกลาง: ลิงก์เมนู (หน้าแรก, ฟีเจอร์/บริการ, ราคา, เกี่ยวกับเรา, ติดต่อเรา) */}
-        <nav className="hidden lg:flex items-center space-x-8 text-xs font-bold text-slate-600 dark:text-slate-300">
+        <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-xs font-bold text-slate-600 dark:text-slate-300">
           <button 
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="hover:text-sky-600 dark:hover:text-sky-400 transition-colors cursor-pointer"
@@ -201,20 +136,20 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </button>
         </nav>
 
-        {/* ฝั่งขวา: ปุ่ม เข้าสู่ระบบ (Login) และปุ่มเด่น สมัครใช้งาน (Sign Up / Register) */}
-        <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* ฝั่งขวา: ปุ่ม เข้าสู่ระบบ (Login) และปุ่มเด่น สมัครใช้งาน (Sign Up / Register) เข้าสู่แดชบอร์ดได้ทันที */}
+        <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
           <button
-            onClick={() => setAuthModal("login")}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-sky-600 dark:hover:text-sky-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+            onClick={onEnterApp}
+            className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-sky-600 dark:hover:text-sky-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
           >
             {isEn ? "Log In" : "เข้าสู่ระบบ"}
           </button>
 
           <button
-            onClick={() => setAuthModal("signup")}
-            className="px-4 py-2 text-xs font-bold text-white rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center space-x-1.5"
+            onClick={onEnterApp}
+            className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-white rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center space-x-1 sm:space-x-1.5"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             <span>{isEn ? "Sign Up Free" : "สมัครใช้งาน"}</span>
           </button>
 
@@ -233,38 +168,45 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       {/* =========================================================================
           SECTION 2: Hero Section (ส่วนแรกสุดบนหน้าจอ)
           ========================================================================= */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-tr from-sky-50/90 via-pink-50/70 via-amber-50/60 to-emerald-50/70 dark:from-slate-900/90 dark:via-sky-950/30 dark:to-slate-900/90 border border-white/70 dark:border-slate-800 p-6 sm:p-12 shadow-sm transition-all">
+      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-sky-50/90 via-pink-50/70 via-amber-50/60 to-emerald-50/70 dark:from-slate-900/90 dark:via-sky-950/30 dark:to-slate-900/90 border border-white/70 dark:border-slate-800 p-4 sm:p-8 md:p-12 shadow-sm transition-all">
         
         {/* Floating background decorative aura */}
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-sky-200/40 dark:bg-sky-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-pink-200/40 dark:bg-pink-500/10 blur-3xl pointer-events-none" />
         <div className="absolute top-1/2 left-1/3 h-64 w-64 rounded-full bg-amber-200/30 dark:bg-amber-500/10 blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 grid gap-10 lg:grid-cols-12 items-center">
+        <div className="relative z-10 grid gap-6 sm:gap-10 lg:grid-cols-12 items-center">
           
           {/* Left Text Column */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-4 sm:space-y-6">
             
             {/* Pill Tag */}
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-sky-200/60 dark:border-slate-700 shadow-2xs">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-sky-200/60 dark:border-slate-700 shadow-2xs">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200">
                 {isEn ? "✨ New: AI Mental Wellness & Daily Productivity" : "✨ นวัตกรรมใหม่: ดูแลสุขภาพใจและเพิ่มพลังชีวิตประจำวัน"}
               </span>
             </div>
 
+            {/* ข้อความพาดหัวหลัก (Headline) */}
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+              {isEn 
+                ? "Empower Your Mind, Elevate Your Daily Peace" 
+                : "ดูแลสุขภาพใจและความสุขของคุณให้เป็นเรื่องง่ายในทุกวัน"}
+            </h1>
+
             {/* ข้อความรอง (Sub-headline) */}
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
+            <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
               {isEn 
                 ? "The smart mental wellness companion for students and professionals. Automatic mood tracking, 24/7 AI psychologist listening, certified mindfulness breathing, and scientifically validated assessments."
                 : "แพลตฟอร์มดูแลสุขภาพจิตอัจฉริยะสำหรับนักเรียน นักศึกษา และคนทำงาน ช่วยวิเคราะห์ความรู้สึกและตรวจจับความเครียดอัตโนมัติ แม่นยำ ปลอดภัย พร้อมคู่หู AI และเกียรติบัตรรับรอง"}
             </p>
 
             {/* ปุ่ม Call-to-Action (CTA) */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-1">
               <button
-                onClick={() => setAuthModal("signup")}
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold text-sm shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center space-x-2"
+                onClick={onEnterApp}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
               >
                 <span>{isEn ? "Get Started Free" : "เริ่มต้นใช้งานฟรี"}</span>
                 <ArrowRight className="h-4 w-4" />
@@ -272,29 +214,29 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
 
               <button
                 onClick={onEnterApp}
-                className="px-6 py-3.5 rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-800/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center space-x-2"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-800/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
               >
                 <Play className="h-4 w-4 text-sky-500 fill-current" />
-                <span>{isEn ? "Explore Live Demo" : "ดูเดโมระบบจริง"}</span>
+                <span>{isEn ? "Explore Live Demo" : "ดู Demo ระบบจริง"}</span>
               </button>
             </div>
 
             {/* 4 Feature Highlights */}
-            <div className="pt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+            <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-semibold text-slate-600 dark:text-slate-400">
               <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-500 shrink-0" />
                 <span>{isEn ? "No Card Needed" : "ไม่มีค่าใช้จ่าย"}</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500 shrink-0" />
                 <span>{isEn ? "24/7 AI Buddy" : "AI คอยรับฟัง 24 ชม."}</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="h-4 w-4 text-pink-500 shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-pink-500 shrink-0" />
                 <span>{isEn ? "PDPA Encrypted" : "ปลอดภัยตาม PDPA"}</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500 shrink-0" />
                 <span>{isEn ? "E-Certificates" : "รับเกียรติบัตรฟรี"}</span>
               </div>
             </div>
@@ -387,15 +329,15 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       {/* =========================================================================
           SECTION 3: Social Proof & Trust Section (ส่วนสร้างความน่าเชื่อถือ)
           ========================================================================= */}
-      <section className="text-center space-y-6">
-        <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <section className="text-center space-y-4 sm:space-y-6">
+        <p className="text-[11px] sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {isEn 
             ? "Trusted by over 10,000+ organizations, universities, and SMEs nationwide"
             : "ได้รับความไว้วางใจจากธุรกิจ สถาบันการศึกษา และองค์กรกว่า 10,000+ รายทั่วประเทศ"}
         </p>
 
         {/* Logo Rows in muted grayscale / translucent styling */}
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-6 sm:gap-8 items-center justify-center opacity-70 dark:opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4 items-center justify-center opacity-75 dark:opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
           {[
             { name: "CHULA HEALTHCARE", icon: Building2 },
             { name: "TECH FOR LIFE", icon: Globe },
@@ -408,10 +350,10 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
             return (
               <div 
                 key={idx}
-                className="flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl bg-white/50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-2xs"
+                className="flex items-center justify-center space-x-1.5 py-2 sm:py-3 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white/50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-2xs"
               >
-                <Icon className="h-4 w-4 text-slate-500" />
-                <span className="text-[11px] font-extrabold tracking-wider text-slate-600 dark:text-slate-300">{partner.name}</span>
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-500 shrink-0" />
+                <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-slate-600 dark:text-slate-300 truncate">{partner.name}</span>
               </div>
             );
           })}
@@ -421,14 +363,14 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       {/* =========================================================================
           SECTION 4: Key Features / Value Proposition (ฟีเจอร์เด่นหรือคุณค่าของเว็บ 4 คอลัมน์)
           ========================================================================= */}
-      <section id="landing-features" className="space-y-8 scroll-mt-24">
+      <section id="landing-features" className="space-y-6 sm:space-y-8 scroll-mt-24">
         
-        <div className="text-center space-y-2 max-w-2xl mx-auto">
+        <div className="text-center space-y-2 max-w-2xl mx-auto px-2">
           <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-sky-900/40">
             {isEn ? "CORE VALUES" : "คุณค่าที่คุณจะได้รับ"}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
-            {isEn ? "Why Choose Mind Merit Platform?" : "ทำไมต้องเลือกใช้บริการของเรา?"}
+          <h2 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+            {isEn ? "Why Choose MIND MERIT Platform?" : "ทำไมต้องเลือกใช้บริการของเรา?"}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             {isEn 
@@ -438,15 +380,15 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
         </div>
 
         {/* 4 คอลัมน์ Grid Layout */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3.5 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           
           {/* คอลัมน์ 1: ไอคอนความเร็ว - ประมวลผลไว เรียลไทม์ (ฟ้า / Sky Blue) */}
-          <div className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-sky-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-sky-300 transition-all space-y-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 shadow-2xs border border-sky-100">
-              <Zap className="h-6 w-6" />
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-sky-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-sky-300 transition-all space-y-3 sm:space-y-4">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 shadow-2xs border border-sky-100">
+              <Zap className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div className="space-y-1.5">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            <div className="space-y-1 sm:space-y-1.5">
+              <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
                 {isEn ? "Real-time Fast Processing" : "ประมวลผลไว เรียลไทม์"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -455,19 +397,19 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                   : "บันทึกอารมณ์และรับการวิเคราะห์ผลทางจิตวิทยาได้ทันที แสดงกราฟดัชนีสุขภาวะแบบสดๆ ไม่ต้องรอนาน"}
               </p>
             </div>
-            <div className="pt-2 text-[11px] font-bold text-sky-600 dark:text-sky-400 flex items-center space-x-1">
+            <div className="pt-1 text-[11px] font-bold text-sky-600 dark:text-sky-400 flex items-center space-x-1">
               <span>{isEn ? "Sub-second speed" : "เร็วทันใจในเสี้ยววินาที"}</span>
               <ArrowRight className="h-3 w-3" />
             </div>
           </div>
 
           {/* คอลัมน์ 2: ไอคอนความปลอดภัย - ระบบล็อกรหัส 2 ชั้น มาตรฐานสากล (เขียว / Mint Green) */}
-          <div className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-emerald-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all space-y-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 shadow-2xs border border-emerald-100">
-              <ShieldCheck className="h-6 w-6" />
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-emerald-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all space-y-3 sm:space-y-4">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 shadow-2xs border border-emerald-100">
+              <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div className="space-y-1.5">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            <div className="space-y-1 sm:space-y-1.5">
+              <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
                 {isEn ? "Bank-Grade Security" : "ระบบความปลอดภัย 2 ชั้น"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -476,19 +418,19 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                   : "ระบบล็อกรหัส 2 ชั้น มาตรฐานสากล เข้ารหัสข้อมูลส่วนบุคคล 100% สอดคล้องตามกฎหมาย PDPA ทุกประการ"}
               </p>
             </div>
-            <div className="pt-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
+            <div className="pt-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
               <span>{isEn ? "PDPA & 2FA Protected" : "มาตรฐานระดับสากล"}</span>
               <ArrowRight className="h-3 w-3" />
             </div>
           </div>
 
           {/* คอลัมน์ 3: ไอคอนความง่าย - ใช้งานง่าย ไม่ต้องมีพื้นฐานก็ทำได้ (ชมพู / Blossom Pink) */}
-          <div className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-pink-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-pink-300 transition-all space-y-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pink-50 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400 shadow-2xs border border-pink-100">
-              <Smile className="h-6 w-6" />
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-pink-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-pink-300 transition-all space-y-3 sm:space-y-4">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-pink-50 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400 shadow-2xs border border-pink-100">
+              <Smile className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div className="space-y-1.5">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            <div className="space-y-1 sm:space-y-1.5">
+              <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
                 {isEn ? "Intuitive & Effortless" : "ใช้งานง่าย ไม่ต้องมีพื้นฐาน"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -497,19 +439,19 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                   : "หน้าจอสบายตา ไม่ซับซ้อน ใช้งานได้ทันทีโดยไม่ต้องผ่านการอบรม ตอบโจทย์ทั้งวัยเรียนและคนทำงาน"}
               </p>
             </div>
-            <div className="pt-2 text-[11px] font-bold text-pink-600 dark:text-pink-400 flex items-center space-x-1">
+            <div className="pt-1 text-[11px] font-bold text-pink-600 dark:text-pink-400 flex items-center space-x-1">
               <span>{isEn ? "Designed for Everyone" : "เข้าใจง่ายใน 1 นาที"}</span>
               <ArrowRight className="h-3 w-3" />
             </div>
           </div>
 
           {/* คอลัมน์ 4: ไอคอนซัพพอร์ต - ทีมงานดูแลช่วยเหลือตลอด 24 ชั่วโมง (เหลือง / Sunlight Yellow) */}
-          <div className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-amber-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-amber-300 transition-all space-y-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 shadow-2xs border border-amber-100">
-              <Headphones className="h-6 w-6" />
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-amber-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-amber-300 transition-all space-y-3 sm:space-y-4">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 shadow-2xs border border-amber-100">
+              <Headphones className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div className="space-y-1.5">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            <div className="space-y-1 sm:space-y-1.5">
+              <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
                 {isEn ? "24/7 Dedicated Support" : "ทีมงานช่วยเหลือตลอด 24 ชม."}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -518,7 +460,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                   : "ทีมงานและผู้เชี่ยวชาญพร้อมให้คำแนะนำตลอด 24 ชั่วโมง พร้อมปุ่ม SOS ฉุกเฉินสำหรับสถานการณ์เร่งด่วน"}
               </p>
             </div>
-            <div className="pt-2 text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center space-x-1">
+            <div className="pt-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center space-x-1">
               <span>{isEn ? "Always by your side" : "ดูแลคุณตลอดเวลา"}</span>
               <ArrowRight className="h-3 w-3" />
             </div>
@@ -531,13 +473,13 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       {/* =========================================================================
           SECTION 5: How It Works (ขั้นตอนการใช้งานย่อๆ 3 ขั้นตอน แนวนอน)
           ========================================================================= */}
-      <section className="rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-sky-100/70 dark:border-slate-800 p-8 sm:p-12 shadow-sm space-y-10">
+      <section className="rounded-2xl sm:rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-sky-100/70 dark:border-slate-800 p-5 sm:p-10 shadow-sm space-y-6 sm:space-y-8">
         
-        <div className="text-center space-y-2 max-w-xl mx-auto">
+        <div className="text-center space-y-2 max-w-xl mx-auto px-2">
           <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100">
             {isEn ? "SIMPLE ONBOARDING" : "ขั้นตอนแสนง่าย"}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+          <h2 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
             {isEn ? "Get Started in 3 Simple Steps" : "เริ่มต้นง่ายๆ ใน 3 ขั้นตอน"}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
@@ -546,17 +488,17 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
         </div>
 
         {/* 3 ขั้นตอน แนวนอน */}
-        <div className="grid gap-8 md:grid-cols-3 relative">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-3 relative">
           
           {/* Step 1 */}
-          <div className="relative p-6 rounded-3xl bg-gradient-to-b from-sky-50/70 to-transparent dark:from-sky-950/20 border border-sky-100/80 dark:border-slate-800 space-y-4">
+          <div className="relative p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-sky-50/70 to-transparent dark:from-sky-950/20 border border-sky-100/80 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500 text-white font-extrabold text-lg shadow-md shadow-sky-500/20">
+              <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-sky-500 text-white font-extrabold text-sm sm:text-lg shadow-md shadow-sky-500/20">
                 1
               </span>
               <span className="text-[10px] font-bold text-sky-600 uppercase tracking-wider">Step 01</span>
             </div>
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
               {isEn ? "Sign Up & Create Your Profile" : "สมัครสมาชิกและสร้างโปรไฟล์ของคุณ"}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -567,14 +509,14 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </div>
 
           {/* Step 2 */}
-          <div className="relative p-6 rounded-3xl bg-gradient-to-b from-emerald-50/70 to-transparent dark:from-emerald-950/20 border border-emerald-100/80 dark:border-slate-800 space-y-4">
+          <div className="relative p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-emerald-50/70 to-transparent dark:from-emerald-950/20 border border-emerald-100/80 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white font-extrabold text-lg shadow-md shadow-emerald-500/20">
+              <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-emerald-500 text-white font-extrabold text-sm sm:text-lg shadow-md shadow-emerald-500/20">
                 2
               </span>
               <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Step 02</span>
             </div>
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
               {isEn ? "Connect Data or Choose Templates" : "เชื่อมต่อข้อมูลหรือเลือกเทมเพลตที่ต้องการ"}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -585,14 +527,14 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </div>
 
           {/* Step 3 */}
-          <div className="relative p-6 rounded-3xl bg-gradient-to-b from-pink-50/70 to-transparent dark:from-pink-950/20 border border-pink-100/80 dark:border-slate-800 space-y-4">
+          <div className="relative p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-pink-50/70 to-transparent dark:from-pink-950/20 border border-pink-100/80 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pink-500 text-white font-extrabold text-lg shadow-md shadow-pink-500/20">
+              <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-pink-500 text-white font-extrabold text-sm sm:text-lg shadow-md shadow-pink-500/20">
                 3
               </span>
               <span className="text-[10px] font-bold text-pink-600 uppercase tracking-wider">Step 03</span>
             </div>
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
               {isEn ? "Start Using & See Instant Results" : "เริ่มต้นใช้งานและดูผลลัพธ์ผ่านแดชบอร์ดทันที"}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -605,10 +547,10 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
         </div>
 
         {/* CTA below steps */}
-        <div className="text-center pt-2">
+        <div className="text-center pt-1">
           <button
             onClick={onEnterApp}
-            className="inline-flex items-center space-x-2 px-6 py-3 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-xs hover:opacity-90 transition-all cursor-pointer shadow-md"
+            className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl sm:rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-xs hover:opacity-90 transition-all cursor-pointer shadow-md"
           >
             <span>{isEn ? "Try The 3 Steps Now" : "ทดลองใช้งาน 3 ขั้นตอนนี้เลย"}</span>
             <ArrowRight className="h-4 w-4" />
@@ -620,29 +562,29 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       {/* =========================================================================
           SECTION 6: Testimonials (เสียงสะท้อนจากผู้ใช้งานจริง 3 กล่อง)
           ========================================================================= */}
-      <section id="landing-testimonials" className="space-y-8 scroll-mt-24">
+      <section id="landing-testimonials" className="space-y-6 sm:space-y-8 scroll-mt-24">
         
-        <div className="text-center space-y-2 max-w-xl mx-auto">
+        <div className="text-center space-y-2 max-w-xl mx-auto px-2">
           <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-100">
             {isEn ? "COMMUNITY LOVE" : "รีวิวและความประทับใจ"}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+          <h2 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
             {isEn ? "Voices from Our Real Users" : "เสียงสะท้อนจากผู้ใช้งานจริงของเรา"}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {isEn ? "See how Mind Merit is making a real difference in people's everyday lives." : "สัมผัสประสบการณ์จริงจากผู้ใช้งานที่ชีวิตและความสุขเปลี่ยนไปในทางที่ดีขึ้น"}
+            {isEn ? "See how MIND MERIT is making a real difference in people's everyday lives." : "สัมผัสประสบการณ์จริงจากผู้ใช้งานที่ชีวิตและความสุขเปลี่ยนไปในทางที่ดีขึ้น"}
           </p>
         </div>
 
         {/* 3 Review Cards */}
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
           
           {/* Review Card 1 */}
-          <div className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 sm:space-y-4">
+            <div className="space-y-2.5">
               <div className="flex text-amber-400 space-x-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
+                  <Star key={i} className="h-3.5 w-3.5 fill-current" />
                 ))}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed italic">
@@ -652,7 +594,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               </p>
             </div>
             <div className="flex items-center space-x-3 pt-3 border-t border-slate-50 dark:border-slate-800">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-100 text-sky-700 font-bold text-sm">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl bg-sky-100 text-sky-700 font-bold text-xs sm:text-sm shrink-0">
                 ธน
               </div>
               <div>
@@ -663,21 +605,21 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </div>
 
           {/* Review Card 2 */}
-          <div className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 sm:space-y-4">
+            <div className="space-y-2.5">
               <div className="flex text-amber-400 space-x-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
+                  <Star key={i} className="h-3.5 w-3.5 fill-current" />
                 ))}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed italic">
                 {isEn 
-                  ? "“Our whole company team uses Mind Merit for wellness check-ins. It is fast, 100% private under PDPA, and cut down workplace burnout remarkably.”"
-                  : "“ทีมงานในบริษัทเราใช้ Mind Merit ในการเช็คอินพลังใจทุกเช้า ระบบเร็วมาก มั่นใจได้ในความปลอดภัยของข้อมูล PDPA ช่วยลดภาวะหมดไฟในที่ทำงานได้อย่างเห็นผลชัดเจน”"}
+                  ? "“Our whole company team uses MIND MERIT for wellness check-ins. It is fast, 100% private under PDPA, and cut down workplace burnout remarkably.”"
+                  : "“ทีมงานในบริษัทเราใช้ MIND MERIT ในการเช็คอินพลังใจทุกเช้า ระบบเร็วมาก มั่นใจได้ในความปลอดภัยของข้อมูล PDPA ช่วยลดภาวะหมดไฟในที่ทำงานได้อย่างเห็นผลชัดเจน”"}
               </p>
             </div>
             <div className="flex items-center space-x-3 pt-3 border-t border-slate-50 dark:border-slate-800">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-pink-100 text-pink-700 font-bold text-sm">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl bg-pink-100 text-pink-700 font-bold text-xs sm:text-sm shrink-0">
                 วร
               </div>
               <div>
@@ -688,11 +630,11 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </div>
 
           {/* Review Card 3 */}
-          <div className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 sm:space-y-4">
+            <div className="space-y-2.5">
               <div className="flex text-amber-400 space-x-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
+                  <Star key={i} className="h-3.5 w-3.5 fill-current" />
                 ))}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed italic">
@@ -702,7 +644,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               </p>
             </div>
             <div className="flex items-center space-x-3 pt-3 border-t border-slate-50 dark:border-slate-800">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 font-bold text-sm">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl bg-emerald-100 text-emerald-700 font-bold text-xs sm:text-sm shrink-0">
                 กม
               </div>
               <div>
@@ -719,34 +661,34 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       {/* =========================================================================
           SECTION 7: Final Call-to-Action (กระตุ้นครั้งสุดท้ายก่อนปิดหน้าเว็บ)
           ========================================================================= */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 p-8 sm:p-14 text-white text-center shadow-xl space-y-6">
+      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 p-6 sm:p-12 text-white text-center shadow-xl space-y-4 sm:space-y-6">
         
         {/* Ambient glow decoration */}
         <div className="absolute -top-12 -right-12 h-64 w-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-amber-300/20 blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+        <div className="relative z-10 max-w-2xl mx-auto space-y-3 sm:space-y-4 px-2">
           <span className="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold bg-white/20 text-white uppercase tracking-widest backdrop-blur-xs">
             {isEn ? "START YOUR TRANSFORMATION" : "ก้าวแรกสู่วันใหม่ที่ดีกว่า"}
           </span>
 
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+          <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
             {isEn ? "Ready to Elevate Your Wellness & Success?" : "พร้อมที่จะยกระดับธุรกิจและชีวิตของคุณแล้วหรือยัง?"}
           </h2>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5 sm:gap-3 pt-2">
             <button
-              onClick={() => setAuthModal("signup")}
-              className="px-8 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-sm shadow-lg shadow-amber-400/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              onClick={onEnterApp}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl sm:rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-400/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
             >
               {isEn ? "Sign Up Today for Free" : "สมัครสมาชิกเลยวันนี้"}
             </button>
             
             <button
               onClick={onEnterApp}
-              className="px-6 py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-sm backdrop-blur-xs hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/20"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm backdrop-blur-xs hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/20"
             >
-              {isEn ? "Launch System Demo" : "เปิดดูแดชบอร์ดระบบ"}
+              {isEn ? "Launch System Demo" : "เปิดดู Demo แดชบอร์ดระบบ"}
             </button>
           </div>
         </div>
@@ -756,7 +698,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       {/* =========================================================================
           SECTION 8: Footer (ส่วนท้ายของเว็บไซต์)
           ========================================================================= */}
-      <footer className="rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-100 dark:border-slate-800 p-8 sm:p-12 space-y-8">
+      <footer className="rounded-2xl sm:rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-100 dark:border-slate-800 p-5 sm:p-10 space-y-6 sm:space-y-8">
         
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           
@@ -766,7 +708,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-400 to-emerald-400 text-white font-extrabold text-base">
                 M
               </div>
-              <span className="font-bold text-base text-slate-800 dark:text-slate-100">Mind Merit</span>
+              <span className="font-extrabold text-base text-slate-800 dark:text-slate-100">MIND MERIT</span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               {isEn 
@@ -839,19 +781,19 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 <span>PDPA Certified Compliant</span>
               </li>
               <li>
-                <a href="#privacy" onClick={(e) => { e.preventDefault(); alert("Mind Merit Privacy Policy: All mental wellness logs are strictly encrypted and anonymous."); }} className="hover:text-sky-600">
-                  {isEn ? "Privacy Policy (นโยบายความเป็นส่วนตัว)" : "นโยบายความเป็นส่วนตัว (Privacy Policy)"}
-                </a>
+                <button onClick={() => setContactModalOpen(true)} className="hover:text-sky-600 text-left cursor-pointer">
+                  {isEn ? "Privacy Policy (MIND MERIT PDPA Protected)" : "นโยบายความเป็นส่วนตัว (MIND MERIT PDPA 100%)"}
+                </button>
               </li>
               <li>
-                <a href="#terms" onClick={(e) => { e.preventDefault(); alert("Mind Merit Terms of Service: Designed for supportive self-care."); }} className="hover:text-sky-600">
-                  {isEn ? "Terms of Service" : "ข้อกำหนดการให้บริการ"}
-                </a>
+                <button onClick={() => setContactModalOpen(true)} className="hover:text-sky-600 text-left cursor-pointer">
+                  {isEn ? "Terms of Service" : "ข้อกำหนดการให้บริการ MIND MERIT"}
+                </button>
               </li>
               <li>
-                <a href="#cookies" onClick={(e) => { e.preventDefault(); alert("Cookie Policy: Essential cookies only."); }} className="hover:text-sky-600">
-                  {isEn ? "Cookie Preferences" : "การจัดการคุกกี้"}
-                </a>
+                <button onClick={() => setContactModalOpen(true)} className="hover:text-sky-600 text-left cursor-pointer">
+                  {isEn ? "Cookie Preferences" : "การจัดการคุกกี้ (เฉพาะที่จำเป็น)"}
+                </button>
               </li>
             </ul>
           </div>
@@ -860,7 +802,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
 
         {/* ข้อความ Copyright ของบริษัท */}
         <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 space-y-2 sm:space-y-0">
-          <p>© {new Date().getFullYear()} Mind Merit Corporation Co., Ltd. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} MIND MERIT Corporation Co., Ltd. All rights reserved.</p>
         </div>
 
       </footer>
@@ -869,189 +811,6 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           INTERACTIVE MODALS: Login / Sign Up, Pricing, Contact
           ========================================================================= */}
       
-      {/* 1. Profile Setup & Quick Start Modal (No Email Required) */}
-      {authModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
-            
-            <button
-              onClick={() => setAuthModal(null)}
-              className="absolute top-5 right-5 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            {/* Header info */}
-            <div className="text-center space-y-1.5">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-400 via-pink-400 to-amber-300 text-white font-extrabold text-2xl shadow-md">
-                {profileAvatar}
-              </div>
-              <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">
-                {authModal === "login" 
-                  ? (isEn ? "Welcome Back / Set Your Profile" : "เข้าใช้งาน Mind Merit ฟรี")
-                  : (isEn ? "Create Your Free Profile" : "เริ่มต้นใช้งานฟรี / สร้างโปรไฟล์")}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {isEn 
-                  ? "No email or password needed! Simply pick your name, role, and avatar." 
-                  : "ไม่ต้องใช้อีเมลหรือรหัสผ่าน! เพียงระบุชื่อ เลือกสถานะ และเลือกอิโมจิโปรไฟล์ของคุณ"}
-              </p>
-            </div>
-
-            {/* Live Profile Card Preview */}
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-50/80 via-pink-50/80 to-amber-50/80 dark:from-slate-800/80 dark:to-slate-800/40 border border-sky-100/80 dark:border-slate-700/80 flex items-center space-x-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-slate-700 text-2xl shadow-sm border border-slate-100 dark:border-slate-600 shrink-0">
-                {profileAvatar}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2">
-                  <span className="font-extrabold text-sm text-slate-800 dark:text-slate-100 truncate">
-                    {profileName.trim() || (isEn ? "Your Name" : "ชื่อของคุณ")}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300 shrink-0">
-                    {profileRole === "student" ? (isEn ? "🎓 Student" : "🎓 นักเรียน/นักศึกษา") : (isEn ? "💼 Working Adult" : "💼 วัยทำงาน")}
-                  </span>
-                </div>
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 flex items-center space-x-1">
-                  <CheckCircle2 className="h-3 w-3 shrink-0" />
-                  <span>{isEn ? "100% Free Forever • Ready to Launch" : "ใช้งานฟรี 100% • พร้อมเริ่มบันทึกอารมณ์"}</span>
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleProfileSubmit} className="space-y-4">
-              
-              {/* 1. Name Input */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {isEn ? "1. Your Name / Nickname" : "1. ชื่อหรือชื่อเล่นของคุณ"} <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder={isEn ? "e.g. Alex, HappyBuddy..." : "เช่น มาริสา, ตะวัน, ใบหม่อน, บัดดี้พลังบวก..."}
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-400 font-medium"
-                />
-              </div>
-
-              {/* 2. Role Selector (นักเรียน / นักศึกษา vs วัยทำงาน) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {isEn ? "2. Select Your Status / Role" : "2. เลือกสถานะ / บทบาทของคุณ"}
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setProfileRole("student")}
-                    className={`p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center space-x-2 ${profileRole === "student" ? "border-sky-500 bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 shadow-sm" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50"}`}
-                  >
-                    <GraduationCap className="h-4 w-4 text-sky-500" />
-                    <span>{isEn ? "Student" : "นักเรียน / นักศึกษา"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setProfileRole("adult")}
-                    className={`p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center space-x-2 ${profileRole === "adult" ? "border-pink-500 bg-pink-50 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300 shadow-sm" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50"}`}
-                  >
-                    <Briefcase className="h-4 w-4 text-pink-500" />
-                    <span>{isEn ? "Working Adult" : "วัยทำงาน"}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* 3. Choose Emoji Avatar (Rich & Diverse Category Grid) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {isEn ? "3. Choose Your Profile Emoji" : "3. เลือกอิโมจิโปรไฟล์ของคุณ (มีให้เลือกหลากหลาย)"}
-                  </label>
-                  <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">
-                    {displayedEmojis.length} {isEn ? "emojis" : "แบบ"}
-                  </span>
-                </div>
-
-                {/* Category Pills */}
-                <div className="flex flex-wrap gap-1.5 pb-1">
-                  <button
-                    type="button"
-                    onClick={() => setActiveEmojiCategory("all")}
-                    className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${activeEmojiCategory === "all" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"}`}
-                  >
-                    {isEn ? "All Emojis" : "🌈 ทั้งหมด"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveEmojiCategory("care")}
-                    className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${activeEmojiCategory === "care" ? "bg-pink-500 text-white" : "bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 hover:bg-pink-100"}`}
-                  >
-                    {isEn ? EMOJI_CATEGORIES.care.labelEn : EMOJI_CATEGORIES.care.labelTh}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveEmojiCategory("animals")}
-                    className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${activeEmojiCategory === "animals" ? "bg-emerald-500 text-white" : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100"}`}
-                  >
-                    {isEn ? EMOJI_CATEGORIES.animals.labelEn : EMOJI_CATEGORIES.animals.labelTh}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveEmojiCategory("activities")}
-                    className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${activeEmojiCategory === "activities" ? "bg-sky-500 text-white" : "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 hover:bg-sky-100"}`}
-                  >
-                    {isEn ? EMOJI_CATEGORIES.activities.labelEn : EMOJI_CATEGORIES.activities.labelTh}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveEmojiCategory("cool")}
-                    className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${activeEmojiCategory === "cool" ? "bg-amber-500 text-white" : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100"}`}
-                  >
-                    {isEn ? EMOJI_CATEGORIES.cool.labelEn : EMOJI_CATEGORIES.cool.labelTh}
-                  </button>
-                </div>
-
-                {/* Emoji Selection Grid */}
-                <div className="grid grid-cols-7 sm:grid-cols-9 gap-2 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 max-h-44 overflow-y-auto">
-                  {displayedEmojis.map((emoji, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setProfileAvatar(emoji)}
-                      className={`h-10 w-10 flex items-center justify-center text-xl rounded-xl transition-all cursor-pointer hover:scale-115 ${profileAvatar === emoji ? "bg-white dark:bg-slate-700 border-2 border-sky-500 shadow-md scale-110" : "hover:bg-white dark:hover:bg-slate-700"}`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Security & PDPA Guarantee note */}
-              <div className="flex items-center space-x-2 text-[11px] text-slate-500 dark:text-slate-400 bg-sky-50/50 dark:bg-sky-950/20 p-2.5 rounded-xl border border-sky-100/60 dark:border-sky-900/40">
-                <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span>
-                  {isEn 
-                    ? "Safe & Private: Data stored locally on your device under PDPA privacy regulations." 
-                    : "ปลอดภัยตามกฎหมาย PDPA: ไม่ต้องกรอกอีเมล ข้อมูลของคุณถูกจัดเก็บอย่างเป็นส่วนตัว"}
-                </span>
-              </div>
-
-              {/* Submit CTA */}
-              <button
-                type="submit"
-                disabled={!profileName.trim()}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-extrabold text-sm shadow-md shadow-sky-500/20 hover:scale-[1.01] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center space-x-2"
-              >
-                <Sparkles className="h-4 w-4" />
-                <span>{isEn ? "Start Free Now (No Email Required) 🚀" : "เริ่มต้นใช้งานฟรีทันที (ไม่ต้องใช้อีเมล) 🚀"}</span>
-              </button>
-            </form>
-
-          </div>
-        </div>
-      )}
-
       {/* 2. Pricing Modal (Free Starter vs Private Expert Consultation) */}
       {pricingModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1073,7 +832,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
                 {isEn 
-                  ? "Mind Merit platform is 100% free for everyday mood care, AI companion, and courses. If you need private sessions with certified human psychologists, book an add-on consultation package."
+                  ? "MIND MERIT platform is 100% free for everyday mood care, AI companion, and courses. If you need private sessions with certified human psychologists, book an add-on consultation package."
                   : "ระบบพื้นฐานทั้งหมดใช้งานได้ฟรีทันที! และหากต้องการคำปรึกษาแบบตัวต่อตัวกับนักจิตวิทยาคลินิกหรือจิตแพทย์ผู้เชี่ยวชาญ สามารถเลือกสมัครแพ็กเกจปรึกษาส่วนตัวเพิ่มเติมได้"}
               </p>
             </div>
@@ -1122,7 +881,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 </div>
 
                 <button
-                  onClick={() => { setPricingModalOpen(false); setAuthModal("signup"); }}
+                  onClick={() => { setPricingModalOpen(false); onEnterApp(); }}
                   className="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-1.5"
                 >
                   <Sparkles className="h-4 w-4" />
@@ -1274,7 +1033,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                     type="text"
                     required
                     placeholder="เช่น ตะวัน หรือชื่อเล่นของคุณ"
-                    value={consultName || profileName}
+                    value={consultName || user.name}
                     onChange={(e) => setConsultName(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-sky-400"
                   />
@@ -1329,7 +1088,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 GET IN TOUCH
               </span>
               <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">
-                {isEn ? "Contact Our Support Team" : "ติดต่อทีมงาน Mind Merit"}
+                {isEn ? "Contact Our Support Team" : "ติดต่อทีมงาน MIND MERIT"}
               </h3>
               <p className="text-xs text-slate-400">
                 {isEn ? "We reply within 15 minutes 24/7" : "เราพร้อมตอบกลับทุกข้อซักถามอย่างรวดเร็ว"}

@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { backendRouter } from "./backend-router";
 
 dotenv.config();
 
@@ -10,6 +11,7 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+app.use("/api", backendRouter);
 
 // Lazy-loaded Gemini Client to prevent crashes on startup if GEMINI_API_KEY is missing
 let aiClient: GoogleGenAI | null = null;

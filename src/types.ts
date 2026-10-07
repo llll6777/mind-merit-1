@@ -161,3 +161,97 @@ export interface ChatMessage {
   timestamp: string;
   category?: string; // e.g. stress, overthinking
 }
+
+export type AdminRole = "super_admin" | "staff_psychologist" | "customer";
+
+export interface AdminUserRecord {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: AdminRole;
+  status: "active" | "suspended";
+  authProvider: "email" | "phone" | "google" | "apple" | "guest";
+  createdAt: string;
+  lastLogin: string;
+  avatar: string;
+}
+
+export interface CatalogItem {
+  id: string;
+  name: string;
+  type: "consultation" | "course" | "subscription" | "assessment";
+  price: number;
+  duration: string;
+  status: "active" | "draft";
+  salesCount: number;
+  description: string;
+}
+
+export interface ArticleItem {
+  id: string;
+  title: string;
+  category: string;
+  author: string;
+  views: number;
+  likes: number;
+  status: "published" | "draft";
+  createdAt: string;
+}
+
+export interface PromotionItem {
+  id: string;
+  code: string;
+  discountPercent: number;
+  maxDiscount: number;
+  usageCount: number;
+  maxUsage: number;
+  validUntil: string;
+  status: "active" | "expired";
+}
+
+export interface PushNotificationItem {
+  id: string;
+  title: string;
+  body: string;
+  audience: "all" | "students" | "adults" | "vip";
+  sentAt: string;
+  status: "sent" | "scheduled";
+  recipientsCount: number;
+}
+
+export interface FileAsset {
+  id: string;
+  name: string;
+  sizeMB: number;
+  type: string;
+  url: string;
+  category: "banner" | "avatar" | "document" | "certificate";
+  uploadedAt: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  adminName: string;
+  adminRole: string;
+  action: string;
+  resource: string;
+  details: string;
+  ipAddress: string;
+  status: "success" | "warning" | "failed";
+}
+
+export interface PdpaConsentRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  email: string;
+  consentTerms: boolean;
+  consentAnalytics: boolean;
+  consentMarketing: boolean;
+  consentSensitiveHealth: boolean;
+  ipAddress: string;
+  updatedAt: string;
+}
+

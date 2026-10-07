@@ -159,7 +159,7 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
       title: isTh ? "ตั้งค่าโปรไฟล์และเลือกอวตารของคุณ" : "Set Up Your Profile & Avatar",
       desc: isTh 
         ? "ปรับแต่งชื่อ นามแฝง เลือกรูปอิโมจิอวตาร และระบุบทบาทของคุณ (นักเรียน/นักศึกษา หรือ วัยทำงาน) เพื่อให้ระบบแนะนำเนื้อหาและแบบประเมินได้ตรงกับสภาวะชีวิตของคุณมากที่สุด พร้อมเปิดโหมดไม่เปิดเผยตัวตน (Anonymous Mode) ได้ตลอดเวลา"
-        : "Customize your nickname, choose an expressive emoji avatar, and set your role (Student or Working Adult). This helps Mind Merit tailor recommendations and assessments to your lifestyle.",
+        : "Customize your nickname, choose an expressive emoji avatar, and set your role (Student or Working Adult). This helps MIND MERIT tailor recommendations and assessments to your lifestyle.",
       tips: [
         isTh ? "คลิกที่รูปโปรไฟล์มุมขวาบน หรือที่การ์ดโปรไฟล์ในหน้าแดชบอร์ดเพื่อแก้ไข" : "Click your avatar in the top-right header or dashboard banner to edit.",
         isTh ? "สามารถสลับภาษาไทย / English ได้ง่ายๆ เพียงกดปุ่มรูปโลกที่เมนูด้านบน" : "Switch between Thai and English anytime using the language toggle.",
@@ -307,10 +307,10 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
         : "Yes, completely secure. Your check-in records are kept on your personal client storage. When using the community or buddy matching, Anonymous Mode conceals your real name."
     },
     {
-      q: isTh ? "Mind Merit สามารถใช้วินิจฉัยโรคทางจิตเวชแทนแพทย์ได้หรือไม่?" : "Can Mind Merit diagnose mental illnesses in place of a doctor?",
+      q: isTh ? "MIND MERIT สามารถใช้วินิจฉัยโรคทางจิตเวชแทนแพทย์ได้หรือไม่?" : "Can MIND MERIT diagnose mental illnesses in place of a doctor?",
       a: isTh 
-        ? "ไม่ได้ครับ Mind Merit เป็นเครื่องมือส่งเสริมสุขภาพจิต การตระหนักรู้ในตนเอง และการดูแลตนเองเบื้องต้น (Self-Care & Cognitive Coaching) ไม่สามารถทดแทนการวินิจฉัยหรือการรักษาทางการแพทย์ หากคุณมีอาการรุนแรง ขอแนะนำให้ใช้เมนู SOS เพื่อปรึกษาแพทย์หรือโทรสายด่วน 1323"
-        : "No. Mind Merit is a self-care companion and psychoeducational tool, not a clinical diagnostic system. For severe distress, please consult licensed medical specialists or call 1323 via our SOS page."
+        ? "ไม่ได้ครับ MIND MERIT เป็นเครื่องมือส่งเสริมสุขภาพจิต การตระหนักรู้ในตนเอง และการดูแลตนเองเบื้องต้น (Self-Care & Cognitive Coaching) ไม่สามารถทดแทนการวินิจฉัยหรือการรักษาทางการแพทย์ หากคุณมีอาการรุนแรง ขอแนะนำให้ใช้เมนู SOS เพื่อปรึกษาแพทย์หรือโทรสายด่วน 1323"
+        : "No. MIND MERIT is a self-care companion and psychoeducational tool, not a clinical diagnostic system. For severe distress, please consult licensed medical specialists or call 1323 via our SOS page."
     },
     {
       q: isTh ? "เกียรติบัตรอิเล็กทรอนิกส์ (E-Certificate) นำไปใช้อะไรได้บ้าง?" : "How can I use the digital completion E-Certificate?",
@@ -354,7 +354,7 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
         <div className="relative z-10 max-w-3xl space-y-3">
           <div className="inline-flex items-center space-x-2 rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-xs font-semibold text-sky-100 border border-white/20">
             <Compass className="h-3.5 w-3.5" />
-            <span>{isTh ? "คู่มือการใช้งานแพลตฟอร์มฉบับสมบูรณ์" : "Complete Mind Merit User Manual"}</span>
+            <span>{isTh ? "คู่มือการใช้งานแพลตฟอร์มฉบับสมบูรณ์" : "Complete MIND MERIT User Manual"}</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -592,7 +592,7 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
                 </h4>
                 <p className="text-[11px] text-orange-700 dark:text-orange-400 mt-0.5">
                   {isTh
-                    ? "เข้าใช้งาน Mind Merit เป็นประจำอย่างต่อเนื่องเพื่อรักษาสถิติ Streak และปลดล็อคเหรียญ Streak Champion!"
+                    ? "เข้าใช้งาน MIND MERIT เป็นประจำอย่างต่อเนื่องเพื่อรักษาสถิติ Streak และปลดล็อคเหรียญ Streak Champion!"
                     : "Visit daily to protect your streak count and claim the prestigious Streak Champion badge!"}
                 </p>
               </div>
@@ -616,7 +616,7 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
                 {t.guide.faqTitle}
               </h3>
               <p className="text-[11px] text-slate-400">
-                {isTh ? "ข้อสงสัยที่พบบ่อยเกี่ยวกับการใช้งานแพลตฟอร์ม" : "Common questions about using Mind Merit"}
+                {isTh ? "ข้อสงสัยที่พบบ่อยเกี่ยวกับการใช้งานแพลตฟอร์ม" : "Common questions about using MIND MERIT"}
               </p>
             </div>
           </div>

@@ -41,20 +41,20 @@ export default function Header({
       <div className="h-1 w-full bg-gradient-to-r from-sky-400 via-emerald-400 via-pink-400 to-amber-300" />
 
       {/* Full-width container spanning edge-to-edge so right controls align with top-right corner */}
-      <div id="app-header-container" className="w-full flex h-15 items-center justify-between px-3 sm:px-6 lg:px-8">
+      <div id="app-header-container" className="w-full flex h-14 sm:h-15 items-center justify-between px-2 sm:px-6 lg:px-8">
         
         {/* Brand Logo & Name */}
         <div 
           id="brand-logo-section" 
-          className="flex items-center space-x-3 cursor-pointer shrink-0" 
+          className="flex items-center space-x-2 sm:space-x-3 cursor-pointer shrink-0" 
           onClick={onOpenLanding || onOpenProfile} 
           title={user.language === 'en' ? "Go to Home / Landing Page" : "ไปยังหน้าหลัก"}
         >
-          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300 shadow-md shadow-sky-500/10 transition-transform hover:scale-105 active:scale-95">
-            <span className="font-sans text-lg sm:text-xl font-extrabold text-white tracking-wider">M</span>
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300 shadow-md shadow-sky-500/10 transition-transform hover:scale-105 active:scale-95">
+            <span className="font-sans text-base sm:text-xl font-black text-white tracking-wider">M</span>
           </div>
           <div>
-            <h1 className="font-sans text-base sm:text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100">
+            <h1 className="font-sans text-sm sm:text-lg font-black tracking-tight text-slate-800 dark:text-slate-100">
               {t.appName}
             </h1>
             <p className="hidden text-[10px] text-slate-400 dark:text-slate-500 sm:block">
@@ -100,7 +100,7 @@ export default function Header({
         </div>
 
         {/* Action Controls - Aligned seamlessly to the right */}
-        <div id="header-controls" className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        <div id="header-controls" className="flex items-center space-x-1 sm:space-x-2 shrink-0">
           
           {/* Home / Landing Page Button */}
           {onOpenLanding && (
@@ -108,13 +108,13 @@ export default function Header({
               id="header-home-btn"
               onClick={onOpenLanding}
               title={user.language === 'en' ? 'Home / Landing Page' : 'หน้าหลัก'}
-              className={`flex items-center justify-center space-x-1.5 h-9 px-2.5 sm:px-3 rounded-xl shadow-2xs transition-all cursor-pointer border ${
+              className={`flex items-center justify-center space-x-1 h-8 sm:h-9 px-2 sm:px-3 rounded-xl shadow-2xs transition-all cursor-pointer border ${
                 activeTab === "landing"
                   ? "bg-sky-500 text-white border-sky-500 shadow-sky-500/20"
                   : "bg-white/80 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-slate-700 hover:bg-slate-100"
               }`}
             >
-              <Home className="h-4 w-4 shrink-0" />
+              <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
               <span className="hidden sm:inline text-xs font-bold">{user.language === 'en' ? 'Home' : 'หน้าหลัก'}</span>
             </button>
           )}
@@ -123,9 +123,9 @@ export default function Header({
           <button
             id="quick-sos-btn"
             onClick={onOpenSOS}
-            className="flex items-center justify-center sm:space-x-1.5 h-9 px-2.5 sm:px-3 rounded-xl bg-pink-50 text-pink-600 shadow-2xs hover:bg-pink-100 dark:bg-pink-950/30 dark:text-pink-300 dark:hover:bg-pink-900/40 transition-all cursor-pointer border border-pink-200/60 dark:border-pink-900/40"
+            className="flex items-center justify-center sm:space-x-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-xl bg-pink-50 text-pink-600 shadow-2xs hover:bg-pink-100 dark:bg-pink-950/30 dark:text-pink-300 dark:hover:bg-pink-900/40 transition-all cursor-pointer border border-pink-200/60 dark:border-pink-900/40"
           >
-            <ShieldAlert className="h-4 w-4 animate-pulse shrink-0 text-pink-500" />
+            <ShieldAlert className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-pulse shrink-0 text-pink-500" />
             <span className="hidden sm:inline text-xs font-bold tracking-wide">SOS</span>
           </button>
 
@@ -134,10 +134,10 @@ export default function Header({
             id="header-user-guide-btn"
             onClick={onOpenGuide}
             title={user.language === 'en' ? 'User Guide & Instructions' : 'คู่มือและวิธีการใช้งาน'}
-            className="flex items-center justify-center space-x-1.5 h-9 px-2.5 sm:px-3 rounded-xl bg-sky-50 text-sky-600 shadow-2xs hover:bg-sky-100 dark:bg-sky-950/30 dark:text-sky-300 dark:hover:bg-sky-900/40 transition-all cursor-pointer border border-sky-200/60 dark:border-sky-900/40"
+            className="hidden sm:flex items-center justify-center space-x-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-sky-50 text-sky-600 shadow-2xs hover:bg-sky-100 dark:bg-sky-950/30 dark:text-sky-300 dark:hover:bg-sky-900/40 transition-all cursor-pointer border border-sky-200/60 dark:border-sky-900/40"
           >
-            <HelpCircle className="h-4 w-4 shrink-0 text-sky-500" />
-            <span className="hidden sm:inline text-xs font-bold">{user.language === 'en' ? 'Guide' : 'วิธีใช้'}</span>
+            <HelpCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-sky-500" />
+            <span className="text-xs font-bold">{user.language === 'en' ? 'Guide' : 'วิธีใช้'}</span>
           </button>
 
           {/* Language Toggle */}
@@ -145,9 +145,9 @@ export default function Header({
             id="language-toggle-btn"
             onClick={toggleLanguage}
             title={user.language === 'en' ? 'Switch to Thai' : 'Switch to English'}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-slate-50 text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-all cursor-pointer"
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-slate-50 text-slate-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-all cursor-pointer"
           >
-            <Languages className="h-4 w-4" />
+            <Languages className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
 
           {/* Theme Toggle */}
@@ -155,9 +155,9 @@ export default function Header({
             id="theme-toggle-btn"
             onClick={toggleTheme}
             title={user.theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-slate-50 text-slate-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-all cursor-pointer"
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-slate-200/60 bg-slate-50 text-slate-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-all cursor-pointer"
           >
-            {user.theme === 'light' ? <Moon className="h-4 w-4 text-amber-500" /> : <Sun className="h-4 w-4 text-amber-400" />}
+            {user.theme === 'light' ? <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" /> : <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400" />}
           </button>
 
           {/* Mini Avatar Profile Button (เขียว / Fresh Mint Green) */}
@@ -165,7 +165,7 @@ export default function Header({
             id="header-profile-avatar-btn"
             onClick={onOpenProfile}
             title={user.language === 'en' ? 'View My Profile' : 'ดูโปรไฟล์ของฉัน'}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 font-bold text-base border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/40 hover:bg-emerald-100 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-2xs"
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm sm:text-base border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/40 hover:bg-emerald-100 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-2xs"
           >
             {user.avatar || user.name.charAt(0).toUpperCase()}
           </button>
