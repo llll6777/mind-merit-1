@@ -90,8 +90,23 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group shrink-0"
           title={isEn ? "Go to App Dashboard" : "ไปที่แดชบอร์ดระบบ"}
         >
-          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300 shadow-md shadow-sky-500/10 group-hover:scale-105 transition-transform">
-            <span className="font-sans text-base sm:text-xl font-black text-white tracking-wider">M</span>
+          <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-sky-500/10 group-hover:scale-105 transition-transform bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700">
+            <img 
+              src="/logo.png" 
+              alt="MIND MERIT" 
+              className="h-full w-full object-cover rounded-xl sm:rounded-2xl"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  const fallback = parent.querySelector('.brand-fallback');
+                  if (fallback) fallback.classList.remove('hidden');
+                }
+              }}
+            />
+            <div className="brand-fallback hidden absolute inset-0 items-center justify-center bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300">
+              <span className="font-sans text-base sm:text-xl font-black text-white tracking-wider">M</span>
+            </div>
           </div>
           <div>
             <div className="flex items-center space-x-2">
@@ -101,7 +116,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </div>
         </div>
 
-        {/* ตรงกลาง: ลิงก์เมนู (หน้าแรก, ฟีเจอร์/บริการ, ราคา, เกี่ยวกับเรา, ติดต่อเรา) */}
+        {/* ตรงกลาง: ลิงก์เมนู (หน้าแรก, ฟีเจอร์/บริการ, Packages, เกี่ยวกับเรา, ติดต่อเรา) */}
         <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-xs font-bold text-slate-600 dark:text-slate-300">
           <button 
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -116,11 +131,11 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
             {isEn ? "Features & Services" : "ฟีเจอร์ / บริการ"}
           </button>
           <button 
-            onClick={() => setPricingModalOpen(true)}
+            onClick={() => scrollToSection("landing-packages")}
             className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors cursor-pointer flex items-center space-x-1"
           >
-            <span>{isEn ? "Pricing" : "ราคา (Pricing)"}</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">Free</span>
+            <span>Packages</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">3 แบบ</span>
           </button>
           <button 
             onClick={() => scrollToSection("landing-testimonials")}
@@ -180,13 +195,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           {/* Left Text Column */}
           <div className="lg:col-span-7 space-y-4 sm:space-y-6">
             
-            {/* Pill Tag */}
-            <div className="inline-flex items-center space-x-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-sky-200/60 dark:border-slate-700 shadow-2xs">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-              <span className="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200">
-                {isEn ? "✨ New: AI Mental Wellness & Daily Productivity" : "✨ นวัตกรรมใหม่: ดูแลสุขภาพใจและเพิ่มพลังชีวิตประจำวัน"}
-              </span>
-            </div>
+
 
             {/* ข้อความพาดหัวหลัก (Headline) */}
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
@@ -206,18 +215,10 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-1">
               <button
                 onClick={onEnterApp}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
               >
                 <span>{isEn ? "Get Started Free" : "เริ่มต้นใช้งานฟรี"}</span>
                 <ArrowRight className="h-4 w-4" />
-              </button>
-
-              <button
-                onClick={onEnterApp}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-800/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
-              >
-                <Play className="h-4 w-4 text-sky-500 fill-current" />
-                <span>{isEn ? "Explore Live Demo" : "ดู Demo ระบบจริง"}</span>
               </button>
             </div>
 
@@ -268,7 +269,9 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                   <div className="flex items-center space-x-2.5">
                     <span className="text-xl">🧘</span>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">Welcome Back, Mindful User!</h4>
+                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                        {isEn ? "Welcome, Mindful User" : "ยินดีต้อนรับ คุณผู้ใช้งาน"}
+                      </h4>
                       <p className="text-[10px] text-emerald-600 font-bold">● Serenity Index: 88% (Healthy)</p>
                     </div>
                   </div>
@@ -560,7 +563,247 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       </section>
 
       {/* =========================================================================
-          SECTION 6: Testimonials (เสียงสะท้อนจากผู้ใช้งานจริง 3 กล่อง)
+          SECTION 6: Service Packages (โครงสร้าง Package สำหรับบุคคลและโรงเรียน)
+          ========================================================================= */}
+      <section id="landing-packages" className="space-y-8 sm:space-y-10 scroll-mt-20">
+        
+        <div className="text-center space-y-3 max-w-2xl mx-auto px-2">
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-gradient-to-r from-sky-50 to-emerald-50 dark:from-slate-800 dark:to-slate-800 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-slate-700 uppercase tracking-widest">
+            <Sparkles className="h-3 w-3 text-amber-500 fill-current" />
+            <span>MIND MERIT Service Packages</span>
+          </span>
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            {isEn ? "Choose Your Package for Mental Well-being" : "เลือก Package ที่ตอบโจทย์การดูแลสุขภาพใจ"}
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            {isEn 
+              ? "Fair, transparent packages tailored for students, individuals, and educational institutions with real-time care."
+              : "โครงสร้าง Package โปร่งใส เข้าถึงง่าย เพื่อการดูแลสุขภาพจิตของนักเรียน เยาวชน บุคคลทั่วไป และสถาบันการศึกษา"}
+          </p>
+        </div>
+
+        {/* 3 Packages Grid */}
+        <div className="grid gap-6 lg:grid-cols-3 items-stretch">
+          
+          {/* Package 1: B2C Basic Package (แพ็กเกจบุคคล - ใช้ฟรี) */}
+          <div className="relative rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 p-6 sm:p-7 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  {isEn ? "FREE FOREVER" : "ใช้ฟรีตลอดไป"}
+                </span>
+                <span className="text-xs text-slate-400 font-medium">B2C Basic</span>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                  B2C Basic Package
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                  (แพ็กเกจบุคคล - ใช้ฟรี)
+                </p>
+              </div>
+
+              {/* Price */}
+              <div className="py-2 border-y border-slate-100 dark:border-slate-800">
+                <div className="flex items-baseline space-x-1">
+                  <span className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">0 บาท</span>
+                  <span className="text-xs text-slate-400">/ ใช้ฟรีตลอดไป</span>
+                </div>
+                <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 bg-emerald-50/50 dark:bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-100 dark:border-emerald-900/40 leading-relaxed">
+                  <span className="font-bold text-emerald-800 dark:text-emerald-300">เงื่อนไข: </span>
+                  สำหรับนักเรียนและเยาวชนทั่วไป ไม่มีค่าใช้จ่าย ใช้งานได้ฟรีตลอดไป
+                </div>
+              </div>
+
+              {/* Features List */}
+              <div className="space-y-2.5">
+                <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                  {isEn ? "WHAT'S INCLUDED:" : "สิ่งที่จะได้รับ:"}
+                </p>
+                <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">Daily Mood Check-in:</strong> ระบบบันทึกและติดตามอารมณ์รายวัน</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">Gamification Quests:</strong> ระบบภารกิจสะสมแต้ม XP</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">AI Companion:</strong> ระบบพูดคุยให้คำปรึกษาเบื้องต้น</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">Safe Community:</strong> พื้นที่ปลอดภัยสำหรับการแบ่งปันและแลกเปลี่ยนประสบการณ์</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <button
+              onClick={onEnterApp}
+              className="w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <span>{isEn ? "Start Free Forever" : "เริ่มต้นใช้งานฟรีตลอดไป"}</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Package 2: B2C Premium Package (แพ็กเกจบุคคล - ขั้นสูง) [FEATURED] */}
+          <div className="relative rounded-3xl bg-gradient-to-b from-sky-50/90 via-white to-pink-50/40 dark:from-slate-800/90 dark:via-slate-900/90 dark:to-slate-900/90 backdrop-blur-md border-2 border-sky-400 dark:border-sky-500 p-6 sm:p-7 shadow-lg shadow-sky-500/10 hover:shadow-xl transition-all flex flex-col justify-between space-y-6 lg:-translate-y-2">
+            
+            {/* Recommended Ribbon */}
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-pink-500 text-white text-[10px] font-black tracking-wider uppercase shadow-md shadow-sky-500/25 flex items-center space-x-1">
+              <Sparkles className="h-3 w-3 fill-current" />
+              <span>RECOMMENDED FOR INDIVIDUALS</span>
+            </div>
+
+            <div className="space-y-4 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                  {isEn ? "DEEP AI ANALYTICS" : "วิเคราะห์เจาะลึกเฉพาะบุคคล"}
+                </span>
+                <span className="text-xs text-sky-600 dark:text-sky-400 font-bold">B2C Premium</span>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                  B2C Premium Package
+                </h3>
+                <p className="text-xs text-sky-600 dark:text-sky-400 font-bold mt-1">
+                  (แพ็กเกจบุคคล - ขั้นสูง)
+                </p>
+              </div>
+
+              {/* Price */}
+              <div className="py-2 border-y border-sky-100 dark:border-slate-800">
+                <div className="flex items-baseline space-x-1">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">100 บาท</span>
+                  <span className="text-xs text-slate-400">/ เดือน / คน</span>
+                </div>
+                <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 bg-sky-50/80 dark:bg-sky-950/40 p-2.5 rounded-xl border border-sky-100 dark:border-sky-900/40 leading-relaxed">
+                  <span className="font-bold text-sky-700 dark:text-sky-300">เงื่อนไข: </span>
+                  ชำระค่าบริการเป็นรายเดือนต่อผู้ใช้งาน สำหรับผู้ที่ต้องการระบบวิเคราะห์และคำแนะนำเฉพาะบุคคล
+                </div>
+              </div>
+
+              {/* Features List */}
+              <div className="space-y-2.5">
+                <p className="text-[11px] font-extrabold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                  {isEn ? "WHAT'S INCLUDED:" : "สิ่งที่จะได้รับ:"}
+                </p>
+                <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">ฟีเจอร์ B2C Basic ทั้งหมด:</strong> Mood Check-in, Gamification, AI Companion และ Safe Community</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">Personalized Deep AI Analytics:</strong> ระบบ AI วิเคราะห์แนวโน้มอารมณ์ย้อนหลังเชิงลึก</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">Personalized Recommendations:</strong> คำแนะนำและการประเมินสุขภาพจิตที่ปรับให้เข้ากับสภาวะอารมณ์ส่วนบุคคล</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <button
+              onClick={onEnterApp}
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-pink-500 hover:from-sky-600 hover:to-pink-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/25 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <span>{isEn ? "Subscribe B2C Premium Package (100 THB/mo)" : "สมัคร B2C Premium Package (100 บาท/เดือน)"}</span>
+              <Sparkles className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Package 3: B2B School Package (แพ็กเกจสำหรับโรงเรียน) */}
+          <div className="relative rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-indigo-200 dark:border-indigo-900/60 p-6 sm:p-7 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                  {isEn ? "FOR SCHOOLS & EDU" : "สำหรับสถาบันการศึกษา"}
+                </span>
+                <span className="text-xs text-indigo-500 font-bold">B2B School</span>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                  B2B School Package
+                </h3>
+                <p className="text-xs text-indigo-600 dark:text-indigo-400 font-bold mt-1">
+                  (แพ็กเกจสำหรับโรงเรียน)
+                </p>
+              </div>
+
+              {/* Price */}
+              <div className="py-2 border-y border-slate-100 dark:border-slate-800">
+                <div className="flex items-baseline space-x-1">
+                  <span className="text-3xl sm:text-4xl font-black text-indigo-600 dark:text-indigo-400">990 บาท</span>
+                  <span className="text-xs text-slate-400">/ เดือน / โรงเรียน</span>
+                </div>
+                <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 bg-indigo-50/60 dark:bg-indigo-950/30 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/40 leading-relaxed">
+                  <span className="font-bold text-indigo-700 dark:text-indigo-300">เงื่อนไข: </span>
+                  ชำระบริการเป็นรายเดือนต่อ 1 โรงเรียน
+                </div>
+              </div>
+
+              {/* Features List */}
+              <div className="space-y-2.5">
+                <p className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                  {isEn ? "WHAT'S INCLUDED:" : "สิ่งที่จะได้รับ:"}
+                </p>
+                <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">B2B School Dashboard:</strong> หน้าปัดสรุปภาพรวมสภาวะสุขภาพจิตของนักเรียนทั้งโรงเรียนแบบ Real-Time</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">Early Warning Alert:</strong> ระบบแจ้งเตือนอัตโนมัติเมื่อพบเคสเสี่ยงระดับกลางถึงระดับสูง เพื่อให้ครูเข้าช่วยเหลือได้ทันเวลา</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                    <span><strong className="text-slate-800 dark:text-slate-200">Anonymized Data Insight Report:</strong> รายงานสรุปสถิติภาพรวมรายเทอม ถูกต้องตามกฎหมาย PDPA สำหรับใช้วางนโยบายส่งเสริมสุขภาพจิตในโรงเรียน</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setContactModalOpen(true)}
+              className="w-full py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <span>{isEn ? "Inquire B2B School Package" : "ติดต่อฝ่ายวิชาการ / สนใจ B2B School Package"}</span>
+              <Building2 className="h-4 w-4" />
+            </button>
+          </div>
+
+        </div>
+
+        {/* PDPA & Security Note below packages */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center space-x-2.5">
+            <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
+            <span>
+              ทุก Package รองรับมาตรฐานความปลอดภัยสูงสุด ข้อมูลเป็นความลับตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA 100%)
+            </span>
+          </div>
+          <button
+            onClick={() => setContactModalOpen(true)}
+            className="text-sky-600 dark:text-sky-400 hover:underline font-bold shrink-0 cursor-pointer"
+          >
+            สอบถามข้อมูลเพิ่มเติมเกี่ยวกับ Package
+          </button>
+        </div>
+
+      </section>
+
+      {/* =========================================================================
+          SECTION 7: Testimonials (เสียงสะท้อนจากผู้ใช้งานจริง 3 กล่อง)
           ========================================================================= */}
       <section id="landing-testimonials" className="space-y-6 sm:space-y-8 scroll-mt-24">
         
@@ -658,42 +901,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
 
       </section>
 
-      {/* =========================================================================
-          SECTION 7: Final Call-to-Action (กระตุ้นครั้งสุดท้ายก่อนปิดหน้าเว็บ)
-          ========================================================================= */}
-      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 p-6 sm:p-12 text-white text-center shadow-xl space-y-4 sm:space-y-6">
-        
-        {/* Ambient glow decoration */}
-        <div className="absolute -top-12 -right-12 h-64 w-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-amber-300/20 blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-2xl mx-auto space-y-3 sm:space-y-4 px-2">
-          <span className="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold bg-white/20 text-white uppercase tracking-widest backdrop-blur-xs">
-            {isEn ? "START YOUR TRANSFORMATION" : "ก้าวแรกสู่วันใหม่ที่ดีกว่า"}
-          </span>
-
-          <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
-            {isEn ? "Ready to Elevate Your Wellness & Success?" : "พร้อมที่จะยกระดับธุรกิจและชีวิตของคุณแล้วหรือยัง?"}
-          </h2>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5 sm:gap-3 pt-2">
-            <button
-              onClick={onEnterApp}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl sm:rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-400/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-            >
-              {isEn ? "Sign Up Today for Free" : "สมัครสมาชิกเลยวันนี้"}
-            </button>
-            
-            <button
-              onClick={onEnterApp}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm backdrop-blur-xs hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/20"
-            >
-              {isEn ? "Launch System Demo" : "เปิดดู Demo แดชบอร์ดระบบ"}
-            </button>
-          </div>
-        </div>
-
-      </section>
 
       {/* =========================================================================
           SECTION 8: Footer (ส่วนท้ายของเว็บไซต์)
@@ -705,8 +913,23 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           {/* Brand Info */}
           <div className="space-y-3">
             <div className="flex items-center space-x-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-400 to-emerald-400 text-white font-extrabold text-base">
-                M
+              <div className="relative flex h-8 w-8 items-center justify-center rounded-xl overflow-hidden bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700 shadow-2xs">
+                <img 
+                  src="/logo.png" 
+                  alt="MIND MERIT" 
+                  className="h-full w-full object-cover rounded-xl"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      const fallback = parent.querySelector('.brand-fallback');
+                      if (fallback) fallback.classList.remove('hidden');
+                    }
+                  }}
+                />
+                <div className="brand-fallback hidden absolute inset-0 items-center justify-center bg-gradient-to-tr from-sky-400 to-emerald-400 text-white font-extrabold text-base">
+                  M
+                </div>
               </div>
               <span className="font-extrabold text-base text-slate-800 dark:text-slate-100">MIND MERIT</span>
             </div>
@@ -734,8 +957,8 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 </button>
               </li>
               <li>
-                <button onClick={() => setPricingModalOpen(true)} className="hover:text-sky-600 cursor-pointer">
-                  {isEn ? "Pricing Plans" : "แพ็กเกจราคา"}
+                <button onClick={() => scrollToSection("landing-packages")} className="hover:text-sky-600 cursor-pointer">
+                  <span>Packages</span>
                 </button>
               </li>
               <li>
@@ -825,136 +1048,171 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
 
             <div className="text-center space-y-1.5">
               <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200">
-                FAIR & TRANSPARENT PRICING
+                MIND MERIT SERVICE PACKAGES
               </span>
               <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100">
-                {isEn ? "Start Free Forever, Upgrade for 1-on-1 Experts" : "เริ่มต้นใช้งานฟรีตลอดชีพ หรือเลือกปรึกษาผู้เชี่ยวชาญส่วนตัว"}
+                {isEn ? "Select Your MIND MERIT Package" : "เลือก Package ที่เหมาะกับคุณ"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
                 {isEn 
-                  ? "MIND MERIT platform is 100% free for everyday mood care, AI companion, and courses. If you need private sessions with certified human psychologists, book an add-on consultation package."
-                  : "ระบบพื้นฐานทั้งหมดใช้งานได้ฟรีทันที! และหากต้องการคำปรึกษาแบบตัวต่อตัวกับนักจิตวิทยาคลินิกหรือจิตแพทย์ผู้เชี่ยวชาญ สามารถเลือกสมัครแพ็กเกจปรึกษาส่วนตัวเพิ่มเติมได้"}
+                  ? "Fair, transparent packages for students, individuals, and educational institutions."
+                  : "โครงสร้าง Package โปร่งใส ครอบคลุมทั้งนักเรียน บุคคลทั่วไป และโรงเรียน"}
               </p>
             </div>
 
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-5 lg:grid-cols-3">
               
-              {/* Plan 1: Free Starter (ฟรีตลอดชีพ) */}
-              <div className="p-6 rounded-3xl border-2 border-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/20 flex flex-col justify-between space-y-5">
-                <div className="space-y-4">
+              {/* Package 1: B2C Basic Package */}
+              <div className="p-5 rounded-3xl border-2 border-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/20 flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="text-lg font-extrabold text-slate-800 dark:text-slate-100">Mind Free Starter</h4>
-                      <p className="text-[11px] text-emerald-600 font-bold">เริ่มต้นใช้งานฟรีได้ทันที</p>
-                    </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-white">
-                      ฟรี 100%
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-2.5 py-0.5 rounded-full">
+                      FREE FOREVER
                     </span>
+                    <span className="text-[10px] text-slate-400 font-bold">B2C Basic</span>
                   </div>
 
-                  <div className="text-3xl font-extrabold text-emerald-600">
-                    ฿0 <span className="text-xs font-normal text-slate-400">/ ฟรีตลอดชีพ (ไม่ต้องผูกบัตร)</span>
+                  <div>
+                    <h4 className="text-base font-extrabold text-slate-800 dark:text-slate-100">B2C Basic Package</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">(แพ็กเกจบุคคล - ใช้ฟรี)</p>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                      <span>บันทึกและวิเคราะห์แนวโน้มอารมณ์ไม่จำกัดครั้ง</span>
+                  <div className="text-2xl font-black text-emerald-600">
+                    0 บาท <span className="text-xs font-normal text-slate-400">/ ใช้ฟรีตลอดไป</span>
+                  </div>
+
+                  <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">เงื่อนไข: </span>
+                    สำหรับนักเรียนและเยาวชนทั่วไป ไม่มีค่าใช้จ่าย ใช้งานได้ฟรีตลอดไป
+                  </div>
+
+                  <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span><strong>Daily Mood Check-in:</strong> ระบบบันทึกและติดตามอารมณ์รายวัน</span>
                     </li>
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                      <span>พูดคุยกับคู่หู AI ด้านจิตวิทยาตลอด 24 ชั่วโมง</span>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span><strong>Gamification Quests:</strong> ระบบภารกิจสะสมแต้ม XP</span>
                     </li>
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                      <span>คลังวิดีโอดนตรีบำบัดและฝึกสมาธิ 100% เล่นได้จริง</span>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span><strong>AI Companion:</strong> ระบบพูดคุยให้คำปรึกษาเบื้องต้น</span>
                     </li>
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                      <span>แบบประเมินสุขภาพจิตมาตรฐาน (PHQ-9, STAI, Burnout)</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                      <span>สะสมแต้ม XP ภารกิจรายวัน และรับเกียรติบัตรรับรองฟรี</span>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span><strong>Safe Community:</strong> พื้นที่ปลอดภัยแลกเปลี่ยนประสบการณ์</span>
                     </li>
                   </ul>
                 </div>
 
                 <button
                   onClick={() => { setPricingModalOpen(false); onEnterApp(); }}
-                  className="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                  className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-1.5"
                 >
                   <Sparkles className="h-4 w-4" />
                   <span>เริ่มต้นใช้งานฟรีตอนนี้เลย</span>
                 </button>
               </div>
 
-              {/* Plan 2: Private Expert Consultation (ปรึกษาผู้เชี่ยวชาญเป็นการส่วนตัว - สมัครเพิ่ม) */}
-              <div className="p-6 rounded-3xl border border-sky-200 dark:border-sky-800 bg-gradient-to-b from-sky-50/60 to-white dark:from-slate-800/80 dark:to-slate-800/40 flex flex-col justify-between space-y-5 shadow-sm">
-                <div className="space-y-4">
+              {/* Package 2: B2C Premium Package */}
+              <div className="p-5 rounded-3xl border-2 border-sky-400 bg-sky-50/30 dark:bg-sky-950/20 flex flex-col justify-between space-y-4 shadow-md">
+                <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="text-lg font-extrabold text-slate-800 dark:text-slate-100">Private Expert Session</h4>
-                      <p className="text-[11px] text-sky-600 font-bold">ปรึกษาผู้เชี่ยวชาญเป็นการส่วนตัว</p>
-                    </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-sky-500 text-white">
-                      1-ON-1
+                    <span className="text-[10px] font-bold text-sky-700 bg-sky-100 dark:bg-sky-900/50 px-2.5 py-0.5 rounded-full">
+                      POPULAR
                     </span>
+                    <span className="text-[10px] text-sky-600 font-bold">B2C Premium</span>
                   </div>
 
-                  <div className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">
-                    ฿790 <span className="text-xs font-normal text-slate-400">/ เซสชัน 50 นาที (หรือแพ็กเกจรายเดือน)</span>
+                  <div>
+                    <h4 className="text-base font-extrabold text-slate-800 dark:text-slate-100">B2C Premium Package</h4>
+                    <p className="text-[11px] text-sky-600 dark:text-sky-400 font-bold">(แพ็กเกจบุคคล - ขั้นสูง)</p>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0" />
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">นัดคุยวิดีโอคอลตัวต่อตัวกับนักจิตวิทยาคลินิก / จิตแพทย์</span>
+                  <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                    100 บาท <span className="text-xs font-normal text-slate-400">/ เดือน / คน</span>
+                  </div>
+
+                  <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-slate-800/60 p-2 rounded-xl border border-sky-100 dark:border-sky-900/40">
+                    <span className="font-bold text-sky-700 dark:text-sky-300">เงื่อนไข: </span>
+                    ชำระเป็นรายเดือนต่อผู้ใช้งาน สำหรับผู้ที่ต้องการวิเคราะห์เฉพาะบุคคล
+                  </div>
+
+                  <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
+                      <span><strong>ฟีเจอร์ B2C Basic ทั้งหมด:</strong> Mood Check-in, Gamification, AI Companion, Safe Community</span>
                     </li>
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0" />
-                      <span>แผนการดูแลสุขภาพใจเฉพาะบุคคล (Personalized Care Plan)</span>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
+                      <span><strong>Personalized Deep AI Analytics:</strong> ระบบ AI วิเคราะห์แนวโน้มอารมณ์ย้อนหลังเชิงลึก</span>
                     </li>
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0" />
-                      <span>สรุปรายงานผลและคำแนะนำเชิงลึกหลังการพูดคุย</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0" />
-                      <span>ห้องปรึกษาเข้ารหัสลับเฉพาะคุณและผู้เชี่ยวชาญ 100%</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0" />
-                      <span>ช่องทางส่งข้อความติดตามผลส่วนตัวระหว่างเซสชัน</span>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />
+                      <span><strong>Personalized Recommendations:</strong> คำแนะนำและประเมินสุขภาพจิตตรงสภาวะอารมณ์</span>
                     </li>
                   </ul>
                 </div>
 
                 <button
-                  onClick={() => { setPricingModalOpen(false); setExpertConsultModalOpen(true); }}
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-extrabold text-xs shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                  onClick={() => { setPricingModalOpen(false); onEnterApp(); }}
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-500 to-pink-500 hover:from-sky-600 hover:to-pink-600 text-white font-bold text-xs shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
                 >
-                  <Users className="h-4 w-4" />
-                  <span>นัดหมายปรึกษาผู้เชี่ยวชาญส่วนตัว</span>
+                  <Sparkles className="h-4 w-4" />
+                  <span>สมัคร B2C Premium Package</span>
                 </button>
               </div>
 
-            </div>
+              {/* Package 3: B2B School Package */}
+              <div className="p-5 rounded-3xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/20 dark:bg-indigo-950/20 flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 dark:bg-indigo-900/50 px-2.5 py-0.5 rounded-full">
+                      FOR SCHOOLS
+                    </span>
+                    <span className="text-[10px] text-indigo-600 font-bold">B2B School</span>
+                  </div>
 
-            {/* School & Enterprise Note */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <div className="flex items-center space-x-2.5">
-                <Building2 className="h-5 w-5 text-slate-500 shrink-0" />
-                <span className="text-slate-600 dark:text-slate-300">
-                  สำหรับสถาบันการศึกษา โรงเรียน หรือบริษัท SME ที่ต้องการแพ็กเกจดูแลสุขภาวะทั้งทีม
-                </span>
+                  <div>
+                    <h4 className="text-base font-extrabold text-slate-800 dark:text-slate-100">B2B School Package</h4>
+                    <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold">(แพ็กเกจสำหรับโรงเรียน)</p>
+                  </div>
+
+                  <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                    990 บาท <span className="text-xs font-normal text-slate-400">/ เดือน / โรงเรียน</span>
+                  </div>
+
+                  <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-slate-800/60 p-2 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
+                    <span className="font-bold text-indigo-700 dark:text-indigo-300">เงื่อนไข: </span>
+                    ชำระบริการเป็นรายเดือนต่อ 1 โรงเรียน
+                  </div>
+
+                  <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                      <span><strong>B2B School Dashboard:</strong> สรุปภาพรวมสุขภาพจิตทั้งโรงเรียน Real-Time</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                      <span><strong>Early Warning Alert:</strong> ระบบแจ้งเตือนอัตโนมัติเมื่อพบเคสเสี่ยงเพื่อช่วยเหลือทันเวลา</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                      <span><strong>Anonymized Data Insight Report:</strong> รายงานสรุปสถิติรายเทอมตามกฎหมาย PDPA</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button
+                  onClick={() => { setPricingModalOpen(false); setContactModalOpen(true); }}
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                >
+                  <Building2 className="h-4 w-4" />
+                  <span>ติดต่อฝ่ายวิชาการ / สนใจ Package</span>
+                </button>
               </div>
-              <button
-                onClick={() => { setPricingModalOpen(false); setContactModalOpen(true); }}
-                className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-100 font-bold shrink-0 transition-colors cursor-pointer"
-              >
-                ติดต่อขอใบเสนอราคา
-              </button>
+
             </div>
 
           </div>

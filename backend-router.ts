@@ -163,44 +163,44 @@ let usersCollection: BackendUser[] = [
 
 let catalogCollection: CatalogItem[] = [
   {
-    id: "cat-001",
-    name: "Mind Free Starter (พื้นฐานสำหรับทุกคน)",
+    id: "pkg-b2c-basic",
+    name: "B2C Basic Package (แพ็กเกจบุคคล - ใช้ฟรี)",
     type: "subscription",
     price: 0,
     duration: "ตลอดชีพ",
     status: "active",
-    salesCount: 14820,
-    description: "เช็คอินอารมณ์ คุยกับ AI Buddy ไม่จำกัด และคอร์สฝึกสมาธิเบื้องต้น"
+    salesCount: 18540,
+    description: "Daily Mood Check-in, Gamification Quests, AI Companion, Safe Community ฟรีตลอดไป"
   },
   {
-    id: "cat-002",
+    id: "pkg-b2c-premium",
+    name: "B2C Premium Package (แพ็กเกจบุคคล - ขั้นสูง)",
+    type: "subscription",
+    price: 100,
+    duration: "1 เดือน / คน",
+    status: "active",
+    salesCount: 3210,
+    description: "ฟีเจอร์ B2C Basic ทั้งหมด + Personalized Deep AI Analytics + Personalized Recommendations"
+  },
+  {
+    id: "pkg-b2b-school",
+    name: "B2B School Package (แพ็กเกจสำหรับโรงเรียน)",
+    type: "subscription",
+    price: 990,
+    duration: "1 เดือน / โรงเรียน",
+    status: "active",
+    salesCount: 145,
+    description: "B2B School Dashboard สรุปภาพรวม Real-Time, Early Warning Alert, รายงานสถิติ PDPA"
+  },
+  {
+    id: "pkg-consult-1on1",
     name: "1-on-1 Private Consultation (50 mins)",
     type: "consultation",
-    price: 990,
+    price: 790,
     duration: "50 นาที",
     status: "active",
-    salesCount: 420,
+    salesCount: 680,
     description: "ปรึกษาส่วนตัวผ่านวิดีโอคอลแบบเป็นความลับ 100% กับนักจิตวิทยาผู้ได้รับใบอนุญาต"
-  },
-  {
-    id: "cat-003",
-    name: "Executive Burnout Recovery Pack",
-    type: "course",
-    price: 1590,
-    duration: "30 วัน",
-    status: "active",
-    salesCount: 185,
-    description: "แพ็กเกจฟื้นฟูภาวะหมดไฟสำหรับคนทำงาน 4 สัปดาห์ พร้อมเกียรติบัตรรับรอง"
-  },
-  {
-    id: "cat-004",
-    name: "Student Exam Stress Relief Bundle",
-    type: "assessment",
-    price: 490,
-    duration: "14 วัน",
-    status: "active",
-    salesCount: 650,
-    description: "แบบประเมินความเครียดสอบเชิงลึก + แผนกำหนดตารางพักใจเฉพาะบุคคล"
   }
 ];
 

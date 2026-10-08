@@ -1,4 +1,4 @@
-import { Award, Zap, BookOpen, Calendar, ChevronRight, UserCheck, Edit2, Check, X, Compass, HelpCircle } from "lucide-react";
+import { Award, Zap, BookOpen, Calendar, ChevronRight, UserCheck, Edit2, Check, X, Compass, HelpCircle, BarChart3 } from "lucide-react";
 import { UserProfile, MoodCheckIn, Badge } from "../types";
 import { translations } from "../translations";
 import React, { useState } from "react";
@@ -15,7 +15,7 @@ interface DashboardViewProps {
 export default function DashboardView({ user, moodLogs, badges, onNavigate, onUpdateUser, onOpenProfile }: DashboardViewProps) {
   const t = translations[user.language];
   const [isEditing, setIsEditing] = useState(false);
-  const [tempName, setTempName] = useState(user.name);
+  const [tempName, setTempName] = useState(user.name.replace(/!+$/, ''));
   const [tempRole, setTempRole] = useState(user.role);
   const [tempAvatar, setTempAvatar] = useState(user.avatar || "🧘");
 
@@ -25,7 +25,7 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
     if (onUpdateUser) {
       onUpdateUser({
         ...user,
-        name: tempName.trim() || user.name,
+        name: tempName.trim().replace(/!+$/, '') || user.name.replace(/!+$/, ''),
         role: tempRole,
         avatar: tempAvatar
       });
@@ -42,19 +42,12 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
     terrible: 1
   };
 
+  // Check if real user logs exist
+  const hasData = moodLogs.length > 0;
+
   // Extract recent logs (last 7 logs) to render inside the SVG chart
   const recentLogs = [...moodLogs].sort((a, b) => a.date.localeCompare(b.date)).slice(-7);
-
-  // Default seed logs if empty
-  const chartLogs = recentLogs.length > 0 ? recentLogs : [
-    { id: "1", date: "Mon", mood: "good" as const, stress: 3 },
-    { id: "2", date: "Tue", mood: "neutral" as const, stress: 4 },
-    { id: "3", date: "Wed", mood: "excellent" as const, stress: 2 },
-    { id: "4", date: "Thu", mood: "bad" as const, stress: 7 },
-    { id: "5", date: "Fri", mood: "good" as const, stress: 3 },
-    { id: "6", date: "Sat", mood: "excellent" as const, stress: 2 },
-    { id: "7", date: "Sun", mood: "excellent" as const, stress: 1 },
-  ];
+  const chartLogs = recentLogs;
 
   // Calculate SVG line points for custom chart
   const width = 500;
@@ -78,8 +71,17 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
     return padding + chartHeight - ((stressVal - 1) / 9) * chartHeight;
   };
 
-  const moodPoints = chartLogs.map((log, idx) => `${getX(idx)},${getMoodY(log.mood)}`).join(" ");
-  const stressPoints = chartLogs.map((log, idx) => `${getX(idx)},${getStressY(log.stress)}`).join(" ");
+  const moodPoints = chartLogs.length > 1 
+    ? chartLogs.map((log, idx) => `${getX(idx)},${getMoodY(log.mood)}`).join(" ") 
+    : chartLogs.length === 1 
+      ? `${padding},${getMoodY(chartLogs[0].mood)} ${width - padding},${getMoodY(chartLogs[0].mood)}`
+      : "";
+
+  const stressPoints = chartLogs.length > 1
+    ? chartLogs.map((log, idx) => `${getX(idx)},${getStressY(log.stress)}`).join(" ")
+    : chartLogs.length === 1
+      ? `${padding},${getStressY(chartLogs[0].stress)} ${width - padding},${getStressY(chartLogs[0].stress)}`
+      : "";
 
   // Localized upcoming events
   const events = user.language === 'en' ? [
@@ -154,7 +156,7 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
                   </button>
                   <button
                     onClick={() => {
-                      setTempName(user.name);
+                      setTempName(user.name.replace(/!+$/, ''));
                       setTempRole(user.role);
                       setTempAvatar(user.avatar || "🧘");
                       setIsEditing(false);
@@ -170,11 +172,11 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
               <div className="space-y-1.5">
                 <div className="flex items-center space-x-2.5">
                   <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                    <span>{t.dashboard.welcome} {user.name}!</span> <span className="text-2xl">{user.avatar || "🌟"}</span>
+                    <span>{t.dashboard.welcome} {user.name.replace(/!+$/, '')}</span> <span className="text-2xl">{user.avatar || "🌟"}</span>
                   </h2>
                   <button
                     onClick={() => {
-                      setTempName(user.name);
+                      setTempName(user.name.replace(/!+$/, ''));
                       setTempRole(user.role);
                       setIsEditing(true);
                     }}
@@ -288,16 +290,20 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
               </div>
             </div>
             <div className="mt-2 flex items-baseline space-x-1">
-              <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{user.streak}</span>
+              <span className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">
+                {hasData ? user.streak : 0}
+              </span>
               <span className="text-xs text-slate-400">{user.language === 'en' ? 'days' : 'วัน'}</span>
             </div>
             <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
-              {user.language === 'en' ? "Log daily to grow your mindfulness streak!" : "บันทึกติดต่อกันทุกวันเพื่อเพิ่มคะแนนพลังใจ!"}
+              {hasData 
+                ? (user.language === 'en' ? "Log daily to grow your mindfulness streak" : "บันทึกติดต่อกันทุกวันเพื่อเพิ่มคะแนนพลังใจ")
+                : (user.language === 'en' ? "Record your first check-in to start your streak" : "เริ่มบันทึกอารมณ์วันแรกเพื่อสะสมสถิติ Streak")}
             </p>
             <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
               <span>{user.language === 'en' ? "Visits Today:" : "จำนวนครั้งที่เข้ามาวันนี้:"}</span>
               <span className="font-bold text-amber-600 dark:text-amber-400">
-                {user.visitsToday || 1} {user.language === 'en' ? "times" : "ครั้ง"}
+                {user.visitsToday || 0} {user.language === 'en' ? "times" : "ครั้ง"}
               </span>
             </div>
           </div>
@@ -345,89 +351,118 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
             </div>
           </div>
 
-          {/* SVG Canvas Container */}
-          <div className="w-full overflow-x-auto">
-            <svg 
-              viewBox={`0 0 ${width} ${height}`} 
-              className="w-full min-w-[300px] sm:min-w-[450px] overflow-visible text-slate-600 dark:text-slate-400"
-            >
-              {/* Horizontal gridlines */}
-              {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => (
-                <line 
-                  key={idx}
-                  x1={padding}
-                  y1={padding + ratio * chartHeight}
-                  x2={width - padding}
-                  y2={padding + ratio * chartHeight}
-                  className="stroke-slate-100 dark:stroke-slate-800"
-                  strokeWidth="1"
-                  strokeDasharray="4 4"
-                />
-              ))}
+          {/* SVG Canvas Container or Empty State */}
+          {!hasData ? (
+            <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl bg-slate-50/60 dark:bg-slate-800/30 border-2 border-dashed border-sky-200/80 dark:border-slate-700/80 space-y-3.5 my-2">
+              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300 shadow-sm">
+                <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7" />
+              </div>
+              <div className="space-y-1 max-w-md">
+                <h4 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
+                  {user.language === 'en' ? "No mood records logged yet" : "ยังไม่มีข้อมูลบันทึกสุขภาพใจ"}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {user.language === 'en'
+                    ? "Please record your first daily check-in. The system will automatically generate your emotional trends, serenity levels, and stress graphs here."
+                    : "ระบบจะเริ่มประมวลผลและสร้างกราฟวิเคราะห์แนวโน้มอารมณ์และระดับความเครียดทันที หลังจากที่คุณเริ่มบันทึกอารมณ์รายวันครั้งแรก"}
+                </p>
+              </div>
+              <button
+                onClick={() => onNavigate("moodCheck")}
+                className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-bold shadow-md shadow-pink-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>{user.language === 'en' ? "+ Log First Mood Check-in" : "+ บันทึกอารมณ์ครั้งแรกเพื่อเริ่มแสดงกราฟ"}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="w-full overflow-x-auto">
+              <svg 
+                viewBox={`0 0 ${width} ${height}`} 
+                className="w-full min-w-[300px] sm:min-w-[450px] overflow-visible text-slate-600 dark:text-slate-400"
+              >
+                {/* Horizontal gridlines */}
+                {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => (
+                  <line 
+                    key={idx}
+                    x1={padding}
+                    y1={padding + ratio * chartHeight}
+                    x2={width - padding}
+                    y2={padding + ratio * chartHeight}
+                    className="stroke-slate-100 dark:stroke-slate-800"
+                    strokeWidth="1"
+                    strokeDasharray="4 4"
+                  />
+                ))}
 
-              {/* Grid Y Axis Labels */}
-              <text x={padding - 8} y={padding + 4} className="text-[9px] fill-slate-400 font-medium" textAnchor="end">High</text>
-              <text x={padding - 8} y={padding + chartHeight / 2 + 4} className="text-[9px] fill-slate-400 font-medium" textAnchor="end">Mid</text>
-              <text x={padding - 8} y={padding + chartHeight + 4} className="text-[9px] fill-slate-400 font-medium" textAnchor="end">Low</text>
+                {/* Grid Y Axis Labels */}
+                <text x={padding - 8} y={padding + 4} className="text-[9px] fill-slate-400 font-medium" textAnchor="end">High</text>
+                <text x={padding - 8} y={padding + chartHeight / 2 + 4} className="text-[9px] fill-slate-400 font-medium" textAnchor="end">Mid</text>
+                <text x={padding - 8} y={padding + chartHeight + 4} className="text-[9px] fill-slate-400 font-medium" textAnchor="end">Low</text>
 
-              {/* Mood Line (Sky Blue) */}
-              <polyline 
-                fill="none" 
-                stroke="#0ea5e9" 
-                strokeWidth="3.5" 
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={moodPoints}
-                className="opacity-95"
-              />
+                {/* Mood Line (Sky Blue) */}
+                {moodPoints && (
+                  <polyline 
+                    fill="none" 
+                    stroke="#0ea5e9" 
+                    strokeWidth="3.5" 
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={moodPoints}
+                    className="opacity-95"
+                  />
+                )}
 
-              {/* Stress Line (Sunlight Yellow) */}
-              <polyline 
-                fill="none" 
-                stroke="#f59e0b" 
-                strokeWidth="2.5" 
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={stressPoints}
-                className="opacity-85"
-              />
+                {/* Stress Line (Sunlight Yellow) */}
+                {stressPoints && (
+                  <polyline 
+                    fill="none" 
+                    stroke="#f59e0b" 
+                    strokeWidth="2.5" 
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={stressPoints}
+                    className="opacity-85"
+                  />
+                )}
 
-              {/* Markers & Interaction dots */}
-              {chartLogs.map((log, idx) => {
-                const x = getX(idx);
-                const ym = getMoodY(log.mood);
-                const ys = getStressY(log.stress);
-                return (
-                  <g key={idx} className="cursor-pointer group">
-                    {/* Vertical Guide line */}
-                    <line 
-                      x1={x} 
-                      y1={padding} 
-                      x2={x} 
-                      y2={padding + chartHeight} 
-                      className="stroke-slate-100 dark:stroke-slate-800 opacity-50 group-hover:opacity-100" 
-                      strokeWidth="1"
-                    />
-                    
-                    {/* Mood Dot (Sky Blue) */}
-                    <circle cx={x} cy={ym} r="5" fill="#0ea5e9" className="stroke-white dark:stroke-slate-900 shadow-sm" strokeWidth="2" />
-                    {/* Stress Dot (Sunlight Yellow) */}
-                    <circle cx={x} cy={ys} r="4" fill="#f59e0b" className="stroke-white dark:stroke-slate-900 shadow-sm" strokeWidth="1.5" />
+                {/* Markers & Interaction dots */}
+                {chartLogs.map((log, idx) => {
+                  const x = getX(idx);
+                  const ym = getMoodY(log.mood);
+                  const ys = getStressY(log.stress);
+                  return (
+                    <g key={idx} className="cursor-pointer group">
+                      {/* Vertical Guide line */}
+                      <line 
+                        x1={x} 
+                        y1={padding} 
+                        x2={x} 
+                        y2={padding + chartHeight} 
+                        className="stroke-slate-100 dark:stroke-slate-800 opacity-50 group-hover:opacity-100" 
+                        strokeWidth="1"
+                      />
+                      
+                      {/* Mood Dot (Sky Blue) */}
+                      <circle cx={x} cy={ym} r="5" fill="#0ea5e9" className="stroke-white dark:stroke-slate-900 shadow-sm" strokeWidth="2" />
+                      {/* Stress Dot (Sunlight Yellow) */}
+                      <circle cx={x} cy={ys} r="4" fill="#f59e0b" className="stroke-white dark:stroke-slate-900 shadow-sm" strokeWidth="1.5" />
 
-                    {/* Date label */}
-                    <text 
-                      x={x} 
-                      y={height - 8} 
-                      className="text-[10px] fill-slate-400 dark:fill-slate-500 font-semibold" 
-                      textAnchor="middle"
-                    >
-                      {log.date}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
+                      {/* Date label */}
+                      <text 
+                        x={x} 
+                        y={height - 8} 
+                        className="text-[10px] fill-slate-400 dark:fill-slate-500 font-semibold" 
+                        textAnchor="middle" 
+                      >
+                        {log.date}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          )}
         </div>
 
       </div>
@@ -452,9 +487,15 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
                 {user.language === 'en' ? "Today's Assessment & Trend Guidance" : "ข้อสังเกตและคำแนะนำจากสุขภาวะวันนี้"}
               </p>
               <p className="leading-relaxed">
-                {user.language === 'en' 
-                  ? "Your average stress level of 3/10 is healthy. We noticed you logged 25 minutes of active exercise and expressed beautiful appreciation for your friends. To maintain this serenity, try out our mindfulness breathing module or connect with your buddy."
-                  : "ดัชนีความเครียดเฉลี่ย 3/10 ของคุณอยู่ในเกณฑ์ที่ดีมากครับ การที่คุณออกกำลังกาย 25 นาทีและจดบันทึกขอบคุณเพื่อนสนิทส่งเสริมสุขภาวะทางใจได้อย่างยอดเยี่ยม แนะนำให้ทำอย่างสม่ำเสมอและหมั่นตรวจสอบความก้าวหน้าร่วมกับบัดดี้ของคุณนะครับ"}
+                {!hasData ? (
+                  user.language === 'en'
+                    ? "Welcome to MIND MERIT! Currently, no wellness data has been recorded yet. Please complete your daily mood check-in or take a psychological assessment so our AI companion can formulate personalized guidance for you."
+                    : "ยินดีต้อนรับสู่ MIND MERIT! ขณะนี้ยังไม่มีประวัติการบันทึกข้อมูลสุขภาพใจของคุณ กรุณากรอกแบบบันทึกอารมณ์ (Daily Mood Check-in) หรือทำแบบประเมินสุขภาพจิต เพื่อให้ระบบ AI สามารถวิเคราะห์และแนะนำเป้าหมายสุขภาวะที่แม่นยำสำหรับคุณ"
+                ) : (
+                  user.language === 'en' 
+                    ? `Your average stress level of ${Math.round(moodLogs.reduce((acc, l) => acc + (l.stress || 5), 0) / moodLogs.length)}/10 has been analyzed. You have recorded ${moodLogs.length} mindful check-in${moodLogs.length > 1 ? 's' : ''}. Keep maintaining your serenity through daily reflections!`
+                    : `ระบบวิเคราะห์จากบันทึกสุขภาพใจล่าสุด ดัชนีความเครียดเฉลี่ยของคุณอยู่ที่ ${Math.round(moodLogs.reduce((acc, l) => acc + (l.stress || 5), 0) / moodLogs.length)}/10 จากการบันทึกทั้งหมด ${moodLogs.length} ครั้ง แนะนำให้หมั่นบันทึกอย่างต่อเนื่องและฝึกสมาธิเพื่อคงความสมดุลของจิตใจครับ`
+                )}
               </p>
             </div>
 

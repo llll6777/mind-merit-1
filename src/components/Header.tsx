@@ -50,8 +50,23 @@ export default function Header({
           onClick={onOpenLanding || onOpenProfile} 
           title={user.language === 'en' ? "Go to Home / Landing Page" : "ไปยังหน้าหลัก"}
         >
-          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300 shadow-md shadow-sky-500/10 transition-transform hover:scale-105 active:scale-95">
-            <span className="font-sans text-base sm:text-xl font-black text-white tracking-wider">M</span>
+          <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-sky-500/10 transition-transform hover:scale-105 active:scale-95 bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700">
+            <img 
+              src="/logo.png" 
+              alt="MIND MERIT" 
+              className="h-full w-full object-cover rounded-xl sm:rounded-2xl"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  const fallback = parent.querySelector('.brand-fallback');
+                  if (fallback) fallback.classList.remove('hidden');
+                }
+              }}
+            />
+            <div className="brand-fallback hidden absolute inset-0 items-center justify-center bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300">
+              <span className="font-sans text-base sm:text-xl font-black text-white tracking-wider">M</span>
+            </div>
           </div>
           <div>
             <h1 className="font-sans text-sm sm:text-lg font-black tracking-tight text-slate-800 dark:text-slate-100">
@@ -160,14 +175,14 @@ export default function Header({
             {user.theme === 'light' ? <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" /> : <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400" />}
           </button>
 
-          {/* Mini Avatar Profile Button (เขียว / Fresh Mint Green) */}
+          {/* Mini Avatar Profile Button (Circular) */}
           <button
             id="header-profile-avatar-btn"
             onClick={onOpenProfile}
             title={user.language === 'en' ? 'View My Profile' : 'ดูโปรไฟล์ของฉัน'}
-            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm sm:text-base border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/40 hover:bg-emerald-100 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-2xs"
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full aspect-square bg-emerald-50 text-emerald-600 font-bold text-sm sm:text-base border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/40 hover:bg-emerald-100 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-2xs overflow-hidden"
           >
-            {user.avatar || user.name.charAt(0).toUpperCase()}
+            {user.avatar || user.name.replace(/!+$/, '').charAt(0).toUpperCase()}
           </button>
         </div>
 

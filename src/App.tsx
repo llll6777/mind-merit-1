@@ -40,7 +40,11 @@ export default function App() {
     const saved = localStorage.getItem("mind_merit_profile_v1");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed) {
+          if (parsed.name) parsed.name = parsed.name.replace(/!+$/, '').trim();
+          return parsed;
+        }
       } catch (e) {
         console.error("Error parsing profile from local storage:", e);
       }
@@ -117,71 +121,21 @@ export default function App() {
     }
   }, [user.theme]);
 
-  // 2. Health & Mood check-in records state
+  // 2. Health & Mood check-in records state (starts empty until user inputs data)
   const [moodLogs, setMoodLogs] = useState<MoodCheckIn[]>(() => {
     const saved = localStorage.getItem("mind_merit_mood_logs_v1");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Filter out mock/seed logs so new users have no mock data
+          return parsed.filter((l: any) => l.id && !l.id.startsWith("log-seed-"));
+        }
       } catch (e) {
         console.error("Error parsing mood logs:", e);
       }
     }
-    // Pre-seeded with recent days for rendering trend lines
-    return [
-      {
-        id: "log-seed-1",
-        date: "2026-07-14",
-        mood: "neutral",
-        stress: 6,
-        sleep: 6,
-        exercise: 0,
-        water: 500,
-        studyWork: "overwhelmed",
-        gratitude: "Having good noodles",
-        journal: "Heavy study sessions today.",
-        aiAnalysis: "You are handling heavy studies with good focus, but try to rest and drink more water!"
-      },
-      {
-        id: "log-seed-2",
-        date: "2026-07-15",
-        mood: "bad",
-        stress: 8,
-        sleep: 4.5,
-        exercise: 15,
-        water: 750,
-        studyWork: "overwhelmed",
-        gratitude: "A brief walk",
-        journal: "Anxiety about mock exams.",
-        aiAnalysis: "Sleep deprivation of 4.5 hours is exacerbating exam stress. Prioritize early rest!"
-      },
-      {
-        id: "log-seed-3",
-        date: "2026-07-16",
-        mood: "good",
-        stress: 4,
-        sleep: 7.5,
-        exercise: 30,
-        water: 1250,
-        studyWork: "focused",
-        gratitude: "Tutor help",
-        journal: "Felt much more clear-headed after sleeping.",
-        aiAnalysis: "Superb alignment of sleep (7.5h) and exercise (30m). Your stress level reduced to 4/10."
-      },
-      {
-        id: "log-seed-4",
-        date: "2026-07-17",
-        mood: "excellent",
-        stress: 2,
-        sleep: 8,
-        exercise: 25,
-        water: 1500,
-        studyWork: "balanced",
-        gratitude: "Talking with my matched buddy",
-        journal: "Met a supportive friend online.",
-        aiAnalysis: "Fostering peer connections is an exceptional self-care booster. Your mood index is excellent today."
-      }
-    ];
+    return [];
   });
 
   useEffect(() => {
@@ -668,9 +622,9 @@ export default function App() {
               className="mt-5 p-3.5 rounded-2xl bg-gradient-to-tr from-purple-500/10 via-indigo-500/5 to-pink-500/5 dark:from-purple-950/20 dark:via-indigo-950/10 dark:to-pink-950/10 border border-purple-100/30 dark:border-slate-800 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
             >
               <div className="flex items-center space-x-2.5">
-                <span className="text-2xl h-10 w-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50">{user.avatar || "🧘"}</span>
+                <span className="text-2xl h-10 w-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full aspect-square shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden">{user.avatar || "🧘"}</span>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-850 dark:text-slate-100">{user.name}</h4>
+                  <h4 className="text-xs font-bold text-slate-850 dark:text-slate-100">{user.name.replace(/!+$/, '')}</h4>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                     Lv. {user.level} • {user.xp} XP
                   </p>

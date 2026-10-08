@@ -35,7 +35,7 @@ export const translations = {
       streakTitle: "Streaks & Daily Mind Care"
     },
     dashboard: {
-      welcome: "Welcome back,",
+      welcome: "Welcome",
       dailyMissions: "Daily Missions",
       weeklyChallenges: "Weekly Challenge",
       completeCheckin: "Complete your mood check-in to analyze trends.",
@@ -184,7 +184,7 @@ export const translations = {
       streakTitle: "ระบบสถิติเช็คอินต่อเนื่อง (Streak)"
     },
     dashboard: {
-      welcome: "ยินดีต้อนรับกลับมา,",
+      welcome: "ยินดีต้อนรับ",
       dailyMissions: "ภารกิจวันนี้",
       weeklyChallenges: "ชาเลนจ์ประจำสัปดาห์",
       completeCheckin: "โปรดบันทึกอารมณ์รายวันเพื่อวิเคราะห์แนวโน้มสุขภาพจิต",

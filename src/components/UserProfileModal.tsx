@@ -61,9 +61,12 @@ export default function UserProfileModal({
         id="profile-modal-container" 
         className="relative z-10 w-full max-w-2xl rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col transition-colors duration-300"
       >
-        {/* Banner Cover Cover with Wave decoration */}
-        <div className="relative h-28 bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 p-6 flex items-end">
-          <div className="absolute top-4 right-4 flex space-x-2">
+        {/* Banner Cover with full round Avatar */}
+        <div className="relative bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 pt-5 px-5 sm:px-6 pb-6 text-white shadow-md">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-white/90 text-xs font-bold uppercase tracking-wider">
+              {isEn ? "Personal Profile" : "โปรไฟล์ผู้ใช้งาน"}
+            </span>
             <button 
               id="profile-modal-close-btn"
               onClick={onClose}
@@ -73,29 +76,46 @@ export default function UserProfileModal({
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-indigo-900 to-slate-900 pointer-events-none" />
-        </div>
+          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-indigo-900 to-slate-900 pointer-events-none" />
 
-        {/* Modal Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
-          
-          {/* Main User Card Section */}
-          <div className="relative -mt-16 flex flex-col sm:flex-row items-center sm:items-end sm:space-x-4 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-            {/* Avatar Circle */}
-            <div className="h-24 w-24 rounded-full border-4 border-white dark:border-slate-900 bg-purple-100 dark:bg-purple-950 flex items-center justify-center text-5xl shadow-md shrink-0 transition-transform hover:scale-105">
-              {user.avatar || "🧘"}
+          {/* Full Unclipped Circular Profile Picture & Identity */}
+          <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-1">
+            <div className="relative shrink-0">
+              <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-full border-4 border-white dark:border-slate-900 bg-white dark:bg-slate-800 shadow-2xl flex items-center justify-center text-4xl sm:text-5xl shrink-0 overflow-hidden aspect-square ring-4 ring-white/40">
+                {user.avatar?.startsWith("http") || user.avatar?.startsWith("/") ? (
+                  <img src={user.avatar} alt={user.name} className="h-full w-full object-cover rounded-full aspect-square block" />
+                ) : (
+                  <span className="select-none leading-none flex items-center justify-center">{user.avatar || "🧘"}</span>
+                )}
+              </div>
             </div>
-            
-            {/* Name and Status */}
-            <div className="mt-3 sm:mt-0 text-center sm:text-left flex-1 space-y-1">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 justify-center sm:justify-start">
-                <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">
-                  {user.name}
+            <div className="text-center sm:text-left space-y-1">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <h2 className="text-xl sm:text-2xl font-black text-white drop-shadow-sm">
+                  {user.name.replace(/!+$/, '')}
                 </h2>
-                <span className="inline-flex self-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200/20">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/25 text-white backdrop-blur-md border border-white/30">
                   {user.role === "student" ? (isEn ? "Student" : "นักศึกษา") : (isEn ? "Working Adult" : "วัยทำงาน")}
                 </span>
               </div>
+              <p className="text-xs text-purple-100 italic">
+                "{bio}"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 sm:space-y-6">
+          
+          {/* Main User Card Section */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+            
+            {/* Bio Editor */}
+            <div className="space-y-1 flex-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                {isEn ? "Bio Status" : "ข้อความประจำตัว"}
+              </span>
               
               {/* Editable Bio */}
               <div className="text-xs text-slate-500 dark:text-slate-400 max-w-md">
@@ -115,7 +135,7 @@ export default function UserProfileModal({
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center sm:justify-start space-x-1.5">
+                  <div className="flex items-center space-x-1.5">
                     <p className="italic">"{bio}"</p>
                     <button 
                       onClick={() => setIsEditingBio(true)}
@@ -127,6 +147,21 @@ export default function UserProfileModal({
                 )}
               </div>
             </div>
+
+            {/* Quick Avatar Emoji Switcher button */}
+            <div className="flex items-center gap-1.5">
+              {["🧘", "😊", "🌱", "☀️", "🌟"].map((em) => (
+                <button
+                  key={em}
+                  onClick={() => onUpdateUser({ ...user, avatar: em })}
+                  className={`h-7 w-7 rounded-full flex items-center justify-center text-sm transition-all cursor-pointer ${user.avatar === em ? "bg-purple-100 dark:bg-purple-900/60 ring-2 ring-purple-400 scale-110" : "hover:bg-slate-100 dark:hover:bg-slate-800 opacity-70 hover:opacity-100"}`}
+                  title={isEn ? `Change avatar to ${em}` : `เปลี่ยนอวตารเป็น ${em}`}
+                >
+                  {em}
+                </button>
+              ))}
+            </div>
+
           </div>
 
           {/* Gamified Points & Stats Dashboard */}
