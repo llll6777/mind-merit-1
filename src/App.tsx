@@ -72,13 +72,31 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState<boolean>(false);
+  const [splashProgress, setSplashProgress] = useState<number>(0);
+  const [splashSecondsLeft, setSplashSecondsLeft] = useState<number>(5);
 
-  // Auto-dismiss Splash Screen after 1.8s
+  // เมื่อกดลิ้งเว็บ ให้ขึ้นโลโก้ พื้นหลังสีขาว โหลด 5 วิ และเข้าสู่หน้าหลัก
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 1800);
-    return () => clearTimeout(timer);
+    const totalDuration = 5000; // โหลด 5 วินาที
+    const intervalTime = 50; // อัปเดตทุก 50ms ให้แอนิเมชันลื่นไหล
+    const startTime = Date.now();
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(100, (elapsed / totalDuration) * 100);
+      const remainingSec = Math.max(0, Math.ceil((totalDuration - elapsed) / 1000));
+      
+      setSplashProgress(progress);
+      setSplashSecondsLeft(remainingSec);
+
+      if (elapsed >= totalDuration) {
+        clearInterval(interval);
+        setShowSplash(false);
+        setActiveTab("landing"); // เข้าสู่หน้าหลักอัตโนมัติ
+      }
+    }, intervalTime);
+
+    return () => clearInterval(interval);
   }, []);
 
 
@@ -376,19 +394,16 @@ export default function App() {
   return (
     <div className="min-h-screen text-slate-800 dark:text-slate-100 font-sans transition-colors duration-300 pt-16">
       
-      {/* 0. Brand Logo Splash Screen on Initial Link Open */}
+      {/* 0. Brand Logo Splash Screen on Initial Link Open (พื้นหลังสีขาว โหลด 5 วิ และเข้าสู่หน้าหลัก) */}
       {showSplash && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-tr from-sky-50 via-teal-50/60 via-pink-50/50 to-amber-50/40 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-opacity duration-500 animate-in fade-in">
-          <div className="flex flex-col items-center text-center p-6 space-y-6 max-w-sm">
-            {/* Animated Logo with glowing rings */}
-            <div 
-              onClick={() => { setShowSplash(false); setIsLogoModalOpen(true); }}
-              className="relative cursor-pointer group"
-              title={user.language === 'en' ? "Click to view Logo" : "คลิกเพื่อดูโลโก้"}
-            >
-              <div className="absolute -inset-4 bg-gradient-to-r from-sky-400 via-teal-400 via-pink-400 to-amber-300 rounded-full blur-xl opacity-60 animate-pulse"></div>
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white text-slate-800 transition-opacity duration-500 animate-in fade-in">
+          <div className="flex flex-col items-center text-center p-6 space-y-6 max-w-sm w-full mx-auto">
+            {/* Animated Logo Container with White Canvas */}
+            <div className="relative">
+              {/* Soft colorful ambient glow */}
+              <div className="absolute -inset-4 bg-gradient-to-tr from-sky-200/60 via-teal-200/40 via-pink-200/50 to-amber-200/50 rounded-full blur-xl opacity-75 animate-pulse"></div>
               
-              <div className="relative h-28 w-28 sm:h-32 sm:w-32 rounded-3xl bg-white dark:bg-slate-900 p-2 shadow-2xl border-2 border-white/90 dark:border-slate-800 flex items-center justify-center overflow-hidden hover:scale-105 transition-transform duration-300">
+              <div className="relative h-32 w-32 sm:h-36 sm:w-36 rounded-3xl bg-white p-3 shadow-2xl border-2 border-slate-100 flex items-center justify-center overflow-hidden">
                 <img 
                   src="/logo.png" 
                   alt="MIND MERIT" 
@@ -400,34 +415,56 @@ export default function App() {
                   }}
                 />
                 <div className="splash-fallback hidden absolute inset-0 flex items-center justify-center bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300">
-                  <span className="font-sans text-4xl font-black text-white">M</span>
+                  <span className="font-sans text-5xl font-black text-white">M</span>
                 </div>
               </div>
             </div>
 
             {/* Brand Title & Tagline */}
-            <div className="space-y-1.5">
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+            <div className="space-y-1 pt-1">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
                 MIND MERIT
               </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
                 {user.language === 'en' 
                   ? "Mental Health & Productivity Ecosystem" 
                   : "แพลตฟอร์มดูแลสุขภาพใจและความสุขของคุณ"}
               </p>
             </div>
 
-            {/* Subtle Progress Bar */}
-            <div className="w-48 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-sky-500 via-teal-500 via-pink-500 to-amber-400 rounded-full animate-pulse w-full"></div>
+            {/* 5-Second Loading Progress Bar & Counter */}
+            <div className="w-full max-w-xs space-y-2 pt-1">
+              <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 px-1">
+                <span className="inline-flex items-center space-x-1.5">
+                  <span className="h-2 w-2 rounded-full bg-sky-500 animate-ping"></span>
+                  <span>{user.language === 'en' ? "Loading to Home..." : "กำลังโหลดเข้าสู่หน้าหลัก..."}</span>
+                </span>
+                <span className="font-mono text-sky-600 font-extrabold">{splashSecondsLeft}s</span>
+              </div>
+
+              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/60">
+                <div 
+                  className="h-full bg-gradient-to-r from-sky-500 via-teal-500 via-pink-500 to-amber-400 rounded-full transition-all duration-75"
+                  style={{ width: `${splashProgress}%` }}
+                />
+              </div>
+
+              <p className="text-[10px] text-slate-400">
+                {user.language === 'en' 
+                  ? `Entering home in ${splashSecondsLeft} seconds (${Math.round(splashProgress)}%)` 
+                  : `จะเข้าสู่หน้าหลักในอีก ${splashSecondsLeft} วินาที (${Math.round(splashProgress)}%)`}
+              </p>
             </div>
 
             {/* Skip / Enter Action button */}
             <button
-              onClick={() => setShowSplash(false)}
-              className="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer pt-2"
+              onClick={() => {
+                setShowSplash(false);
+                setActiveTab("landing");
+              }}
+              className="text-xs font-bold text-sky-600 hover:text-sky-700 hover:underline cursor-pointer pt-0.5 transition-colors"
             >
-              {user.language === 'en' ? "Enter Home ➜" : "เข้าสู่หน้าหลัก ➜"}
+              {user.language === 'en' ? "Enter Home Now ➜" : "เข้าสู่หน้าหลักทันที ➜"}
             </button>
           </div>
         </div>
@@ -480,7 +517,7 @@ export default function App() {
             </nav>
 
             {/* Core Content viewport (Takes 3/4 space on desktop) */}
-            <main id="main-content-viewport" className="md:col-span-3">
+            <main id="main-content-viewport" className="md:col-span-3 min-w-0 w-full">
             {activeTab === "dashboard" && (
               <DashboardView 
                 user={user} 

@@ -339,18 +339,19 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
         </div>
       </div>
 
-      {/* 2. Quick Jump Grid - Compact 3-col on Mobile with Short Non-Overflow Labels */}
+      {/* 2. Quick Jump Grid - แนวนอน 2 แนวตั้ง 3 บน Mobile ตามที่ผู้ใช้สั่ง */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            {isTh ? "ทางลัดฟีเจอร์หลัก" : "Quick Shortcuts"}
+            {isTh ? "ทางลัดฟีเจอร์หลัก (6 รายการ)" : "Quick Shortcuts"}
           </h3>
           <span className="text-[9px] sm:text-[10px] text-sky-600 dark:text-sky-400 font-semibold">
             {isTh ? "แตะเพื่อเปิดใช้งานทันที" : "Tap to open"}
           </span>
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2.5">
+        {/* แนวนอน 2 แนวตั้ง 3 บน Mobile (grid-cols-2), 3 แนวนอนบน Tablet (sm:grid-cols-3), 6 แนวนอนบน Desktop (lg:grid-cols-6) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
           {quickShortcuts.map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -360,17 +361,19 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
                   if (item.action) item.action();
                   else if (item.tab) onNavigate(item.tab);
                 }}
-                className="flex flex-col items-center text-center p-2 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:shadow-sm hover:scale-[1.02] active:scale-95 transition-all cursor-pointer group"
+                className="flex items-center space-x-2.5 p-2.5 sm:p-3 sm:flex-col sm:space-x-0 sm:text-center rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:shadow-sm hover:scale-[1.01] active:scale-95 transition-all cursor-pointer group text-left"
               >
-                <div className={`flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-tr ${item.color} text-white shadow-2xs mb-1 group-hover:rotate-6 transition-transform`}>
-                  <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <div className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-tr ${item.color} text-white shadow-2xs shrink-0 sm:mb-1 group-hover:rotate-6 transition-transform`}>
+                  <Icon className="h-4 w-4" />
                 </div>
-                <h4 className="text-[10px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 truncate w-full">
-                  {item.shortTitle}
-                </h4>
-                <p className="text-[8px] sm:text-[9px] text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5 hidden sm:block">
-                  {item.desc}
-                </p>
+                <div className="min-w-0 flex-1 sm:w-full">
+                  <h4 className="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                    {item.title}
+                  </h4>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                    {item.desc}
+                  </p>
+                </div>
               </button>
             );
           })}
@@ -378,7 +381,7 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
       </div>
 
       {/* 3. Category Filter Pills - Touch friendly scrolling */}
-      <div className="flex items-center space-x-1 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+      <div className="flex items-center space-x-1.5 overflow-x-auto py-1 scrollbar-none px-0.5">
         {categories.map((cat) => {
           const isActive = activeCategory === cat.id;
           return (

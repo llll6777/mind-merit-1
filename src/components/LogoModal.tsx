@@ -80,27 +80,10 @@ export default function LogoModal({ isOpen, onClose, language = "th" }: LogoModa
             </div>
           </div>
 
-          {/* Logo Variations in Mini View */}
-          <div className="grid grid-cols-2 gap-3 w-full pt-1">
-            <div className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800 text-center flex flex-col items-center space-y-1">
-              <div className="h-10 w-10 rounded-full overflow-hidden p-0.5 border border-sky-300 dark:border-sky-700 bg-white dark:bg-slate-800 flex items-center justify-center shadow-xs">
-                <img src="/logo.png" alt="Circle Icon" className="h-full w-full object-cover rounded-full" />
-              </div>
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                {isEn ? "Full Circle Badge" : "ตราสัญลักษณ์วงกลมเต็ม"}
-              </span>
-              <span className="text-[9px] text-slate-400">Profile & Social Icon</span>
-            </div>
-
-            <div className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800 text-center flex flex-col items-center space-y-1">
-              <div className="h-10 w-10 rounded-xl overflow-hidden p-0.5 border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-800 flex items-center justify-center shadow-xs">
-                <img src="/logo.png" alt="Square Icon" className="h-full w-full object-cover rounded-lg" />
-              </div>
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                {isEn ? "App Icon Box" : "ไอคอนแอปพลิเคชัน"}
-              </span>
-              <span className="text-[9px] text-slate-400">Favicon & App Tile</span>
-            </div>
+          {/* Square Format Display Tag */}
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300 shadow-2xs">
+            <span className="h-2 w-2 rounded-sm bg-sky-500"></span>
+            <span>{isEn ? "Square Format (แบบสี่เหลี่ยม)" : "ตราสัญลักษณ์แบบสี่เหลี่ยม (Square Logo)"}</span>
           </div>
         </div>
 
