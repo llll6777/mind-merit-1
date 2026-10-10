@@ -43,15 +43,15 @@ export default function LogoModal({ isOpen, onClose, language = "th" }: LogoModa
         <div className="text-center space-y-1.5">
           <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-gradient-to-r from-sky-50 via-teal-50 to-pink-50 dark:from-slate-800 dark:to-slate-800 text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-slate-700 uppercase tracking-widest">
             <Sparkles className="h-3 w-3 text-amber-500 fill-current" />
-            <span>MIND MERIT BRAND IDENTITY</span>
+            <span>MIND MERIT OFFICIAL LOGO</span>
           </span>
           <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            {isEn ? "Official Brand Logo" : "โลโก้อย่างเป็นทางการของ MIND MERIT"}
+            {isEn ? "Square Format Logo" : "โลโก้ทางการ (แบบสี่เหลี่ยม)"}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {isEn 
-              ? "Mental Health & Productivity Ecosystem Visual Assets" 
-              : "อัตลักษณ์ภาพลักษณ์แบรนด์เพื่อสุขภาพจิตและพลังแห่งความสุข"}
+              ? "Official square format brand identity for MIND MERIT ecosystem" 
+              : "ตราสัญลักษณ์อย่างเป็นทางการแบบสี่เหลี่ยม (Square Format) ของ MIND MERIT"}
           </p>
         </div>
 

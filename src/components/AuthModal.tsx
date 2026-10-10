@@ -121,15 +121,15 @@ export default function AuthModal({
       return;
     }
 
-    // Check if duplicate name exists
+    // Check if duplicate name exists (ห้ามมีชื่อซ้ำกัน เช่นถ้ามีคนชื่อ กุ้ง แล้ว จะกุ้งอีกไม่ได้ แต่ กุ้งง แบบนี้ได้เพราะมีความแตกต่าง)
     const existing = savedAccounts.find(
-      (acc) => acc.name.toLowerCase() === trimmedName.toLowerCase()
+      (acc) => acc.name && acc.name.trim().toLowerCase() === trimmedName.toLowerCase()
     );
     if (existing) {
       setErrorMessage(
         isEn 
-          ? "This name is already registered. Please login or pick another name." 
-          : "ชื่อนี้เคยสมัครใช้งานแล้ว กรุณากดเข้าสู่ระบบ หรือเปลี่ยนชื่อใหม่"
+          ? `The name "${trimmedName}" is already taken. Please choose a different name (e.g. add extra letters) or log in.` 
+          : `ชื่อ "${trimmedName}" มีผู้ใช้งานแล้ว ไม่สามารถใช้ชื่อซ้ำกันได้ (เช่น ถ้ามีคนชื่อ กุ้ง แล้ว จะกุ้งอีกไม่ได้ แต่ "${trimmedName}ง" แบบนี้ได้ หรือกดเข้าสู่ระบบ)`
       );
       return;
     }
@@ -167,7 +167,9 @@ export default function AuthModal({
       pdpaConsent: true,
       anonymousMode: false,
       visitsToday: 1,
-      lastVisitDate: new Date().toISOString().split("T")[0]
+      lastVisitDate: new Date().toISOString().split("T")[0],
+      isRegistered: true,
+      password: passcode
     };
 
     setSuccessMessage(isEn ? "Registration successful! Welcome to MIND MERIT." : "สมัครใช้งานสำเร็จ! กำลังเข้าสู่ระบบ...");
@@ -237,7 +239,9 @@ export default function AuthModal({
       pdpaConsent: true,
       anonymousMode: false,
       visitsToday: 1,
-      lastVisitDate: new Date().toISOString().split("T")[0]
+      lastVisitDate: new Date().toISOString().split("T")[0],
+      isRegistered: true,
+      password: matchedAccount.passcode
     };
 
     setSuccessMessage(isEn ? "Login successful! Welcome back." : "เข้าสู่ระบบสำเร็จ ยินดีต้อนรับกลับมา!");

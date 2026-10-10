@@ -180,15 +180,26 @@ export default function Header({
             {user.theme === 'light' ? <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" /> : <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400" />}
           </button>
 
-          {/* Mini Avatar Profile Button (Circular) */}
-          <button
-            id="header-profile-avatar-btn"
-            onClick={onOpenProfile}
-            title={user.language === 'en' ? 'View My Profile' : 'ดูโปรไฟล์ของฉัน'}
-            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full aspect-square bg-emerald-50 text-emerald-600 font-bold text-sm sm:text-base border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/40 hover:bg-emerald-100 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-2xs overflow-hidden"
-          >
-            {user.avatar || user.name.replace(/!+$/, '').charAt(0).toUpperCase()}
-          </button>
+          {/* Mini Avatar Profile Button (จะขึ้นเมื่อสมัครผู้ใช้งานแล้วเท่านั้น) */}
+          {user.isRegistered && (
+            <button
+              id="header-profile-avatar-btn"
+              onClick={onOpenProfile}
+              title={user.language === 'en' ? 'View My Profile' : 'ดูโปรไฟล์ผู้ใช้งาน'}
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full aspect-square bg-emerald-50 text-emerald-600 font-bold text-sm sm:text-base border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/40 hover:bg-emerald-100 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-2xs overflow-hidden"
+            >
+              {user.avatar || user.name.replace(/!+$/, '').charAt(0).toUpperCase()}
+            </button>
+          )}
+
+          {!user.isRegistered && onOpenLanding && (
+            <button
+              onClick={onOpenLanding}
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-white font-bold text-[11px] sm:text-xs shadow-xs hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+            >
+              <span>{user.language === 'en' ? 'Sign In / Register' : 'สมัคร / เข้าสู่ระบบ'}</span>
+            </button>
+          )}
         </div>
 
       </div>

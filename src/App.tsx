@@ -31,6 +31,7 @@ import UserGuideView from "./components/UserGuideView";
 import UserProfileModal from "./components/UserProfileModal";
 import LandingPageView from "./components/LandingPageView";
 import LogoModal from "./components/LogoModal";
+import SettingsView from "./components/SettingsView";
 
 import { UserProfile, MoodCheckIn, Badge, Post, Certificate, ChatMessage } from "./types";
 import { translations } from "./translations";
@@ -63,7 +64,8 @@ export default function App() {
       pdpaConsent: true,
       anonymousMode: true,
       visitsToday: 0,
-      lastVisitDate: ""
+      lastVisitDate: "",
+      isRegistered: false // User profile only active after registering/logging in
     };
   });
 
@@ -340,7 +342,59 @@ export default function App() {
     }
   };
 
-  // Nav items definitions (เอาหน้าหลักออกจากแดชบอร์ด ให้เหลือเฉพาะหน้าหลักที่อยู่ข้างบน)
+  // ยกเลิกการเข้าสู่ระบบ: บันทึกข้อมูลและสถิติของผู้ใช้ไว้ในระบบอย่างปลอดภัย แล้วออกจากระบบกลับสู่หน้าหลัก
+  const handleLogout = () => {
+    try {
+      const stored = localStorage.getItem("mind_merit_registered_users_v1");
+      if (stored) {
+        const accounts = JSON.parse(stored);
+        if (Array.isArray(accounts)) {
+          const updated = accounts.map((acc: any) => {
+            if (acc.name && acc.name.trim().toLowerCase() === user.name.trim().toLowerCase()) {
+              return {
+                ...acc,
+                xp: user.xp,
+                level: user.level,
+                streak: user.streak,
+                avatar: user.avatar || acc.avatar,
+                role: user.role,
+                updatedAt: new Date().toISOString()
+              };
+            }
+            return acc;
+          });
+          localStorage.setItem("mind_merit_registered_users_v1", JSON.stringify(updated));
+        }
+      }
+    } catch (e) {
+      console.error("Error saving account on logout:", e);
+    }
+
+    const guestUser: UserProfile = {
+      name: "ผู้ใช้ใหม่",
+      age: 19,
+      role: "student",
+      xp: 0,
+      level: 1,
+      streak: 0,
+      badges: ["welcome_badge"],
+      language: user.language,
+      theme: user.theme,
+      pdpaConsent: true,
+      anonymousMode: true,
+      visitsToday: 1,
+      lastVisitDate: new Date().toISOString().split("T")[0],
+      isRegistered: false
+    };
+
+    setUser(guestUser);
+    localStorage.setItem("mind_merit_profile_v1", JSON.stringify(guestUser));
+    localStorage.removeItem("mind_merit_is_logged_in");
+    setActiveTab("landing");
+    setIsProfileOpen(false);
+  };
+
+  // Nav items definitions (ให้การตั้งค่าอยู่ล่างวิธีการใช้งาน ตามคำสั่งผู้ใช้)
   const sidebarNavItems = [
     { id: "dashboard", label: t.nav.dashboard, icon: LayoutDashboard, color: "sky" },
     { id: "moodCheck", label: t.nav.moodCheck, icon: BookOpen, color: "pink" },
@@ -350,7 +404,8 @@ export default function App() {
     { id: "academy", label: t.nav.academy, icon: GraduationCap, color: "amber" },
     { id: "community", label: t.nav.community, icon: Users, color: "pink" },
     { id: "guide", label: t.nav.guide, icon: HelpCircle, color: "emerald" },
-    { id: "admin", label: t.nav.admin, icon: Settings, color: "sky" },
+    { id: "settings", label: t.nav.settings || (user.language === 'en' ? "Settings" : "การตั้งค่า"), icon: Settings, color: "sky" },
+    { id: "admin", label: t.nav.admin, icon: ShieldAlert, color: "sky" },
     { id: "docs", label: t.nav.docs, icon: FileText, color: "emerald" }
   ];
 
@@ -360,6 +415,7 @@ export default function App() {
       case 'landing':
       case 'dashboard':
       case 'assessments':
+      case 'settings':
       case 'admin':
         return 'bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-300 border-l-4 border-sky-500 font-bold shadow-2xs';
       case 'moodCheck':
@@ -476,7 +532,13 @@ export default function App() {
         onChangeLanguage={(lang) => setUser(prev => ({ ...prev, language: lang }))}
         onChangeTheme={(theme) => setUser(prev => ({ ...prev, theme: theme }))}
         onOpenSOS={() => setActiveTab("sos")}
-        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenProfile={() => {
+          if (user.isRegistered) {
+            setIsProfileOpen(true);
+          } else {
+            setActiveTab("landing");
+          }
+        }}
         onOpenGuide={() => setActiveTab("guide")}
         onOpenLanding={() => setActiveTab("landing")}
         onViewLogo={() => setIsLogoModalOpen(true)}
@@ -593,6 +655,18 @@ export default function App() {
               />
             )}
 
+            {activeTab === "settings" && (
+              <SettingsView 
+                user={user}
+                onUpdateUser={setUser}
+                onOpenProfile={() => setIsProfileOpen(true)}
+                onNavigate={(tab) => setActiveTab(tab)}
+                onLogout={handleLogout}
+                onChangeLanguage={(lang) => setUser(prev => ({ ...prev, language: lang }))}
+                onChangeTheme={(theme) => setUser(prev => ({ ...prev, theme: theme }))}
+              />
+            )}
+
             {activeTab === "admin" && (
               <AdminView user={user} certificates={certificates} />
             )}
@@ -672,16 +746,17 @@ export default function App() {
               </button>
             </div>
 
-            {/* Grid of extra menus */}
+            {/* Grid of extra menus (ให้การตั้งค่าอยู่ล่างวิธีการใช้งาน) */}
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
               {[
                 { id: "guide", labelEn: "User Guide", labelTh: "วิธีใช้งาน", icon: HelpCircle, color: "emerald" },
+                { id: "settings", labelEn: "Settings", labelTh: "การตั้งค่า", icon: Settings, color: "sky" },
                 { id: "assessments", labelEn: "Assessments", labelTh: "ประเมินสุขภาพ", icon: ClipboardList, color: "sky" },
                 { id: "academy", labelEn: "Academy", labelTh: "คลังความรู้ใจ", icon: GraduationCap, color: "amber" },
                 { id: "community", labelEn: "Community", labelTh: "ชุมชนสนทนา", icon: Users, color: "pink" },
                 { id: "sos", labelEn: "SOS Help", labelTh: "ช่วยเหลือด่วน", icon: ShieldAlert, highlight: true },
                 { id: "docs", labelEn: "System Guide", labelTh: "คู่มือระบบ", icon: FileText, color: "emerald" },
-                { id: "admin", labelEn: "Admin Hub", labelTh: "ศูนย์แอดมิน", icon: Settings, color: "sky" },
+                { id: "admin", labelEn: "Admin Hub", labelTh: "ศูนย์แอดมิน", icon: ShieldAlert, color: "sky" },
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -717,47 +792,51 @@ export default function App() {
               })}
             </div>
             
-            {/* Quick mini-profile card inside More drawer */}
-            <div 
-              id="mobile-drawer-profile-card"
-              onClick={() => {
-                setIsProfileOpen(true);
-                setShowMobileMenu(false);
-              }}
-              title={user.language === 'en' ? "Open Profile" : "เปิดดูโปรไฟล์ของคุณ"}
-              className="mt-5 p-3.5 rounded-2xl bg-gradient-to-tr from-purple-500/10 via-indigo-500/5 to-pink-500/5 dark:from-purple-950/20 dark:via-indigo-950/10 dark:to-pink-950/10 border border-purple-100/30 dark:border-slate-800 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-            >
-              <div className="flex items-center space-x-2.5">
-                <span className="text-2xl h-10 w-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full aspect-square shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden">{user.avatar || "🧘"}</span>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-850 dark:text-slate-100">{user.name.replace(/!+$/, '')}</h4>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                    Lv. {user.level} • {user.xp} XP
-                  </p>
+            {/* Quick mini-profile card inside More drawer (ขึ้นเมื่อสมัครผู้ใช้งานแล้วเท่านั้น) */}
+            {user.isRegistered && (
+              <div 
+                id="mobile-drawer-profile-card"
+                onClick={() => {
+                  setIsProfileOpen(true);
+                  setShowMobileMenu(false);
+                }}
+                title={user.language === 'en' ? "Open Profile" : "เปิดดูโปรไฟล์ของคุณ"}
+                className="mt-5 p-3.5 rounded-2xl bg-gradient-to-tr from-purple-500/10 via-indigo-500/5 to-pink-500/5 dark:from-purple-950/20 dark:via-indigo-950/10 dark:to-pink-950/10 border border-purple-100/30 dark:border-slate-800 flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <span className="text-2xl h-10 w-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full aspect-square shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden">{user.avatar || "🧘"}</span>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-850 dark:text-slate-100">{user.name.replace(/!+$/, '')}</h4>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      Lv. {user.level} • {user.xp} XP
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="rounded-full bg-orange-50 px-2.5 py-0.5 text-[10px] font-bold text-orange-600 dark:bg-orange-950/20 dark:text-orange-400 shadow-sm border border-orange-100 dark:border-orange-900/30">
+                    🔥 {user.streak} {user.language === 'en' ? 'Days' : 'วัน'}
+                  </div>
+                  <div className="text-[10px] font-bold text-purple-600 dark:text-purple-400">
+                    {user.language === 'en' ? "Profile ➜" : "โปรไฟล์ ➜"}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="rounded-full bg-orange-50 px-2.5 py-0.5 text-[10px] font-bold text-orange-600 dark:bg-orange-950/20 dark:text-orange-400 shadow-sm border border-orange-100 dark:border-orange-900/30">
-                  🔥 {user.streak} {user.language === 'en' ? 'Days' : 'วัน'}
-                </div>
-                <div className="text-[10px] font-bold text-purple-600 dark:text-purple-400">
-                  {user.language === 'en' ? "Profile ➜" : "โปรไฟล์ ➜"}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* 5. Interactive User Profile Modal */}
-      <UserProfileModal 
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        user={user}
-        certificates={certificates}
-        onUpdateUser={setUser}
-        systemBadges={systemBadges}
-      />
+      {/* 5. Interactive User Profile Modal (จะขึ้นเมื่อสมัครผู้ใช้งานแล้วเท่านั้น) */}
+      {user.isRegistered && (
+        <UserProfileModal 
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          user={user}
+          certificates={certificates}
+          onUpdateUser={setUser}
+          systemBadges={systemBadges}
+        />
+      )}
 
       {/* 6. Official Web Logo Viewer Modal */}
       <LogoModal 

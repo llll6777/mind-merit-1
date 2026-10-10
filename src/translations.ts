@@ -11,6 +11,7 @@ export const translations = {
       academy: "Academy",
       community: "Community",
       guide: "User Guide",
+      settings: "Settings",
       sos: "SOS",
       admin: "Admin Simulation",
       docs: "PRD & Architecture"
@@ -160,6 +161,7 @@ export const translations = {
       academy: "สถาบันการเรียนรู้",
       community: "ชุมชนและเพื่อน",
       guide: "วิธีการใช้งาน",
+      settings: "การตั้งค่า",
       sos: "ช่วยเหลือฉุกเฉิน",
       admin: "จำลองระบบหลังบ้าน",
       docs: "PRD และโครงสร้างระบบ"

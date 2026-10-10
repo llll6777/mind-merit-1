@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { 
   X, Award, Shield, Compass, BookOpen, Clock, Zap, Calendar, 
-  ChevronRight, ToggleLeft, ToggleRight, Check, Printer, FileText, BadgeCheck, Trophy, Sparkles
+  ChevronRight, ToggleLeft, ToggleRight, Check, Printer, FileText, BadgeCheck, Trophy, Sparkles, Edit2
 } from "lucide-react";
 import { UserProfile, Certificate, Badge } from "../types";
 
@@ -27,6 +27,61 @@ export default function UserProfileModal({
   });
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
+
+  // Name editing state (แก้ไขชื่อได้เฉพาะตรงโปรไฟล์ผู้ใช้งานเท่านั้น)
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState(user.name.replace(/!+$/, ''));
+  const [nameError, setNameError] = useState("");
+
+  const handleSaveName = () => {
+    setNameError("");
+    const trimmed = newName.trim();
+    if (!trimmed) {
+      setNameError(user.language === "en" ? "Name cannot be empty." : "กรุณากรอกชื่อ ไม่สามารถเว้นว่างได้");
+      return;
+    }
+
+    // Check duplicate name against registered users list in localStorage
+    // (ห้ามมีชื่อซ้ำกัน เช่นถ้ามีคนชื่อ กุ้ง แล้ว จะกุ้งอีกไม่ได้ แต่ กุ้งง แบบนี้ได้เพราะมีความแตกต่าง)
+    try {
+      const stored = localStorage.getItem("mind_merit_registered_users_v1");
+      if (stored) {
+        const accounts: any[] = JSON.parse(stored);
+        if (Array.isArray(accounts)) {
+          const duplicate = accounts.find(
+            acc => acc.name && 
+                   acc.name.trim().toLowerCase() === trimmed.toLowerCase() && 
+                   acc.name.trim().toLowerCase() !== user.name.trim().toLowerCase()
+          );
+          if (duplicate) {
+            setNameError(
+              user.language === "en"
+                ? `The name "${trimmed}" is already taken. Please choose a different name.`
+                : `ชื่อ "${trimmed}" มีผู้ใช้งานแล้ว ไม่สามารถใช้ชื่อซ้ำกันได้ (กรุณาใช้ชื่ออื่น เช่น ${trimmed}ง)`
+            );
+            return;
+          }
+
+          // Update this account in registered users storage
+          const updatedAccounts = accounts.map(acc => {
+            if (acc.name && acc.name.trim().toLowerCase() === user.name.trim().toLowerCase()) {
+              return { ...acc, name: trimmed };
+            }
+            return acc;
+          });
+          localStorage.setItem("mind_merit_registered_users_v1", JSON.stringify(updatedAccounts));
+        }
+      }
+    } catch (e) {
+      console.error("Error checking duplicate name in profile modal:", e);
+    }
+
+    onUpdateUser({
+      ...user,
+      name: trimmed
+    });
+    setIsEditingName(false);
+  };
 
   if (!isOpen) return null;
 
@@ -91,9 +146,63 @@ export default function UserProfileModal({
             </div>
             <div className="text-center sm:text-left space-y-1">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <h2 className="text-xl sm:text-2xl font-black text-white drop-shadow-sm">
-                  {user.name.replace(/!+$/, '')}
-                </h2>
+                {isEditingName ? (
+                  <div className="flex flex-col space-y-1 my-1">
+                    <div className="flex items-center space-x-1.5">
+                      <input
+                        type="text"
+                        value={newName}
+                        onChange={(e) => {
+                          setNewName(e.target.value);
+                          setNameError("");
+                        }}
+                        placeholder={isEn ? "Your name" : "ชื่อของคุณ"}
+                        className="px-2.5 py-1 text-xs font-bold rounded-xl border border-white/60 bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white max-w-[160px] sm:max-w-[200px]"
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleSaveName}
+                        className="px-2.5 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-colors cursor-pointer shadow-sm flex items-center space-x-1"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        <span>{isEn ? "Save" : "บันทึก"}</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setNewName(user.name.replace(/!+$/, ''));
+                          setNameError("");
+                          setIsEditingName(false);
+                        }}
+                        className="px-2 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        {isEn ? "Cancel" : "ยกเลิก"}
+                      </button>
+                    </div>
+                    {nameError && (
+                      <p className="text-[11px] font-bold text-rose-200 bg-rose-900/80 px-2 py-0.5 rounded-lg">
+                        ⚠️ {nameError}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <h2 className="text-xl sm:text-2xl font-black text-white drop-shadow-sm">
+                      {user.name.replace(/!+$/, '')}
+                    </h2>
+                    <button
+                      onClick={() => {
+                        setNewName(user.name.replace(/!+$/, ''));
+                        setNameError("");
+                        setIsEditingName(true);
+                      }}
+                      className="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-all cursor-pointer flex items-center space-x-1 hover:scale-105 active:scale-95"
+                      title={isEn ? "Edit Name (Can only be edited in User Profile)" : "แก้ไขชื่อ (แก้ไขได้เฉพาะตรงโปรไฟล์ผู้ใช้งานเท่านั้น)"}
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                      <span className="text-[10px] font-bold hidden sm:inline">{isEn ? "Edit Name" : "แก้ไขชื่อ"}</span>
+                    </button>
+                  </div>
+                )}
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/25 text-white backdrop-blur-md border border-white/30">
                   {user.role === "student" ? (isEn ? "Student" : "นักศึกษา") : (isEn ? "Working Adult" : "วัยทำงาน")}
                 </span>
