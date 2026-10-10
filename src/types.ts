@@ -16,6 +16,8 @@ export interface UserProfile {
   visitsToday?: number;
   lastVisitDate?: string;
   avatar?: string;
+  password?: string;
+  isRegistered?: boolean;
 }
 
 export type MoodType = 'excellent' | 'good' | 'neutral' | 'bad' | 'terrible';

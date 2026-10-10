@@ -204,16 +204,7 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
             )}
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2 md:mt-0">
-            {/* 1. Guide Button (ฟ้า / Sky Blue) */}
-            <button
-              onClick={() => onNavigate("guide")}
-              className="rounded-2xl border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-800/60 px-3.5 py-2.5 text-xs font-bold shadow-2xs transition-all flex items-center space-x-1.5 cursor-pointer hover:scale-[1.02] active:scale-95"
-            >
-              <HelpCircle className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
-              <span>{user.language === 'en' ? "User Guide" : "วิธีใช้งาน"}</span>
-            </button>
-
-            {/* 2. Log Mood Button (ชมพู / Blossom Pink) */}
+            {/* 1. Log Mood Button (ชมพู / Blossom Pink) */}
             <button
               onClick={() => onNavigate("moodCheck")}
               className="rounded-2xl border border-pink-200 bg-pink-500 hover:bg-pink-600 px-3.5 py-2.5 text-xs font-bold text-white shadow-sm shadow-pink-500/20 transition-all flex items-center space-x-1.5 cursor-pointer hover:scale-[1.02] active:scale-95"
@@ -222,7 +213,7 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
               <span>{user.language === 'en' ? "+ Log Mood" : "+ บันทึกอารมณ์"}</span>
             </button>
 
-            {/* 3. Chat with Buddy Button (เขียว / Mint Green) */}
+            {/* 2. Chat with Buddy Button (เขียว / Mint Green) */}
             <button
               onClick={() => onNavigate("aiChat")}
               className="rounded-2xl border border-emerald-200 bg-emerald-500 hover:bg-emerald-600 px-3.5 py-2.5 text-xs font-bold text-white shadow-sm shadow-emerald-500/20 transition-all flex items-center space-x-1.5 cursor-pointer hover:scale-[1.02] active:scale-95"
@@ -231,7 +222,7 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
               <span>{user.language === 'en' ? "Chat Buddy" : "คุยกับคู่หู AI"}</span>
             </button>
 
-            {/* 4. Watch Care Video Button (เหลือง / Sunlight Yellow) */}
+            {/* 3. Watch Care Video Button (เหลือง / Sunlight Yellow) */}
             <button
               onClick={() => onNavigate("videos")}
               className="rounded-2xl border border-amber-300 bg-amber-400 hover:bg-amber-500 text-amber-950 px-3.5 py-2.5 text-xs font-bold shadow-sm shadow-amber-400/20 transition-all flex items-center space-x-1.5 cursor-pointer hover:scale-[1.02] active:scale-95"
@@ -241,38 +232,6 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Quick Guide Card Banner (With Sky Blue, Mint, Pink, and Yellow elements) */}
-      <div className="rounded-3xl border border-sky-100/70 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-sm transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center space-x-3.5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-400 via-teal-400 to-emerald-400 text-white shadow-md shadow-sky-500/10">
-            <Compass className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-[10px] font-bold border border-sky-100 dark:border-sky-900/30">
-                {user.language === 'en' ? "Quick Start Guide" : "คู่มือแนะนำวิธีใช้"}
-              </span>
-              <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
-                {user.language === 'en' ? "How to use MIND MERIT in 4 Simple Steps" : "วิธีการใช้งาน MIND MERIT เบื้องต้น (4 ขั้นตอนง่ายๆ)"}
-              </h3>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
-              <span className="text-pink-600 dark:text-pink-400 font-semibold">1. เช็คอินอารมณ์</span> ➔ 
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold ml-1">2. ปรึกษาคู่หู AI</span> ➔ 
-              <span className="text-amber-600 dark:text-amber-400 font-semibold ml-1">3. ชมคลิปดูแลใจ</span> ➔ 
-              <span className="text-sky-600 dark:text-sky-400 font-semibold ml-1">4. ฝึกหายใจ & รับเกียรติบัตร</span>
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() => onNavigate("guide")}
-          className="shrink-0 inline-flex items-center space-x-1.5 px-4 py-2 rounded-2xl bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 text-white text-xs font-bold shadow-sm shadow-sky-500/15 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 w-full sm:w-auto justify-center"
-        >
-          <span>{user.language === 'en' ? "View Full Guide" : "ดูวิธีการใช้งานทั้งหมด"}</span>
-          <ChevronRight className="h-4 w-4" />
-        </button>
       </div>
 
       {/* 2. Grid of Core Stats and Custom SVG Graph */}

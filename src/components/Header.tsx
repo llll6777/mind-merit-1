@@ -10,6 +10,7 @@ interface HeaderProps {
   onOpenProfile: () => void;
   onOpenGuide: () => void;
   onOpenLanding?: () => void;
+  onViewLogo?: () => void;
   activeTab?: string;
 }
 
@@ -21,6 +22,7 @@ export default function Header({
   onOpenProfile, 
   onOpenGuide,
   onOpenLanding,
+  onViewLogo,
   activeTab
 }: HeaderProps) {
   const t = translations[user.language];
@@ -44,13 +46,12 @@ export default function Header({
       <div id="app-header-container" className="w-full flex h-14 sm:h-15 items-center justify-between px-2 sm:px-6 lg:px-8">
         
         {/* Brand Logo & Name */}
-        <div 
-          id="brand-logo-section" 
-          className="flex items-center space-x-2 sm:space-x-3 cursor-pointer shrink-0" 
-          onClick={onOpenLanding || onOpenProfile} 
-          title={user.language === 'en' ? "Go to Home / Landing Page" : "ไปยังหน้าหลัก"}
-        >
-          <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-sky-500/10 transition-transform hover:scale-105 active:scale-95 bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700">
+        <div id="brand-logo-section" className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          <div 
+            onClick={onViewLogo || onOpenLanding}
+            className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-sky-500/10 transition-transform hover:scale-110 active:scale-95 bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700 cursor-pointer group"
+            title={user.language === 'en' ? "Click to view full Logo" : "คลิกเพื่อดูโลโก้เว็บไซต์"}
+          >
             <img 
               src="/logo.png" 
               alt="MIND MERIT" 
@@ -68,8 +69,12 @@ export default function Header({
               <span className="font-sans text-base sm:text-xl font-black text-white tracking-wider">M</span>
             </div>
           </div>
-          <div>
-            <h1 className="font-sans text-sm sm:text-lg font-black tracking-tight text-slate-800 dark:text-slate-100">
+          <div 
+            onClick={onOpenLanding || onOpenProfile}
+            className="cursor-pointer group"
+            title={user.language === 'en' ? "Go to Home / Landing Page" : "ไปยังหน้าหลัก"}
+          >
+            <h1 className="font-sans text-sm sm:text-lg font-black tracking-tight text-slate-800 dark:text-slate-100 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
               {t.appName}
             </h1>
             <p className="hidden text-[10px] text-slate-400 dark:text-slate-500 sm:block">

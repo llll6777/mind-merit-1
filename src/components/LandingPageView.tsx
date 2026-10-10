@@ -28,20 +28,41 @@ import {
 } from "lucide-react";
 import { UserProfile } from "../types";
 
+import LogoModal from "./LogoModal";
+import AuthModal from "./AuthModal";
+
 interface LandingPageViewProps {
   user: UserProfile;
   onEnterApp: () => void;
   onNavigateTab: (tab: string) => void;
   onUpdateUser?: (updated: UserProfile) => void;
+  onViewLogo?: () => void;
 }
 
-export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpdateUser }: LandingPageViewProps) {
+export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpdateUser, onViewLogo }: LandingPageViewProps) {
   const isEn = user.language === "en";
 
   // Modals state
   const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactFormSubmitted, setContactFormSubmitted] = useState(false);
+  const [localLogoModalOpen, setLocalLogoModalOpen] = useState(false);
+
+  // Auth Modal State (Register & Login with 6-digit alphanumeric code)
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<"login" | "register">("register");
+  const [authSelectedPackage, setAuthSelectedPackage] = useState<"basic" | "premium" | "b2b">("basic");
+
+  const openRegister = (pkg: "basic" | "premium" | "b2b" = "basic") => {
+    setAuthSelectedPackage(pkg);
+    setAuthModalMode("register");
+    setAuthModalOpen(true);
+  };
+
+  const openLogin = () => {
+    setAuthModalMode("login");
+    setAuthModalOpen(true);
+  };
   
   // Private Expert Consultation Modal State
   const [expertConsultModalOpen, setExpertConsultModalOpen] = useState(false);
@@ -76,6 +97,16 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
     }, 2500);
   };
 
+
+  const openLogoView = () => {
+    if (onViewLogo) {
+      onViewLogo();
+    } else {
+      setLocalLogoModalOpen(true);
+    }
+  };
+
+
   return (
     <div className="w-full space-y-8 sm:space-y-14 pb-12 font-sans transition-colors duration-300">
       
@@ -84,13 +115,13 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           ========================================================================= */}
       <header className="relative w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border border-sky-100/60 dark:border-slate-800/80 transition-all rounded-2xl sm:rounded-3xl shadow-sm px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between mb-4 sm:mb-8">
         
-        {/* ฝั่งซ้าย: โลโก้แบรนด์ */}
-        <div 
-          onClick={onEnterApp}
-          className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group shrink-0"
-          title={isEn ? "Go to App Dashboard" : "ไปที่แดชบอร์ดระบบ"}
-        >
-          <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-sky-500/10 group-hover:scale-105 transition-transform bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700">
+        {/* ฝั่งซ้าย: โลโก้แบรนด์ และปุ่มดูโลโก้ */}
+        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          <div 
+            onClick={openLogoView}
+            className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-sky-500/10 hover:scale-110 active:scale-95 transition-transform bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700 cursor-pointer group"
+            title={isEn ? "Click to view full Logo" : "คลิกเพื่อดูโลโก้เว็บขนาดเต็ม"}
+          >
             <img 
               src="/logo.png" 
               alt="MIND MERIT" 
@@ -107,10 +138,23 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
             <div className="brand-fallback hidden absolute inset-0 items-center justify-center bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300">
               <span className="font-sans text-base sm:text-xl font-black text-white tracking-wider">M</span>
             </div>
+            <div className="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Sparkles className="h-3.5 w-3.5 text-white" />
+            </div>
           </div>
-          <div>
+          
+          <div 
+            onClick={openLogoView}
+            className="cursor-pointer group"
+            title={isEn ? "Click to view brand logo" : "คลิกเพื่อดูโลโก้เว็บ"}
+          >
             <div className="flex items-center space-x-2">
-              <span className="font-black text-sm sm:text-lg text-slate-800 dark:text-slate-100 tracking-tight">MIND MERIT</span>
+              <span className="font-black text-sm sm:text-lg text-slate-800 dark:text-slate-100 tracking-tight group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                MIND MERIT
+              </span>
+              <span className="px-1.5 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-[9px] font-bold text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-900/40 hidden sm:inline-block">
+                {isEn ? "View Logo" : "ดูโลโก้"}
+              </span>
             </div>
             <p className="text-[10px] text-slate-400 hidden md:block">Mental Health & Productivity Ecosystem</p>
           </div>
@@ -151,17 +195,17 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </button>
         </nav>
 
-        {/* ฝั่งขวา: ปุ่ม เข้าสู่ระบบ (Login) และปุ่มเด่น สมัครใช้งาน (Sign Up / Register) เข้าสู่แดชบอร์ดได้ทันที */}
+        {/* ฝั่งขวา: ปุ่ม เข้าสู่ระบบ (Login) และปุ่มเด่น สมัครใช้งาน (Sign Up / Register) */}
         <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
           <button
-            onClick={onEnterApp}
+            onClick={openLogin}
             className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-sky-600 dark:hover:text-sky-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
           >
             {isEn ? "Log In" : "เข้าสู่ระบบ"}
           </button>
 
           <button
-            onClick={onEnterApp}
+            onClick={() => openRegister("basic")}
             className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-white rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center space-x-1 sm:space-x-1.5"
           >
             <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
@@ -181,185 +225,86 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       </header>
 
       {/* =========================================================================
-          SECTION 2: Hero Section (ส่วนแรกสุดบนหน้าจอ)
+          SECTION 2: Hero Section (ส่วนแรกสุดบนหน้าจอ - จัดกึ่งกลาง สง่างาม เรียบง่าย)
           ========================================================================= */}
-      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-sky-50/90 via-pink-50/70 via-amber-50/60 to-emerald-50/70 dark:from-slate-900/90 dark:via-sky-950/30 dark:to-slate-900/90 border border-white/70 dark:border-slate-800 p-4 sm:p-8 md:p-12 shadow-sm transition-all">
+      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-sky-50/90 via-pink-50/70 via-amber-50/60 to-emerald-50/70 dark:from-slate-900/90 dark:via-sky-950/30 dark:to-slate-900/90 border border-white/70 dark:border-slate-800 p-6 sm:p-10 md:p-14 shadow-sm transition-all text-center">
         
         {/* Floating background decorative aura */}
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-sky-200/40 dark:bg-sky-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-pink-200/40 dark:bg-pink-500/10 blur-3xl pointer-events-none" />
         <div className="absolute top-1/2 left-1/3 h-64 w-64 rounded-full bg-amber-200/30 dark:bg-amber-500/10 blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 grid gap-6 sm:gap-10 lg:grid-cols-12 items-center">
+        <div className="relative z-10 max-w-4xl mx-auto space-y-5 sm:space-y-7">
           
-          {/* Left Text Column */}
-          <div className="lg:col-span-7 space-y-4 sm:space-y-6">
-            
-
-
-            {/* ข้อความพาดหัวหลัก (Headline) */}
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
-              {isEn 
-                ? "Empower Your Mind, Elevate Your Daily Peace" 
-                : "ดูแลสุขภาพใจและความสุขของคุณให้เป็นเรื่องง่ายในทุกวัน"}
-            </h1>
-
-            {/* ข้อความรอง (Sub-headline) */}
-            <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
-              {isEn 
-                ? "The smart mental wellness companion for students and professionals. Automatic mood tracking, 24/7 AI psychologist listening, certified mindfulness breathing, and scientifically validated assessments."
-                : "แพลตฟอร์มดูแลสุขภาพจิตอัจฉริยะสำหรับนักเรียน นักศึกษา และคนทำงาน ช่วยวิเคราะห์ความรู้สึกและตรวจจับความเครียดอัตโนมัติ แม่นยำ ปลอดภัย พร้อมคู่หู AI และเกียรติบัตรรับรอง"}
-            </p>
-
-            {/* ปุ่ม Call-to-Action (CTA) */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-1">
-              <button
-                onClick={onEnterApp}
-                className="w-full sm:w-auto px-7 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
-              >
-                <span>{isEn ? "Get Started Free" : "เริ่มต้นใช้งานฟรี"}</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* 4 Feature Highlights */}
-            <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-              <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-500 shrink-0" />
-                <span>{isEn ? "No Card Needed" : "ไม่มีค่าใช้จ่าย"}</span>
-              </div>
-              <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500 shrink-0" />
-                <span>{isEn ? "24/7 AI Buddy" : "AI คอยรับฟัง 24 ชม."}</span>
-              </div>
-              <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-pink-500 shrink-0" />
-                <span>{isEn ? "PDPA Encrypted" : "ปลอดภัยตาม PDPA"}</span>
-              </div>
-              <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500 shrink-0" />
-                <span>{isEn ? "E-Certificates" : "รับเกียรติบัตรฟรี"}</span>
-              </div>
-            </div>
-
+          {/* Tagline Badge with Logo Preview link */}
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-sky-200/70 dark:border-slate-700 shadow-2xs">
+            <span 
+              onClick={openLogoView} 
+              className="cursor-pointer flex items-center space-x-1 text-sky-600 dark:text-sky-400 hover:underline font-bold text-[10px] sm:text-[11px]"
+              title={isEn ? "View Official Logo" : "ดูโลโก้ทางการ"}
+            >
+              <span>🧘</span>
+              <span>MIND MERIT</span>
+            </span>
+            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+              {isEn ? "Holistic Mental Well-being Ecosystem" : "แพลตฟอร์มดูแลสุขภาพจิตอัจฉริยะ"}
+            </span>
           </div>
 
-          {/* Right Hero Image / Visual: Modern Dashboard Mockup Graphic */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl border border-white/80 dark:border-slate-700 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md p-4 sm:p-5 shadow-xl shadow-sky-950/10 transition-all hover:shadow-2xl">
-              
-              {/* Simulated Window Top Bar */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex space-x-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                </div>
-                <div className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-500 font-mono">
-                  app.mindmerit.com/dashboard
-                </div>
-                <div className="h-2.5 w-6 rounded bg-slate-200 dark:bg-slate-700" />
-              </div>
+          {/* ข้อความพาดหัวหลัก (Headline) */}
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+            {isEn 
+              ? "Empower Your Mind, Elevate Your Daily Peace" 
+              : "ดูแลสุขภาพใจและความสุขของคุณให้เป็นเรื่องง่ายในทุกวัน"}
+          </h1>
 
-              {/* Mockup Dashboard Content */}
-              <div className="mt-4 space-y-3.5">
-                
-                {/* Mini Welcome Greeting */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-sky-50 via-pink-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/60 border border-sky-100/50">
-                  <div className="flex items-center space-x-2.5">
-                    <span className="text-xl">🧘</span>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                        {isEn ? "Welcome, Mindful User" : "ยินดีต้อนรับ คุณผู้ใช้งาน"}
-                      </h4>
-                      <p className="text-[10px] text-emerald-600 font-bold">● Serenity Index: 88% (Healthy)</p>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-amber-950">🔥 7 Days</span>
-                </div>
+          {/* ข้อความรอง (Sub-headline) */}
+          <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
+            {isEn 
+              ? "The smart mental wellness companion for students and professionals. Automatic mood tracking, 24/7 AI psychologist listening, certified mindfulness breathing, and scientifically validated assessments."
+              : "แพลตฟอร์มดูแลสุขภาพจิตอัจฉริยะสำหรับนักเรียน นักศึกษา และคนทำงาน ช่วยวิเคราะห์ความรู้สึกและตรวจจับความเครียดอัตโนมัติ แม่นยำ ปลอดภัย พร้อมคู่หู AI และเกียรติบัตรรับรอง"}
+          </p>
 
-                {/* 3 Metric Cards */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="p-2.5 rounded-xl bg-sky-50/60 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/40 text-center">
-                    <p className="text-[9px] text-slate-400 uppercase font-bold">Mood Log</p>
-                    <p className="text-sm font-extrabold text-sky-600">Great 😊</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-center">
-                    <p className="text-[9px] text-slate-400 uppercase font-bold">Deep Calm</p>
-                    <p className="text-sm font-extrabold text-emerald-600">25 Mins</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-pink-50/60 dark:bg-pink-950/30 border border-pink-100 dark:border-pink-900/40 text-center">
-                    <p className="text-[9px] text-slate-400 uppercase font-bold">Level XP</p>
-                    <p className="text-sm font-extrabold text-pink-600">Lv. 3 ⭐</p>
-                  </div>
-                </div>
+          {/* ปุ่ม Call-to-Action (CTA) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => openRegister("basic")}
+              className="w-full sm:w-auto px-7 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
+            >
+              <span>{isEn ? "Sign Up Free" : "สมัครใช้งาน (ฟรี)"}</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
 
-                {/* Simulated Wave SVG Graph */}
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                  <div className="flex justify-between items-center mb-1 text-[10px] font-bold text-slate-500">
-                    <span>Weekly Stress vs Happiness Trend</span>
-                    <span className="text-sky-500">Live AI</span>
-                  </div>
-                  <div className="h-16 w-full flex items-end justify-between px-1 gap-1">
-                    {[45, 60, 55, 75, 80, 70, 90].map((h, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                        <div 
-                          className="w-full rounded-t-md bg-gradient-to-t from-sky-400 via-teal-400 to-emerald-400 transition-all"
-                          style={{ height: `${h}%` }}
-                        />
-                        <span className="text-[8px] text-slate-400">D{i+1}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            <button
+              onClick={openLogin}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-bold text-xs sm:text-sm border border-sky-200/80 dark:border-sky-800 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
+            >
+              <UserCheck className="h-4 w-4 text-sky-500" />
+              <span>{isEn ? "Log In" : "เข้าสู่ระบบ"}</span>
+            </button>
+          </div>
 
-                {/* Interactive Click overlay button */}
-                <button
-                  onClick={onEnterApp}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 text-white text-xs font-bold shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>{isEn ? "Click to Enter Interactive Dashboard" : "คลิกเพื่อเข้าสู่ระบบแดชบอร์ดจริง"}</span>
-                </button>
-
-              </div>
+          {/* 4 Feature Highlights */}
+          <div className="pt-4 flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 text-[10px] sm:text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+            <div className="flex items-center space-x-1.5 bg-white/60 dark:bg-slate-800/60 px-3 py-1.5 rounded-full border border-white/80 dark:border-slate-700/60 shadow-2xs">
+              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-500 shrink-0" />
+              <span>{isEn ? "No Card Needed" : "ไม่มีค่าใช้จ่าย"}</span>
+            </div>
+            <div className="flex items-center space-x-1.5 bg-white/60 dark:bg-slate-800/60 px-3 py-1.5 rounded-full border border-white/80 dark:border-slate-700/60 shadow-2xs">
+              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500 shrink-0" />
+              <span>{isEn ? "24/7 AI Buddy" : "AI คอยรับฟัง 24 ชม."}</span>
+            </div>
+            <div className="flex items-center space-x-1.5 bg-white/60 dark:bg-slate-800/60 px-3 py-1.5 rounded-full border border-white/80 dark:border-slate-700/60 shadow-2xs">
+              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-pink-500 shrink-0" />
+              <span>{isEn ? "PDPA Encrypted" : "ปลอดภัยตาม PDPA"}</span>
+            </div>
+            <div className="flex items-center space-x-1.5 bg-white/60 dark:bg-slate-800/60 px-3 py-1.5 rounded-full border border-white/80 dark:border-slate-700/60 shadow-2xs">
+              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500 shrink-0" />
+              <span>{isEn ? "E-Certificates" : "รับเกียรติบัตรฟรี"}</span>
             </div>
           </div>
 
-        </div>
-      </section>
-
-      {/* =========================================================================
-          SECTION 3: Social Proof & Trust Section (ส่วนสร้างความน่าเชื่อถือ)
-          ========================================================================= */}
-      <section className="text-center space-y-4 sm:space-y-6">
-        <p className="text-[11px] sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          {isEn 
-            ? "Trusted by over 10,000+ organizations, universities, and SMEs nationwide"
-            : "ได้รับความไว้วางใจจากธุรกิจ สถาบันการศึกษา และองค์กรกว่า 10,000+ รายทั่วประเทศ"}
-        </p>
-
-        {/* Logo Rows in muted grayscale / translucent styling */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4 items-center justify-center opacity-75 dark:opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
-          {[
-            { name: "CHULA HEALTHCARE", icon: Building2 },
-            { name: "TECH FOR LIFE", icon: Globe },
-            { name: "SME INNOVATION", icon: Zap },
-            { name: "GLOBAL WELLNESS", icon: ShieldCheck },
-            { name: "YOUTH COMMUNITY", icon: Users },
-            { name: "ACADEMY CERT", icon: Star },
-          ].map((partner, idx) => {
-            const Icon = partner.icon;
-            return (
-              <div 
-                key={idx}
-                className="flex items-center justify-center space-x-1.5 py-2 sm:py-3 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white/50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-2xs"
-              >
-                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-500 shrink-0" />
-                <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-slate-600 dark:text-slate-300 truncate">{partner.name}</span>
-              </div>
-            );
-          })}
         </div>
       </section>
 
@@ -575,22 +520,17 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             {isEn ? "Choose Your Package for Mental Well-being" : "เลือก Package ที่ตอบโจทย์การดูแลสุขภาพใจ"}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-            {isEn 
-              ? "Fair, transparent packages tailored for students, individuals, and educational institutions with real-time care."
-              : "โครงสร้าง Package โปร่งใส เข้าถึงง่าย เพื่อการดูแลสุขภาพจิตของนักเรียน เยาวชน บุคคลทั่วไป และสถาบันการศึกษา"}
-          </p>
         </div>
 
         {/* 3 Packages Grid */}
         <div className="grid gap-6 lg:grid-cols-3 items-stretch">
           
-          {/* Package 1: B2C Basic Package (แพ็กเกจบุคคล - ใช้ฟรี) */}
+          {/* Package 1: B2C Basic Package (แพ็กเกจบุคคล - ฟรี) */}
           <div className="relative rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 p-6 sm:p-7 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                  {isEn ? "FREE FOREVER" : "ใช้ฟรีตลอดไป"}
+                  {isEn ? "FREE" : "ฟรี"}
                 </span>
                 <span className="text-xs text-slate-400 font-medium">B2C Basic</span>
               </div>
@@ -600,7 +540,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                   B2C Basic Package
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                  (แพ็กเกจบุคคล - ใช้ฟรี)
+                  {isEn ? "(Individual - Free)" : "(แพ็กเกจบุคคล - ฟรี)"}
                 </p>
               </div>
 
@@ -608,11 +548,11 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               <div className="py-2 border-y border-slate-100 dark:border-slate-800">
                 <div className="flex items-baseline space-x-1">
                   <span className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">0 บาท</span>
-                  <span className="text-xs text-slate-400">/ ใช้ฟรีตลอดไป</span>
+                  <span className="text-xs text-slate-400">/ ฟรี</span>
                 </div>
                 <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 bg-emerald-50/50 dark:bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-100 dark:border-emerald-900/40 leading-relaxed">
                   <span className="font-bold text-emerald-800 dark:text-emerald-300">เงื่อนไข: </span>
-                  สำหรับนักเรียนและเยาวชนทั่วไป ไม่มีค่าใช้จ่าย ใช้งานได้ฟรีตลอดไป
+                  สำหรับนักเรียนและเยาวชนทั่วไป ไม่มีค่าใช้จ่าย (ฟรี)
                 </div>
               </div>
 
@@ -643,10 +583,10 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
             </div>
 
             <button
-              onClick={onEnterApp}
+              onClick={() => openRegister("basic")}
               className="w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span>{isEn ? "Start Free Forever" : "เริ่มต้นใช้งานฟรีตลอดไป"}</span>
+              <span>{isEn ? "Apply B2C Basic (Free)" : "สมัครใช้งาน B2C Basic (ฟรี)"}</span>
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -712,10 +652,10 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
             </div>
 
             <button
-              onClick={onEnterApp}
+              onClick={() => openRegister("premium")}
               className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-pink-500 hover:from-sky-600 hover:to-pink-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/25 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span>{isEn ? "Subscribe B2C Premium Package (100 THB/mo)" : "สมัคร B2C Premium Package (100 บาท/เดือน)"}</span>
+              <span>{isEn ? "Apply B2C Premium (100 THB/mo)" : "สมัคร B2C Premium Package"}</span>
               <Sparkles className="h-4 w-4" />
             </button>
           </div>
@@ -782,22 +722,6 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
             </button>
           </div>
 
-        </div>
-
-        {/* PDPA & Security Note below packages */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <div className="flex items-center space-x-2.5">
-            <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
-            <span>
-              ทุก Package รองรับมาตรฐานความปลอดภัยสูงสุด ข้อมูลเป็นความลับตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA 100%)
-            </span>
-          </div>
-          <button
-            onClick={() => setContactModalOpen(true)}
-            className="text-sky-600 dark:text-sky-400 hover:underline font-bold shrink-0 cursor-pointer"
-          >
-            สอบถามข้อมูลเพิ่มเติมเกี่ยวกับ Package
-          </button>
         </div>
 
       </section>
@@ -1067,23 +991,23 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-2.5 py-0.5 rounded-full">
-                      FREE FOREVER
+                      {isEn ? "FREE" : "ฟรี"}
                     </span>
                     <span className="text-[10px] text-slate-400 font-bold">B2C Basic</span>
                   </div>
 
                   <div>
                     <h4 className="text-base font-extrabold text-slate-800 dark:text-slate-100">B2C Basic Package</h4>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">(แพ็กเกจบุคคล - ใช้ฟรี)</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{isEn ? "(Individual - Free)" : "(แพ็กเกจบุคคล - ฟรี)"}</p>
                   </div>
 
                   <div className="text-2xl font-black text-emerald-600">
-                    0 บาท <span className="text-xs font-normal text-slate-400">/ ใช้ฟรีตลอดไป</span>
+                    0 บาท <span className="text-xs font-normal text-slate-400">/ ฟรี</span>
                   </div>
 
                   <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-slate-700">
                     <span className="font-bold text-slate-700 dark:text-slate-300">เงื่อนไข: </span>
-                    สำหรับนักเรียนและเยาวชนทั่วไป ไม่มีค่าใช้จ่าย ใช้งานได้ฟรีตลอดไป
+                    สำหรับนักเรียนและเยาวชนทั่วไป ไม่มีค่าใช้จ่าย (ฟรี)
                   </div>
 
                   <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
@@ -1107,11 +1031,11 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 </div>
 
                 <button
-                  onClick={() => { setPricingModalOpen(false); onEnterApp(); }}
+                  onClick={() => { setPricingModalOpen(false); openRegister("basic"); }}
                   className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-1.5"
                 >
                   <Sparkles className="h-4 w-4" />
-                  <span>เริ่มต้นใช้งานฟรีตอนนี้เลย</span>
+                  <span>{isEn ? "Apply B2C Basic (Free)" : "สมัครใช้งาน B2C Basic (ฟรี)"}</span>
                 </button>
               </div>
 
@@ -1156,11 +1080,11 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 </div>
 
                 <button
-                  onClick={() => { setPricingModalOpen(false); onEnterApp(); }}
+                  onClick={() => { setPricingModalOpen(false); openRegister("premium"); }}
                   className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-500 to-pink-500 hover:from-sky-600 hover:to-pink-600 text-white font-bold text-xs shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
                 >
                   <Sparkles className="h-4 w-4" />
-                  <span>สมัคร B2C Premium Package</span>
+                  <span>{isEn ? "Apply B2C Premium" : "สมัคร B2C Premium Package"}</span>
                 </button>
               </div>
 
@@ -1218,6 +1142,26 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </div>
         </div>
       )}
+
+      {/* 2.5 Auth Modal (Register & Login with 6-digit alphanumeric code) */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authModalMode}
+        selectedPackage={authSelectedPackage}
+        language={user.language}
+        onLoginSuccess={(updatedUser) => {
+          if (onUpdateUser) onUpdateUser(updatedUser);
+          onEnterApp();
+        }}
+      />
+
+      {/* 2.6 Official Logo Viewer Modal */}
+      <LogoModal 
+        isOpen={localLogoModalOpen} 
+        onClose={() => setLocalLogoModalOpen(false)} 
+        language={user.language} 
+      />
 
       {/* 3. Private Expert Consultation Booking Modal */}
       {expertConsultModalOpen && (

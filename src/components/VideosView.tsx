@@ -205,12 +205,9 @@ export default function VideosView({ user, onRewardXP }: VideosViewProps) {
                 <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">
                   {isEn ? "Mental Health Video Care Library" : "คลังวิดีโอดูแลสุขภาพจิต"}
                 </h2>
-                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/50">
-                  {isEn ? "100% Watchable" : "ดูได้แน่นอน 100%"}
-                </span>
               </div>
               <p className="text-xs text-slate-400">
-                {isEn ? "Curated playable videos on mindfulness, anxiety, and sleep. Earn +30 XP on completion!" : "วิดีโอผ่อนคลายจิตใจและฝึกสติที่คัดสรรแล้วว่าดูได้แน่นอน ดูจบรับทันที +30 XP!"}
+                {isEn ? "Curated videos on mindfulness, anxiety, and sleep. Earn +30 XP on completion!" : "วิดีโอผ่อนคลายจิตใจและฝึกสติที่คัดสรรมาเพื่อคุณ ดูจบรับทันที +30 XP!"}
               </p>
             </div>
           </div>

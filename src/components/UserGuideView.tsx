@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   BookOpen,
-  LayoutDashboard,
   Video,
   Bot,
   ClipboardList,
@@ -11,6 +10,7 @@ import {
   Search,
   CheckCircle2,
   ArrowRight,
+  ArrowLeft,
   Sparkles,
   Award,
   Zap,
@@ -18,10 +18,11 @@ import {
   Shield,
   ChevronDown,
   ChevronUp,
-  HeartHandshake,
   Smile,
   Compass,
-  FileCheck
+  SlidersHorizontal,
+  ChevronRight,
+  Lightbulb
 } from "lucide-react";
 import { UserProfile } from "../types";
 import { translations } from "../translations";
@@ -39,296 +40,195 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"list" | "step">("list");
+  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [expandedTips, setExpandedTips] = useState<{ [key: number]: boolean }>({});
+
+  const toggleTips = (stepIdx: number) => {
+    setExpandedTips((prev) => ({
+      ...prev,
+      [stepIdx]: !prev[stepIdx]
+    }));
+  };
 
   const categories = [
-    { id: "all", label: isTh ? "ทั้งหมด" : "All Topics" },
-    { id: "start", label: isTh ? "เริ่มต้นใช้งาน" : "Getting Started" },
-    { id: "wellness", label: isTh ? "เครื่องมือดูแลใจ" : "Mind Tools" },
-    { id: "academy", label: isTh ? "คอร์ส & เกียรติบัตร" : "Academy & Certs" },
-    { id: "community", label: isTh ? "ชุมชน & บัดดี้" : "Community & Buddy" },
-    { id: "safety", label: isTh ? "ความปลอดภัย & SOS" : "Safety & SOS" },
-    { id: "xp", label: isTh ? "เลเวล & XP" : "Levels & XP" },
+    { id: "all", label: isTh ? "ทั้งหมด" : "All" },
+    { id: "start", label: isTh ? "เริ่มต้น" : "Start" },
+    { id: "wellness", label: isTh ? "ดูแลใจ" : "Mind Tools" },
+    { id: "academy", label: isTh ? "คอร์ส & วุฒิบัตร" : "Academy" },
+    { id: "safety", label: isTh ? "ความปลอดภัย" : "Safety" },
+    { id: "xp", label: isTh ? "เลเวล & XP" : "XP & Levels" },
     { id: "faq", label: isTh ? "คำถามพบบ่อย" : "FAQs" },
   ];
 
   const quickShortcuts = [
     {
-      title: isTh ? "บันทึกอารมณ์รายวัน" : "Daily Mood Log",
-      desc: isTh ? "สะท้อนความรู้สึก รับวิเคราะห์จาก AI" : "Reflect & get AI feedback",
+      title: isTh ? "บันทึกอารมณ์" : "Mood Log",
+      shortTitle: isTh ? "บันทึกอารมณ์" : "Mood",
+      desc: isTh ? "สะท้อนความรู้สึก รับวิเคราะห์ AI" : "Daily check-in & AI feedback",
       icon: BookOpen,
       color: "from-pink-500 to-rose-400",
       tab: "moodCheck"
     },
     {
-      title: isTh ? "วิดีโอเสริมพลังใจ" : "Care Videos",
-      desc: isTh ? "คัดสรรคลิปดูได้จริง 100%" : "Curated watchable videos",
-      icon: Video,
-      color: "from-amber-400 to-yellow-500",
-      tab: "videos"
-    },
-    {
-      title: isTh ? "คุยกับคู่หู AI" : "AI Psychologist Buddy",
-      desc: isTh ? "ปรึกษาได้ 24 ชม. ไม่ตัดสิน" : "24/7 empathetic listener",
+      title: isTh ? "คุยกับคู่หู AI" : "AI Buddy",
+      shortTitle: isTh ? "คู่หู AI" : "AI Buddy",
+      desc: isTh ? "ปรึกษาได้ 24 ชม. ไม่ตัดสิน" : "24/7 empathetic friend",
       icon: Bot,
       color: "from-emerald-400 to-teal-500",
       tab: "aiChat"
     },
     {
-      title: isTh ? "แบบประเมินสุขภาพจิต" : "Scientific Assessments",
-      desc: isTh ? "PSS, WHO-5, วัดภาวะหมดไฟ" : "WHO-5, Stress & Burnout",
+      title: isTh ? "วิดีโอผ่อนคลาย" : "Videos",
+      shortTitle: isTh ? "คลังวิดีโอ" : "Videos",
+      desc: isTh ? "คลิปคัดสรรเสริมพลังใจ" : "Mindfulness & calm videos",
+      icon: Video,
+      color: "from-amber-400 to-yellow-500",
+      tab: "videos"
+    },
+    {
+      title: isTh ? "แบบประเมินใจ" : "Assessments",
+      shortTitle: isTh ? "แบบประเมิน" : "Checks",
+      desc: isTh ? "วัดความเครียด & ภาวะหมดไฟ" : "PSS & WHO-5 checks",
       icon: ClipboardList,
       color: "from-sky-400 to-blue-500",
       tab: "assessments"
     },
     {
-      title: isTh ? "ฝึกหายใจ & เกียรติบัตร" : "Academy & Certificates",
-      desc: isTh ? "Box Breathing & E-Cert" : "Interactive breathing & Certs",
+      title: isTh ? "ฝึกหายใจ & คอร์ส" : "Academy",
+      shortTitle: isTh ? "ฝึกหายใจ" : "Breathing",
+      desc: isTh ? "Box Breathing & เกียรติบัตร" : "Breathing & Certificates",
       icon: GraduationCap,
-      color: "from-amber-500 to-orange-400",
+      color: "from-purple-500 to-indigo-500",
       tab: "academy"
     },
     {
-      title: isTh ? "ช่วยเหลือฉุกเฉิน (SOS)" : "Emergency SOS",
-      desc: isTh ? "เทคนิค 5-4-3-2-1 และสายด่วน" : "5-4-3-2-1 grounding & hotlines",
+      title: isTh ? "ช่วยเหลือด่วน SOS" : "SOS Help",
+      shortTitle: isTh ? "สายด่วน SOS" : "SOS Help",
+      desc: isTh ? "เทคนิค 5-4-3-2-1 และสายด่วน" : "Emergency hotlines",
       icon: ShieldAlert,
       color: "from-rose-500 to-red-500",
       action: onOpenSOS
     },
   ];
 
-  const getStepColorTheme = (stepNumber: string) => {
-    switch (stepNumber) {
-      case "01": // Profile Setup (Sky Blue)
-      case "05": // Assessments (Sky Blue)
-        return {
-          bg: "bg-sky-50 dark:bg-sky-950/30",
-          text: "text-sky-600 dark:text-sky-400",
-          border: "border-sky-100 dark:border-sky-900/30",
-          badge: "bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200/60",
-          hoverBorder: "hover:border-sky-200 dark:hover:border-sky-800/50",
-          btn: "bg-sky-50 hover:bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300"
-        };
-      case "02": // Mood Check (Blossom Pink)
-      case "07": // Community (Blossom Pink)
-        return {
-          bg: "bg-pink-50 dark:bg-pink-950/30",
-          text: "text-pink-600 dark:text-pink-400",
-          border: "border-pink-100 dark:border-pink-900/30",
-          badge: "bg-pink-50 dark:bg-pink-950/50 text-pink-700 dark:text-pink-300 border border-pink-200/60",
-          hoverBorder: "hover:border-pink-200 dark:hover:border-pink-800/50",
-          btn: "bg-pink-50 hover:bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300"
-        };
-      case "03": // Videos (Sunlight Yellow)
-      case "06": // Academy & Breathing (Sunlight Yellow)
-        return {
-          bg: "bg-amber-50 dark:bg-amber-950/30",
-          text: "text-amber-600 dark:text-amber-400",
-          border: "border-amber-100 dark:border-amber-900/30",
-          badge: "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200/60",
-          hoverBorder: "hover:border-amber-200 dark:hover:border-amber-800/50",
-          btn: "bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-        };
-      case "04": // AI Buddy (Mint Green)
-      case "08": // SOS / Safety (Rose)
-      default:
-        return stepNumber === "08" ? {
-          bg: "bg-rose-50 dark:bg-rose-950/30",
-          text: "text-rose-600 dark:text-rose-400",
-          border: "border-rose-100 dark:border-rose-900/30",
-          badge: "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200/60",
-          hoverBorder: "hover:border-rose-200 dark:hover:border-rose-800/50",
-          btn: "bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
-        } : {
-          bg: "bg-emerald-50 dark:bg-emerald-950/30",
-          text: "text-emerald-600 dark:text-emerald-400",
-          border: "border-emerald-100 dark:border-emerald-900/30",
-          badge: "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60",
-          hoverBorder: "hover:border-emerald-200 dark:hover:border-emerald-800/50",
-          btn: "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-        };
-    }
-  };
-
   const steps = [
     {
       number: "01",
       category: "start",
       icon: Smile,
-      badge: isTh ? "เริ่มต้นใช้งาน" : "Step 1",
-      title: isTh ? "ตั้งค่าโปรไฟล์และเลือกอวตารของคุณ" : "Set Up Your Profile & Avatar",
+      color: "sky",
+      badge: isTh ? "ขั้นตอนที่ 1" : "Step 1",
+      title: isTh ? "ตั้งค่าโปรไฟล์และเลือกอวตาร" : "Set Up Profile & Role",
       desc: isTh 
-        ? "ปรับแต่งชื่อ นามแฝง เลือกรูปอิโมจิอวตาร และระบุบทบาทของคุณ (นักเรียน/นักศึกษา หรือ วัยทำงาน) เพื่อให้ระบบแนะนำเนื้อหาและแบบประเมินได้ตรงกับสภาวะชีวิตของคุณมากที่สุด พร้อมเปิดโหมดไม่เปิดเผยตัวตน (Anonymous Mode) ได้ตลอดเวลา"
-        : "Customize your nickname, choose an expressive emoji avatar, and set your role (Student or Working Adult). This helps MIND MERIT tailor recommendations and assessments to your lifestyle.",
-      tips: [
-        isTh ? "คลิกที่รูปโปรไฟล์มุมขวาบน หรือที่การ์ดโปรไฟล์ในหน้าแดชบอร์ดเพื่อแก้ไข" : "Click your avatar in the top-right header or dashboard banner to edit.",
-        isTh ? "สามารถสลับภาษาไทย / English ได้ง่ายๆ เพียงกดปุ่มรูปโลกที่เมนูด้านบน" : "Switch between Thai and English anytime using the language toggle.",
-        isTh ? "รองรับโหมดกลางคืน (Dark Mode) เพื่อความสบายตาในเวลากลางคืน" : "Toggle Dark Mode for gentle night viewing."
-      ],
-      actionLabel: isTh ? "ไปตั้งค่าโปรไฟล์" : "Open Profile Settings",
-      onAction: onOpenProfile
+        ? "เลือกชื่อ นามแฝง และอวตารอิโมจิที่ชอบ พร้อมระบุสถานะ เช่น นักเรียน หรือ วัยทำงาน เพื่อให้ AI และเนื้อหาปรับให้เข้ากับคุณที่สุด"
+        : "Set your display name, choose a cute avatar, and pick your role so the AI tailors its guidance directly to your daily life.",
+      tips: isTh
+        ? ["เปิดโหมดไม่ระบุตัวตน (Anonymous Mode) ได้ตลอดเวลา", "เปลี่ยนชื่อและรูปอวตารได้ทันทีจากเมนูโปรไฟล์"]
+        : ["Enable Anonymous Mode anytime for extra privacy", "Update your avatar anytime in profile settings"],
+      actionLabel: isTh ? "ตั้งค่าโปรไฟล์" : "Edit Profile",
+      action: onOpenProfile
     },
     {
       number: "02",
       category: "wellness",
       icon: BookOpen,
-      badge: isTh ? "บันทึกอารมณ์" : "Step 2",
-      title: isTh ? "เช็คอินอารมณ์รายวัน & รับการวิเคราะห์จาก AI" : "Daily Mood Check-in & AI Counselor Analysis",
-      desc: isTh
-        ? "การตระหนักรู้ในตนเองเป็นก้าวแรกของสุขภาพจิตที่ดี เพียงใช้เวลา 1-2 นาทีในแต่ละวัน บันทึกระดับอารมณ์ ความเครียด (สเกล 1-10) ชั่วโมงนอนหลับ การดื่มน้ำ และการออกกำลังกาย พร้อมฝึกเขียน 3 สิ่งที่รู้สึกขอบคุณ (Gratitude) และความในใจ"
-        : "Self-awareness is the cornerstone of mental resilience. Spend 1-2 minutes daily logging your mood, stress level (1-10), sleep hours, water intake, gratitude reflections, and private journal notes.",
-      tips: [
-        isTh ? "กดปุ่ม 'บันทึกข้อมูลและขอรับการวิเคราะห์จาก AI' เพื่อรับคำแนะนำเชิงบวกเฉพาะบุคคลทันที" : "Click 'Log Check-in & Request AI Analysis' to receive custom psychologist feedback.",
-        isTh ? "รับทันที +30 XP ต่อการบันทึกแต่ละครั้ง ช่วยสะสมเลเวลและเหรียญรางวัล" : "Earn +30 XP per log, advancing your level and unlocking streak badges.",
-        isTh ? "ระบบจะนำข้อมูลมาพล็อตกราฟแนวโน้มอารมณ์และความเครียดในหน้าแดชบอร์ดให้คุณเห็นภาพรวม" : "Check the dashboard to visualize your weekly stress and mood trend line."
-      ],
-      actionLabel: isTh ? "เริ่มบันทึกอารมณ์วันนี้" : "Log Today's Mood",
+      color: "pink",
+      badge: isTh ? "ขั้นตอนที่ 2" : "Step 2",
+      title: isTh ? "เช็คอินอารมณ์รายวัน & รับคำแนะนำ AI" : "Daily Mood Check-in & AI Insight",
+      desc: isTh 
+        ? "เลือกอารมณ์ 5 ระดับ ระบุระดับความเครียด ชั่วโมงการนอน และเขียนบันทึกสั้นๆ AI จะประมวลผลและให้คำแนะนำสุขภาพใจทันที"
+        : "Select your mood, log stress and sleep hours, and get immediate personalized wellness insights powered by AI.",
+      tips: isTh
+        ? ["เช็คอินทุกวันเพื่อสะสมสถิติ Streak และรับ +30 XP", "ดูกราฟแนวโน้มอารมณ์ย้อนหลังในหน้าแดชบอร์ด"]
+        : ["Log daily to protect your streak count and earn +30 XP", "View your mood trends chart in the Dashboard"],
+      actionLabel: isTh ? "บันทึกอารมณ์" : "Check In Now",
       tab: "moodCheck"
     },
     {
       number: "03",
       category: "wellness",
-      icon: Video,
-      badge: isTh ? "วิดีโอเสริมใจ" : "Step 3",
-      title: isTh ? "ชมวิดีโอดูแลใจและฝึกสมาธิ (เล่นได้จริง 100%)" : "Watch Curated Mental Health & Meditation Videos",
-      desc: isTh
-        ? "รวบรวมคลิปวิดีโอคุณภาพสูงที่คัดสรรมาแล้วว่าสามารถเปิดรับชมได้อย่างราบรื่น 100% ไม่มีปัญหาการติดลิขสิทธิ์ฝังเล่น แบ่งเป็นหมวดหมู่: ผ่อนคลายก่อนนอน, จัดการความเครียด, ฝึกสติและสมาธิ, และสร้างแรงบันดาลใจ"
-        : "A hand-curated library of 100% playable, embed-verified mental wellness videos, organized into Sleep & Calm, Stress Relief, Mindfulness, and Inspiration categories.",
-      tips: [
-        isTh ? "เลือกฟิลเตอร์หมวดหมู่เพื่อค้นหาวิดีโอที่ตรงกับความรู้สึกในขณะนั้น" : "Filter by category to find content matching your current mood.",
-        isTh ? "สามารถขยายเต็มจอเพื่อสร้างบรรยากาศสงบไร้สิ่งรบกวน" : "Expand to fullscreen for an immersive relaxation experience.",
-        isTh ? "กดปุ่ม 'รับ +20 XP จากการชมคลิป' เพื่อรับคะแนนสะสมพัฒนาตนเอง" : "Earn +20 XP upon watching to reinforce healthy mindfulness habits."
-      ],
-      actionLabel: isTh ? "ดูวิดีโอดูแลใจ" : "Browse Care Videos",
-      tab: "videos"
-    },
-    {
-      number: "04",
-      category: "wellness",
       icon: Bot,
-      badge: isTh ? "คู่หู AI" : "Step 4",
-      title: isTh ? "ปรึกษาคู่หู AI นักจิตวิทยาใจดี (อบอุ่น ไม่ตัดสิน 24 ชม.)" : "Chat with Your AI Psychologist & Caring Buddy",
-      desc: isTh
-        ? "หากมีเรื่องไม่สบายใจ เครียดเรื่องเรียน การสอบ การทำงาน หรือรู้สึกโดดเดี่ยว คุณสามารถระบายหรือปรึกษาคู่หู AI ของเราได้ตลอดเวลา โดย AI จะตอบด้วยความเข้าใจ อบอุ่น และใช้หลักจิตวิทยาปรับความคิดและพฤติกรรม (CBT) ที่สร้างสรรค์"
-        : "Whenever you feel overwhelmed, anxious about exams, lonely, or burnt out, chat with our empathetic AI Buddy. It blends supportive friendship with cognitive behavioral coaching.",
-      tips: [
-        isTh ? "มีปุ่มตัวอย่างคำถาม เช่น 'เครียดเรื่องสอบ', 'รู้สึกเหงา', 'หมดไฟ' ให้กดเริ่มต้นได้ทันที" : "Use one-click prompt suggestions like exam stress or feeling lonely.",
-        isTh ? "พิมพ์คุยได้อย่างเป็นธรรมชาติทั้งภาษาไทยและภาษาอังกฤษ" : "Converses fluently in both Thai and English.",
-        isTh ? "มีระบบตรวจจับข้อความวิกฤต พร้อมเชื่อมต่อไปยังเมนูช่วยเหลือฉุกเฉิน SOS อัตโนมัติ" : "Includes safety triggers that direct high-distress messages to 24/7 crisis hotlines."
-      ],
-      actionLabel: isTh ? "เริ่มคุยกับคู่หู AI" : "Start Conversation",
+      color: "emerald",
+      badge: isTh ? "ขั้นตอนที่ 3" : "Step 3",
+      title: isTh ? "ปรึกษาคู่หู AI และรับชมคลิปดูแลใจ" : "Chat with AI Buddy & Care Videos",
+      desc: isTh 
+        ? "พูดคุยระบายความรู้สึกกับ AI Buddy ได้ตลอด 24 ชั่วโมง โดยไม่ตัดสิน พร้อมเลือกชมคลิปวิดีโอฝึกสมาธิ ผ่อนคลายก่อนนอน หรือเสียงธรรมชาติ"
+        : "Talk to your empathetic AI companion 24/7 without judgment, or unwind with curated relaxation and meditation videos.",
+      tips: isTh
+        ? ["คลิกเลือกหัวข้อแนะนำด่วนเพื่อเริ่มบทสนทนาได้ทันที", "รับชมวิดีโอจบรับแต้ม +30 XP ต่อคลิป"]
+        : ["Use quick starter prompts to begin chatting easily", "Earn +30 XP for each completed video"],
+      actionLabel: isTh ? "คุยกับ AI" : "Open Chat",
       tab: "aiChat"
     },
     {
-      number: "05",
-      category: "wellness",
-      icon: ClipboardList,
-      badge: isTh ? "ประเมินสุขภาพจิต" : "Step 5",
-      title: isTh ? "ทำแบบประเมินสุขภาพจิตมาตรฐานทางวิทยาศาสตร์" : "Take Standardized Psychometric Assessments",
-      desc: isTh
-        ? "ประเมินสุขภาพจิตอย่างแม่นยำด้วย 3 เครื่องมือวัดที่ได้รับการยอมรับระดับสากล: แบบวัดความเครียด PSS, ดัชนีสุขภาวะทั่วไป WHO-5, และแบบประเมินภาวะหมดไฟ (Burnout Inventory) เพื่อทราบระดับความเสี่ยงของตนเอง"
-        : "Evaluate your mental state with gold-standard psychological surveys: Perceived Stress Scale (PSS), WHO-5 Well-Being Index, and Burnout Inventory.",
-      tips: [
-        isTh ? "ตอบคำถามตามความเป็นจริงในช่วง 1-2 สัปดาห์ที่ผ่านมา" : "Answer honestly based on how you felt over the past 1-2 weeks.",
-        isTh ? "ระบบจะคำนวณคะแนน ระดับความเสี่ยง (ต่ำ/ปานกลาง/สูง) พร้อมสร้างแผนพัฒนาตนเองรายบุคคลโดย AI" : "Receive instant score calculation, risk level, and AI-tailored daily micro-goals.",
-        isTh ? "ทำแบบประเมินสำเร็จได้รับ +50 XP และปลดล็อคเหรียญตราพิเศษ" : "Completing an assessment rewards +50 XP and unlocks achievement badges."
-      ],
-      actionLabel: isTh ? "ทำแบบประเมินสุขภาพจิต" : "Take an Assessment",
-      tab: "assessments"
-    },
-    {
-      number: "06",
+      number: "04",
       category: "academy",
       icon: GraduationCap,
-      badge: isTh ? "เรียนรู้ & เกียรติบัตร" : "Step 6",
-      title: isTh ? "ฝึกหายใจ Box Breathing และรับเกียรติบัตรดิจิทัล" : "Box Breathing & Earn Verified E-Certificates",
-      desc: isTh
-        ? "เข้าเรียนคอร์สสุขภาพจิต เช่น 'การเอาชนะความเครียดและการปรับความคิด', 'การรับมือภาวะหมดไฟ' พร้อมใช้งานเครื่องมือนำฝึกหายใจ Box Breathing (4 วินาทีเข้า - 4 วินาทีกลั้น - 4 วินาทีออก - 4 วินาทีพัก) และทำแบบทดสอบเพื่อรับเกียรติบัตรยืนยันได้จริง"
-        : "Enroll in structured wellness courses, utilize the interactive Box Breathing rhythm animator, pass the certification quiz, and generate verifiable digital completion certificates.",
-      tips: [
-        isTh ? "ฝึกหายใจตามวงกลมแอนิเมชันเพื่อปรับอัตราการเต้นของหัวใจและลดฮอร์โมนความเครียดใน 3 นาที" : "Follow the pulsating visual breathing guide to quickly soothe your nervous system.",
-        isTh ? "ทำแบบทดสอบให้ได้คะแนนเต็มเพื่อดาวน์โหลดเกียรติบัตรที่มีรหัสเฉพาะและ QR Code ตรวจสอบได้" : "Score 100% on the quiz to claim your credential with unique ID and digital verification stamp.",
-        isTh ? "เกียรติบัตรสามารถนำไปแนบแฟ้มสะสมผลงาน (Portfolio) ได้" : "Use earned certificates for academic and professional portfolios."
-      ],
-      actionLabel: isTh ? "เข้าสู่สถาบันการเรียนรู้" : "Explore Academy",
+      color: "amber",
+      badge: isTh ? "ขั้นตอนที่ 4" : "Step 4",
+      title: isTh ? "ประเมินสุขภาพใจ & ฝึกหายใจรับวุฒิบัตร" : "Assessments & E-Certificates",
+      desc: isTh 
+        ? "ทำแบบทดสอบมาตรฐานสากล (PSS, WHO-5, ภาวะหมดไฟ) และฝึกการหายใจแบบ 4-4-4-4 เพื่อรับใบประกาศนียบัตรดิจิทัลพร้อมรหัสตรวจสอบ"
+        : "Take standardized self-checks and practice guided Box Breathing (4-4-4-4) to earn verifiable completion certificates.",
+      tips: isTh
+        ? ["ฝึกหายใจพร้อมแอนิเมชันนำทางการขยายปอด", "เกียรติบัตรมีรหัสเฉพาะ ใช้แนบแฟ้มผลงานได้"]
+        : ["Guided breathing animation helps regulate your nervous system", "Digital certificates include verification hashes"],
+      actionLabel: isTh ? "ไปที่คลังความรู้" : "Start Learning",
       tab: "academy"
     },
     {
-      number: "07",
-      category: "community",
-      icon: Users,
-      badge: isTh ? "ชุมชน & บัดดี้" : "Step 7",
-      title: isTh ? "เชื่อมต่อกับเพื่อนคู่หูบัดดี้ & แลกเปลี่ยนกำลังใจ" : "Anonymous Support Community & Peer Buddy Matching",
-      desc: isTh
-        ? "คุณไม่ต้องเผชิญปัญหาเพียงลำพัง! ระบบจับคู่บัดดี้จะค้นหาเพื่อนที่มีระดับความเครียดและเป้าหมายใกล้เคียงกัน เพื่อคอยส่งพลังใจให้แก่กัน พร้อมกระดานชุมชนที่โพสต์ข้อความสนับสนุนกันได้แบบไม่เปิดเผยตัวตน"
-        : "You are not alone. Our intelligent buddy matching connects you with peers sharing similar stress profiles and roles. Share uplifting thoughts on our AI-moderated anonymous board.",
-      tips: [
-        isTh ? "กดปุ่ม 'ค้นหาคู่หูบัดดี้คอยหนุนใจ' เพื่อเริ่มจับคู่เพื่อน" : "Click 'Find a Support Buddy' to find a supportive companion.",
-        isTh ? "มีระบบ AI ตรวจจับคำหยาบและข้อความกลั่นแกล้ง (Toxicity Moderator) เพื่อให้พื้นที่นี้ปลอดภัย 100%" : "Equipped with AI content moderation to keep interactions kind, constructive, and safe.",
-        isTh ? "ร่วมโหวตโพลประจำวันเพื่อดูความคิดเห็นของเพื่อนๆ ในคอมมูนิตี้" : "Participate in daily well-being polls to reflect together."
-      ],
-      actionLabel: isTh ? "ไปยังหน้าชุมชน" : "Visit Community",
-      tab: "community"
-    },
-    {
-      number: "08",
+      number: "05",
       category: "safety",
       icon: ShieldAlert,
-      badge: isTh ? "ช่วยเหลือฉุกเฉิน" : "Step 8",
-      title: isTh ? "เมนูช่วยเหลือฉุกเฉิน (SOS) และเทคนิคดึงสติ 5-4-3-2-1" : "Emergency SOS Support & 5-4-3-2-1 Grounding Method",
-      desc: isTh
-        ? "หากคุณหรือคนใกล้ชิดกำลังรู้สึกดิ่ง วิตกกังวลอย่างรุนแรง หรือมีภาวะตื่นตระหนก (Panic Attack) สามารถกดปุ่ม SOS สีแดงที่แถบด้านบนได้ตลอดเวลา เพื่อใช้ปุ่มช่วยสงบใจ หรือปฏิบัติตามแบบฝึกหัด 5-4-3-2-1 และดูเบอร์สายด่วนโทรฟรี 24 ชม."
-        : "If you experience severe distress or panic, click the red SOS button at any time. Access the quick calming panic sequence, the 5-4-3-2-1 sensory grounding exercise, and 24/7 crisis hotline directory.",
-      tips: [
-        isTh ? "ปุ่ม SOS อยู่มุมขวาบนของทุกหน้า เข้าถึงได้ในคลิกเดียวตลอดเวลา" : "The red SOS button is permanently anchored in the top header for instant access.",
-        isTh ? "เทคนิค 5-4-3-2-1 ช่วยดึงสมองกลับมาสู่ปัจจุบันขณะได้อย่างรวดเร็ว" : "The 5-4-3-2-1 technique anchors your mind by engaging your 5 physical senses.",
-        isTh ? "รวบรวมเบอร์สายด่วนสุขภาพจิตไทย (1323, 1667, สะมาริตันส์ ฯลฯ) ที่กดโทรออกได้ทันที" : "One-tap direct calling to accredited mental health hotlines and hospitals."
-      ],
-      actionLabel: isTh ? "เปิดเมนูช่วยเหลือฉุกเฉิน" : "Open SOS Portal",
+      color: "rose",
+      badge: isTh ? "ขั้นตอนที่ 5" : "Step 5",
+      title: isTh ? "สายด่วนฉุกเฉิน (SOS) & ชุมชนปลอดภัย" : "Emergency SOS & Safe Community",
+      desc: isTh 
+        ? "เมื่อรู้สึกไม่ไหว สามารถกดปุ่ม SOS ได้ทันทีเพื่อเข้าถึงเทคนิคดึงสติ 5-4-3-2-1 และสายด่วนสุขภาพจิต 1323 หรือแวะไปแบ่งปันกำลังใจในชุมชน"
+        : "If you feel overwhelmed, use SOS for 5-4-3-2-1 grounding exercises and emergency hotline numbers, or find comfort in our safe community.",
+      tips: isTh
+        ? ["ปุ่ม SOS อยู่มุมบนขวาในทุกหน้าจอ เข้าถึงได้ทันใจ", "ชุมชนมีระบบคัดกรองคำพูดสร้างความเกลียดชังอย่างปลอดภัย"]
+        : ["Quick SOS button is always available at top-right", "Community enforces friendly positive communication"],
+      actionLabel: isTh ? "เปิดหน้า SOS" : "Open SOS",
       action: onOpenSOS
-    },
+    }
   ];
 
   const xpRules = [
-    { activity: isTh ? "เช็คอินอารมณ์ประจำวัน" : "Daily Mood Check-in", xp: "+30 XP", icon: "📝" },
-    { activity: isTh ? "ทำแบบประเมินสุขภาพจิต (PSS / WHO-5 / Burnout)" : "Complete Psychometric Assessment", xp: "+50 XP", icon: "📋" },
-    { activity: isTh ? "ฝึกหายใจ Box Breathing ครบ 5 นาที" : "5-min Box Breathing Session", xp: "+50 XP", icon: "🫁" },
-    { activity: isTh ? "สอบผ่านคอร์ส & รับเกียรติบัตรดิจิทัล" : "Pass Course Quiz & Earn Certificate", xp: "+100 XP", icon: "🎓" },
-    { activity: isTh ? "รับชมวิดีโอดูแลใจจนจบ" : "Watch Care / Meditation Video", xp: "+20 XP", icon: "🎬" },
-    { activity: isTh ? "สนทนากับคู่หู AI และสะท้อนความคิด" : "Reflective AI Chat Session", xp: "+15 XP", icon: "🤖" },
-    { activity: isTh ? "เข้าใช้งานแพลตฟอร์มเพิ่มสถิติ Streak" : "Daily Login & Streak Bonus", xp: "+10 XP", icon: "🔥" },
+    { icon: "📝", activity: isTh ? "บันทึกอารมณ์รายวัน" : "Daily Mood Check", xp: "+30 XP" },
+    { icon: "💬", activity: isTh ? "ปรึกษาคู่หู AI" : "AI Counselor Chat", xp: "+15 XP" },
+    { icon: "🎬", activity: isTh ? "รับชมคลิปดูแลใจ" : "Watch Care Video", xp: "+30 XP" },
+    { icon: "📊", activity: isTh ? "ทำแบบประเมินสุขภาพ" : "Complete Assessment", xp: "+40 XP" },
+    { icon: "🌬️", activity: isTh ? "ฝึกหายใจ Box Breathing" : "Breathing Session", xp: "+25 XP" },
+    { icon: "🎓", activity: isTh ? "สอบผ่านคอร์สรับเกียรติบัตร" : "Pass Course Exam", xp: "+100 XP" },
   ];
 
   const faqs = [
     {
-      q: isTh ? "ข้อมูลส่วนตัวและการบันทึกอารมณ์ของฉันปลอดภัยหรือไม่?" : "Is my personal data and mood history private and secure?",
+      q: isTh ? "ข้อมูลส่วนตัวและการบันทึกอารมณ์ปลอดภัยหรือไม่?" : "Is my personal data and mood history secure?",
       a: isTh 
-        ? "ปลอดภัยอย่างยิ่งครับ ข้อมูลทั้งหมดถูกจัดเก็บบนอุปกรณ์ของคุณอย่างเป็นส่วนตัว และเมื่อคุณโพสต์ในชุมชนหรือจับคู่บัดดี้ คุณสามารถเปิด 'โหมดไม่เปิดเผยตัวตน (Anonymous Mode)' ได้เสมอ เพื่อไม่ให้ใครเห็นชื่อจริงของคุณ"
-        : "Yes, completely secure. Your check-in records are kept on your personal client storage. When using the community or buddy matching, Anonymous Mode conceals your real name."
+        ? "ปลอดภัยอย่างยิ่ง ข้อมูลทั้งหมดบันทึกอยู่บนอุปกรณ์ของคุณอย่างเป็นส่วนตัว และคุณสามารถเปิด 'โหมดไม่เปิดเผยตัวตน (Anonymous Mode)' ได้เสมอเมื่อใช้งานชุมชน"
+        : "Yes, completely secure. Your records are stored privately on your device. Anonymous Mode conceals your real name in the community."
     },
     {
-      q: isTh ? "MIND MERIT สามารถใช้วินิจฉัยโรคทางจิตเวชแทนแพทย์ได้หรือไม่?" : "Can MIND MERIT diagnose mental illnesses in place of a doctor?",
+      q: isTh ? "MIND MERIT สามารถใช้วินิจฉัยโรคแทนแพทย์ได้หรือไม่?" : "Can MIND MERIT diagnose illnesses instead of a doctor?",
       a: isTh 
-        ? "ไม่ได้ครับ MIND MERIT เป็นเครื่องมือส่งเสริมสุขภาพจิต การตระหนักรู้ในตนเอง และการดูแลตนเองเบื้องต้น (Self-Care & Cognitive Coaching) ไม่สามารถทดแทนการวินิจฉัยหรือการรักษาทางการแพทย์ หากคุณมีอาการรุนแรง ขอแนะนำให้ใช้เมนู SOS เพื่อปรึกษาแพทย์หรือโทรสายด่วน 1323"
-        : "No. MIND MERIT is a self-care companion and psychoeducational tool, not a clinical diagnostic system. For severe distress, please consult licensed medical specialists or call 1323 via our SOS page."
+        ? "ไม่ได้ครับ MIND MERIT เป็นเครื่องมือดูแลใจเบื้องต้นและการฝึกสติ (Self-Care & Psychoeducation) หากท่านมีภาวะวิกฤต สามารถกดปุ่ม SOS เพื่อติดต่อสายด่วน 1323 หรือพบแพทย์ผู้เชี่ยวชาญทันที"
+        : "No. MIND MERIT is a self-care companion and educational tool. For clinical diagnosis or emergencies, use SOS to call 1323."
     },
     {
-      q: isTh ? "เกียรติบัตรอิเล็กทรอนิกส์ (E-Certificate) นำไปใช้อะไรได้บ้าง?" : "How can I use the digital completion E-Certificate?",
+      q: isTh ? "เกียรติบัตรอิเล็กทรอนิกส์ (E-Certificate) นำไปใช้อะไรได้บ้าง?" : "How can I use the digital completion certificate?",
       a: isTh 
-        ? "เกียรติบัตรที่ได้รับหลังผ่านแบบทดสอบในสถาบันการเรียนรู้ มาพร้อมรหัสตรวจสอบเฉพาะ (Certificate ID) และตราประทับดิจิทัล คุณสามารถดาวน์โหลด แคปหน้าจอ หรือนำไปแนบเป็นหลักฐานการพัฒนาตนเองในแฟ้มสะสมผลงาน (Portfolio) หรือ CV ได้"
-        : "Certificates come with verifiable unique IDs and digital stamps. You can print them or attach them as evidence of soft-skill & wellness development in your academic portfolio or resume."
+        ? "เกียรติบัตรมีรหัสตรวจสอบเฉพาะ (Certificate ID) และตราประทับ สามารถแคปหน้าจอ พิมพ์ หรือแนบเป็นผลงานพัฒนาตนเองใน Portfolio หรือ CV ได้"
+        : "Certificates feature unique verifiable IDs. You can save, print, or attach them to your resume and portfolio."
     },
     {
-      q: isTh ? "หากเปิดคลิปวิดีโอดูแลใจไม่ได้ ต้องทำอย่างไร?" : "What if a video doesn't play?",
+      q: isTh ? "ทำอย่างไรให้เลเวลเพิ่มและปลดล็อคเหรียญรางวัล?" : "How do I level up and unlock achievement badges?",
       a: isTh 
-        ? "ทีมงานได้อัปเดตและคัดกรองลิงก์วิดีโอทั้งหมดให้เป็นคลิปที่อนุญาตให้ฝังเล่นผ่านเว็บไซต์ได้ 100% เรียบร้อยแล้ว หากพบปัญหาการเชื่อมต่อ ให้ตรวจสอบสัญญาณอินเทอร์เน็ต หรือกดรีเฟรชหน้าเว็บหนึ่งครั้ง"
-        : "All videos in the library have been embed-verified for seamless playback. If an issue occurs, please verify your internet connection or reload the page."
-    },
-    {
-      q: isTh ? "จะเพิ่มเลเวลและปลดล็อคเหรียญรางวัล (Badges) ได้อย่างไร?" : "How do I level up and unlock achievement badges?",
-      a: isTh 
-        ? "คุณจะได้รับแต้ม XP ทุกครั้งที่บันทึกอารมณ์ ทำแบบประเมิน ฝึกหายใจ หรือเรียนจบคอร์ส เมื่อสะสม XP ครบตามเกณฑ์ เลเวลของคุณจะเพิ่มขึ้นโดยอัตโนมัติ และจะได้รับเหรียญตรา เช่น 'ผู้พิชิตความเครียด', 'นักเช็คอินต่อเนื่อง' เป็นต้น"
-        : "You earn XP for every wellness activity. As XP accumulates, your Level advances automatically, unlocking special milestone badges like Streak Champion and Stress Warrior."
+        ? "สะสมแต้ม XP จากกิจกรรมดูแลสุขภาพใจ เช่น บันทึกอารมณ์ ฝึกหายใจ หรือเรียนจบคอร์ส เมื่อครบเกณฑ์เลเวลจะเพิ่มอัตโนมัติและปลดล็อคเหรียญรางวัล"
+        : "Earn XP across mindfulness activities. As XP grows, your level advances automatically and unlocks milestone badges."
     }
   ];
 
@@ -340,48 +240,96 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
     return matchesCategory && matchesSearch;
   });
 
-  const filteredFaqs = faqs.filter((faq) => {
-    return searchQuery === "" || 
-      faq.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      faq.a.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  const getStepColorClasses = (color: string) => {
+    switch (color) {
+      case "sky":
+        return {
+          iconBg: "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300",
+          border: "border-sky-200 dark:border-sky-900/40",
+          btn: "bg-sky-600 text-white hover:bg-sky-700 shadow-xs",
+          badge: "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border border-sky-200/60",
+          accent: "text-sky-600 dark:text-sky-400"
+        };
+      case "pink":
+        return {
+          iconBg: "bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300",
+          border: "border-pink-200 dark:border-pink-900/40",
+          btn: "bg-pink-600 text-white hover:bg-pink-700 shadow-xs",
+          badge: "bg-pink-50 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300 border border-pink-200/60",
+          accent: "text-pink-600 dark:text-pink-400"
+        };
+      case "emerald":
+        return {
+          iconBg: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+          border: "border-emerald-200 dark:border-emerald-900/40",
+          btn: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs",
+          badge: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/60",
+          accent: "text-emerald-600 dark:text-emerald-400"
+        };
+      case "amber":
+        return {
+          iconBg: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
+          border: "border-amber-200 dark:border-amber-900/40",
+          btn: "bg-amber-600 text-white hover:bg-amber-700 shadow-xs",
+          badge: "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200/60",
+          accent: "text-amber-600 dark:text-amber-400"
+        };
+      case "rose":
+      default:
+        return {
+          iconBg: "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
+          border: "border-rose-200 dark:border-rose-900/40",
+          btn: "bg-rose-600 text-white hover:bg-rose-700 shadow-xs",
+          badge: "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200/60",
+          accent: "text-rose-600 dark:text-rose-400"
+        };
+    }
+  };
+
+  const currentFocusedStep = steps[currentStepIndex] || steps[0];
+  const focusedTheme = getStepColorClasses(currentFocusedStep.color);
+  const FocusedIcon = currentFocusedStep.icon;
 
   return (
-    <div id="user-guide-root" className="space-y-6 sm:space-y-8 w-full max-w-full overflow-hidden px-1 sm:px-0 animate-fadeIn">
+    <div id="user-guide-root" className="w-full space-y-3.5 sm:space-y-5 max-w-5xl mx-auto pb-12 px-0.5 sm:px-0">
       
-      {/* 1. Hero Banner (Sky Blue, Teal, Indigo pastel harmony) */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-sky-600 via-teal-600 to-indigo-700 p-4 sm:p-8 text-white shadow-xl shadow-sky-900/10">
-        <div className="relative z-10 max-w-3xl space-y-2.5 sm:space-y-3">
-          <div className="inline-flex items-center space-x-2 rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-[11px] sm:text-xs font-semibold text-sky-100 border border-white/20">
-            <Compass className="h-3.5 w-3.5" />
-            <span>{isTh ? "คู่มือการใช้งานแพลตฟอร์มฉบับสมบูรณ์" : "Complete MIND MERIT User Manual"}</span>
+      {/* 1. Header Banner - Perfectly Proportioned for Mobile Screens */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-sky-600 via-teal-600 to-indigo-700 p-3.5 sm:p-6 text-white shadow-md">
+        {/* Subtle decorative circles */}
+        <div className="absolute -top-12 -right-12 h-36 w-36 rounded-full bg-white/10 blur-xl pointer-events-none" />
+        <div className="absolute -bottom-8 -left-8 h-28 w-28 rounded-full bg-white/10 blur-lg pointer-events-none" />
+
+        <div className="relative z-10 space-y-1.5 sm:space-y-2.5">
+          <div className="inline-flex items-center space-x-1.5 rounded-full bg-white/20 backdrop-blur-md px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-sky-100">
+            <Compass className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <span>{isTh ? "คู่มือและวิธีการใช้งาน" : "User Guide & Manual"}</span>
           </div>
 
-          <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight">
-            {t.guide.title}
+          <h2 className="text-base sm:text-2xl font-black tracking-tight leading-tight">
+            {isTh ? "เริ่มต้นใช้งาน MIND MERIT อย่างง่ายดาย" : "Getting Started with MIND MERIT"}
           </h2>
 
-          <p className="text-xs sm:text-base text-sky-100 leading-relaxed max-w-2xl">
-            {t.guide.subtitle} {isTh 
-              ? "ไม่ว่าคุณจะต้องการคลายเครียดจากการสอบ ปรึกษาคู่หู AI หรือฝึกสมาธิเพื่อความสงบใจ เราพร้อมอยู่เคียงข้างคุณทุกช่วงเวลา" 
-              : "Whether you need to relieve stress, talk to an AI buddy, or practice guided breathing, we've got you covered."}
+          <p className="text-[11px] sm:text-xs md:text-sm text-sky-100/90 leading-relaxed max-w-2xl">
+            {isTh 
+              ? "รวมคำแนะนำและขั้นตอนการใช้งานเครื่องมือดูแลใจ เพื่อความสุขและสุขภาพจิตที่ดีของคุณ"
+              : "Step-by-step instructions to get the most out of your mental well-being companion."}
           </p>
 
-          {/* Search Bar */}
-          <div className="pt-1.5 sm:pt-2">
-            <div className="relative max-w-md w-full">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          {/* Quick Search - Compact on mobile */}
+          <div className="pt-1 max-w-sm w-full">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.guide.searchPlaceholder}
-                className="w-full rounded-xl sm:rounded-2xl bg-white/95 dark:bg-slate-900/95 py-2 sm:py-2.5 pl-10 pr-4 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-300"
+                placeholder={isTh ? "ค้นหาขั้นตอนหรือคำแนะนำ..." : "Search topics..."}
+                className="w-full rounded-xl bg-white/95 dark:bg-slate-900/95 py-1.5 sm:py-2 pl-8 pr-7 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 px-1"
                 >
                   ✕
                 </button>
@@ -389,24 +337,20 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
             </div>
           </div>
         </div>
-
-        {/* Decorative background elements */}
-        <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-sky-400/20 blur-3xl pointer-events-none" />
-        <div className="absolute right-20 top-0 h-48 w-48 rounded-full bg-teal-400/20 blur-2xl pointer-events-none" />
       </div>
 
-      {/* 2. Quick Jump Grid (Shortcuts to main modules) */}
-      <div className="space-y-2.5 sm:space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            {t.guide.quickStartTitle}
+      {/* 2. Quick Jump Grid - Compact 3-col on Mobile with Short Non-Overflow Labels */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            {isTh ? "ทางลัดฟีเจอร์หลัก" : "Quick Shortcuts"}
           </h3>
-          <span className="text-[10px] sm:text-[11px] text-sky-600 dark:text-sky-400 font-medium">
-            {isTh ? "คลิกเพื่อไปยังฟีเจอร์ทันที" : "Click to jump directly"}
+          <span className="text-[9px] sm:text-[10px] text-sky-600 dark:text-sky-400 font-semibold">
+            {isTh ? "แตะเพื่อเปิดใช้งานทันที" : "Tap to open"}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2.5">
           {quickShortcuts.map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -416,15 +360,15 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
                   if (item.action) item.action();
                   else if (item.tab) onNavigate(item.tab);
                 }}
-                className="flex flex-col items-center text-center p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all cursor-pointer group"
+                className="flex flex-col items-center text-center p-2 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:shadow-sm hover:scale-[1.02] active:scale-95 transition-all cursor-pointer group"
               >
-                <div className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-tr ${item.color} text-white shadow-xs mb-1.5 sm:mb-2 group-hover:rotate-6 transition-transform`}>
-                  <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+                <div className={`flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-tr ${item.color} text-white shadow-2xs mb-1 group-hover:rotate-6 transition-transform`}>
+                  <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </div>
-                <h4 className="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1">
-                  {item.title}
+                <h4 className="text-[10px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 truncate w-full">
+                  {item.shortTitle}
                 </h4>
-                <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 line-clamp-2 mt-0.5">
+                <p className="text-[8px] sm:text-[9px] text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5 hidden sm:block">
                   {item.desc}
                 </p>
               </button>
@@ -433,17 +377,17 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
         </div>
       </div>
 
-      {/* 3. Filter Category Pills */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none">
+      {/* 3. Category Filter Pills - Touch friendly scrolling */}
+      <div className="flex items-center space-x-1 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
         {categories.map((cat) => {
           const isActive = activeCategory === cat.id;
           return (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer active:scale-95 ${
                 isActive
-                  ? "bg-sky-600 text-white shadow-sm"
+                  ? "bg-sky-600 text-white shadow-2xs"
                   : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
@@ -453,198 +397,319 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
         })}
       </div>
 
-      {/* 4. Step-by-Step Instructions */}
+      {/* 4. Step-by-Step Guide with View Switcher (Perfect for Mobile) */}
       {activeCategory !== "faq" && activeCategory !== "xp" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-              <Sparkles className="h-4 w-4 text-sky-500" />
-              <span>{isTh ? "ขั้นตอนการใช้งานทีละสเต็ป" : "Step-by-Step Guide"}</span>
-            </h3>
-            <span className="text-xs text-slate-400">
-              {filteredSteps.length} {isTh ? "หัวข้อ" : "topics"}
-            </span>
+        <div className="space-y-2.5">
+          
+          {/* Section Subheader & Mobile View Mode Switcher */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center space-x-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-sky-500" />
+              <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
+                {isTh ? "ขั้นตอนการใช้งาน" : "Step-by-Step Instructions"}
+              </h3>
+            </div>
+
+            {/* View Mode Toggle: Cards vs Focus Stepper */}
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-semibold">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === "list"
+                    ? "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-2xs font-bold"
+                    : "text-slate-500 dark:text-slate-400"
+                }`}
+              >
+                {isTh ? "รายการทั้งหมด" : "List"}
+              </button>
+              <button
+                onClick={() => setViewMode("step")}
+                className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === "step"
+                    ? "bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs font-bold"
+                    : "text-slate-500 dark:text-slate-400"
+                }`}
+              >
+                {isTh ? "ทีละขั้นตอน" : "Step Focus"}
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {filteredSteps.map((step, index) => {
-              const StepIcon = step.icon;
-              const theme = getStepColorTheme(step.number);
-              return (
-                <div
-                  key={index}
-                  className={`rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-3.5 sm:p-6 shadow-xs ${theme.hoverBorder} transition-all`}
-                >
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 sm:gap-4">
-                    
-                    {/* Left Icon & Content */}
-                    <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
-                      <div className="flex flex-col items-center shrink-0">
-                        <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl ${theme.bg} ${theme.text} font-extrabold text-xs sm:text-sm border ${theme.border} shadow-2xs`}>
-                          <StepIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-                        </div>
-                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 mt-1 font-mono">
-                          {step.number}
-                        </span>
-                      </div>
+          {/* MODE A: Interactive Stepper (Single-Screen Mobile Focus) */}
+          {viewMode === "step" && (
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-5 shadow-2xs space-y-3.5 transition-all">
+              
+              {/* Stepper Progress Bar */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                  <span>
+                    {isTh ? `ขั้นตอนที่ ${currentStepIndex + 1} จาก ${steps.length}` : `Step ${currentStepIndex + 1} of ${steps.length}`}
+                  </span>
+                  <span className="font-mono text-sky-600 dark:text-sky-400">
+                    {Math.round(((currentStepIndex + 1) / steps.length) * 100)}%
+                  </span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-sky-500 to-indigo-600 rounded-full transition-all duration-300"
+                    style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
+                  />
+                </div>
+              </div>
 
-                      <div className="space-y-1.5 sm:space-y-2 flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                          <span className={`px-2 py-0.5 rounded-full ${theme.badge} text-[9px] sm:text-[10px] font-bold`}>
-                            {step.badge}
-                          </span>
-                          <h4 className="text-xs sm:text-base font-bold text-slate-800 dark:text-slate-100 leading-snug">
-                            {step.title}
-                          </h4>
-                        </div>
-
-                        <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                          {step.desc}
-                        </p>
-
-                        {/* Tips list */}
-                        <div className="mt-2.5 sm:mt-3 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800/40 p-2.5 sm:p-3.5 space-y-1.5 border border-slate-100/60 dark:border-slate-800/60">
-                          <span className="text-[9px] sm:text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider block">
-                            💡 {isTh ? "เกร็ดเคล็ดลับการใช้งาน:" : "Pro Tips:"}
-                          </span>
-                          {step.tips.map((tip, tipIdx) => (
-                            <div key={tipIdx} className="flex items-start space-x-1.5 sm:space-x-2 text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">
-                              <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                              <span className="leading-snug">{tip}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Action Button */}
-                    <div className="w-full md:w-auto shrink-0 flex justify-end pt-1 sm:pt-2 md:pt-0">
-                      <button
-                        onClick={() => {
-                          if (step.onAction) step.onAction();
-                          else if (step.action) step.action();
-                          else if (step.tab) onNavigate(step.tab);
-                        }}
-                        className={`w-full md:w-auto inline-flex items-center justify-center space-x-2 rounded-xl sm:rounded-2xl ${theme.btn} px-4 py-2 sm:py-2.5 text-xs font-bold transition-all cursor-pointer shadow-2xs`}
-                      >
-                        <span>{step.actionLabel}</span>
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-
+              {/* Step Detail Card */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-center space-x-2.5">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${focusedTheme.iconBg} shadow-2xs shrink-0`}>
+                    <FocusedIcon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className={`inline-block px-2 py-0.2 rounded-full text-[9px] font-bold ${focusedTheme.badge} mb-0.5`}>
+                      {currentFocusedStep.badge}
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                      {currentFocusedStep.title}
+                    </h4>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                  {currentFocusedStep.desc}
+                </p>
+
+                {/* Tips */}
+                <div className="space-y-1.5 pt-0.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    {isTh ? "💡 เคล็ดลับแนะนำ" : "Pro Tips"}
+                  </span>
+                  <div className="space-y-1">
+                    {currentFocusedStep.tips.map((tip, idx) => (
+                      <div key={idx} className="flex items-start space-x-1.5 text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0 mt-0.5" />
+                        <span className="leading-snug">{tip}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Direct Action Button */}
+                <div className="pt-2">
+                  <button
+                    onClick={() => {
+                      if (currentFocusedStep.action) currentFocusedStep.action();
+                      else if (currentFocusedStep.tab) onNavigate(currentFocusedStep.tab);
+                    }}
+                    className={`w-full inline-flex items-center justify-center space-x-2 rounded-xl ${focusedTheme.btn} py-2.5 px-4 text-xs font-bold transition-all cursor-pointer active:scale-98`}
+                  >
+                    <span>{currentFocusedStep.actionLabel}</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Prev / Next controls & Jump Dots */}
+              <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3">
+                <button
+                  disabled={currentStepIndex === 0}
+                  onClick={() => setCurrentStepIndex((prev) => Math.max(0, prev - 1))}
+                  className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                    currentStepIndex === 0 
+                      ? "text-slate-300 dark:text-slate-700 cursor-not-allowed" 
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  }`}
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                  <span>{isTh ? "ก่อนหน้า" : "Back"}</span>
+                </button>
+
+                {/* Dots indicator */}
+                <div className="flex items-center space-x-1">
+                  {steps.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentStepIndex(idx)}
+                      className={`h-2 rounded-full transition-all cursor-pointer ${
+                        currentStepIndex === idx 
+                          ? "w-4 bg-sky-600" 
+                          : "w-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  disabled={currentStepIndex === steps.length - 1}
+                  onClick={() => setCurrentStepIndex((prev) => Math.min(steps.length - 1, prev + 1))}
+                  className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                    currentStepIndex === steps.length - 1
+                      ? "text-slate-300 dark:text-slate-700 cursor-not-allowed" 
+                      : "text-sky-600 dark:text-sky-400 font-bold hover:bg-sky-50 dark:hover:bg-sky-950/40 cursor-pointer"
+                  }`}
+                >
+                  <span>{isTh ? "ถัดไป" : "Next"}</span>
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+
+            </div>
+          )}
+
+          {/* MODE B: List View (Compact Mobile Cards that never overflow) */}
+          {viewMode === "list" && (
+            <div className="space-y-2 sm:space-y-2.5">
+              {filteredSteps.map((step, idx) => {
+                const StepIcon = step.icon;
+                const theme = getStepColorClasses(step.color);
+                const isTipsOpen = expandedTips[idx] ?? false;
+
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 shadow-2xs transition-all"
+                  >
+                    {/* Compact Card Header */}
+                    <div className="flex items-start justify-between gap-2.5">
+                      
+                      <div className="flex items-start space-x-2.5 flex-1 min-w-0">
+                        {/* Icon */}
+                        <div className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl ${theme.iconBg} shadow-2xs shrink-0 mt-0.5`}>
+                          <StepIcon className="h-4 w-4" />
+                        </div>
+
+                        {/* Title and Badge */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center space-x-1.5 flex-wrap mb-0.5">
+                            <span className={`px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold ${theme.badge}`}>
+                              {step.badge}
+                            </span>
+                            <span className="text-[9px] font-mono font-bold text-slate-400">
+                              #{step.number}
+                            </span>
+                          </div>
+
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                            {step.title}
+                          </h4>
+
+                          <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-1">
+                            {step.desc}
+                          </p>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Bottom Action Row (Fitted for Mobile without large empty gaps) */}
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                      
+                      {/* Tips Expander Button */}
+                      <button
+                        onClick={() => toggleTips(idx)}
+                        className="inline-flex items-center space-x-1 text-[10px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                      >
+                        <Lightbulb className="h-3 w-3 text-amber-500" />
+                        <span>{isTipsOpen ? (isTh ? "ซ่อนเคล็ดลับ" : "Hide Tips") : (isTh ? `ดูเคล็ดลับ (${step.tips.length})` : `Tips (${step.tips.length})`)}</span>
+                        {isTipsOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      </button>
+
+                      {/* Direct CTA Button */}
+                      <button
+                        onClick={() => {
+                          if (step.action) step.action();
+                          else if (step.tab) onNavigate(step.tab);
+                        }}
+                        className={`inline-flex items-center space-x-1 rounded-lg ${theme.btn} px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer active:scale-95 shrink-0`}
+                      >
+                        <span>{step.actionLabel}</span>
+                        <ChevronRight className="h-3 w-3" />
+                      </button>
+
+                    </div>
+
+                    {/* Collapsible Tips Drawer */}
+                    {isTipsOpen && (
+                      <div className="mt-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 p-2 sm:p-2.5 space-y-1 border border-slate-100/60 dark:border-slate-800/60 animate-in fade-in duration-200">
+                        {step.tips.map((tip, tipIdx) => (
+                          <div key={tipIdx} className="flex items-start space-x-1.5 text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400">
+                            <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0 mt-0.5" />
+                            <span className="leading-snug">{tip}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
         </div>
       )}
 
-      {/* 5. XP & Gamification Rules (Shown when 'all' or 'xp' selected) */}
+      {/* 5. XP Gamification Summary Card - Compact & Clean for Mobile */}
       {(activeCategory === "all" || activeCategory === "xp") && (
-        <div className="rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 sm:pb-4 gap-2">
-            <div className="flex items-center space-x-2.5 sm:space-x-3">
-              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-500 dark:bg-amber-950/30">
-                <Award className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
-                  {t.guide.gamificationTitle}
-                </h3>
-                <p className="text-[10px] sm:text-[11px] text-slate-400">
-                  {isTh ? "สะสมค่าประสบการณ์ (XP) เพื่อเลื่อนระดับและปลดล็อคเหรียญรางวัลพิเศษ" : "Earn XP through healthy mindfulness habits to level up"}
-                </p>
-              </div>
+        <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+            <div className="flex items-center space-x-1.5">
+              <Award className="h-4 w-4 text-amber-500" />
+              <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
+                {isTh ? "การสะสมค่าประสบการณ์ (XP & เลเวล)" : "XP & Leveling System"}
+              </h3>
             </div>
-            <div className="text-left sm:text-right">
-              <span className="text-[11px] sm:text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-2.5 py-1 rounded-full">
-                {isTh ? "เลเวลปัจจุบันของคุณ:" : "Your Current Level:"} Lv. {user.level} ({user.xp} XP)
-              </span>
-            </div>
+            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-2 py-0.5 rounded-full">
+              Lv. {user.level} ({user.xp} XP)
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
             {xpRules.map((rule, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80"
+                className="flex items-center justify-between p-1.5 sm:p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800"
               >
-                <div className="flex items-center space-x-2 min-w-0 pr-2">
-                  <span className="text-base sm:text-lg">{rule.icon}</span>
-                  <span className="text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                <div className="flex items-center space-x-1.5 min-w-0 pr-1">
+                  <span className="text-xs sm:text-sm">{rule.icon}</span>
+                  <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-200 truncate">
                     {rule.activity}
                   </span>
                 </div>
-                <span className="shrink-0 text-[10px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full font-mono">
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 font-mono shrink-0">
                   {rule.xp}
                 </span>
               </div>
             ))}
           </div>
-
-          <div className="rounded-xl sm:rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 p-3 sm:p-4 border border-orange-100 dark:border-orange-900/30 flex items-center justify-between flex-wrap gap-2.5">
-            <div className="flex items-center space-x-2.5">
-              <span className="text-xl sm:text-2xl">🔥</span>
-              <div>
-                <h4 className="text-xs font-bold text-orange-800 dark:text-orange-300">
-                  {t.guide.streakTitle}
-                </h4>
-                <p className="text-[10px] sm:text-[11px] text-orange-700 dark:text-orange-400 mt-0.5">
-                  {isTh
-                    ? "เข้าใช้งาน MIND MERIT เป็นประจำอย่างต่อเนื่องเพื่อรักษาสถิติ Streak และปลดล็อคเหรียญ Streak Champion!"
-                    : "Visit daily to protect your streak count and claim the prestigious Streak Champion badge!"}
-                </p>
-              </div>
-            </div>
-            <div className="px-3 py-1 rounded-xl bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 font-bold text-xs shadow-2xs">
-              {user.streak} {isTh ? "วันต่อเนื่อง" : "Days Streak"}
-            </div>
-          </div>
         </div>
       )}
 
-      {/* 6. Frequently Asked Questions (FAQ) */}
+      {/* 6. Frequently Asked Questions (Accordion) */}
       {(activeCategory === "all" || activeCategory === "faq") && (
-        <div className="rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-xs space-y-3 sm:space-y-4">
-          <div className="flex items-center space-x-2.5 sm:space-x-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/30">
-              <HelpCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
-                {t.guide.faqTitle}
-              </h3>
-              <p className="text-[10px] sm:text-[11px] text-slate-400">
-                {isTh ? "ข้อสงสัยที่พบบ่อยเกี่ยวกับการใช้งานแพลตฟอร์ม" : "Common questions about using MIND MERIT"}
-              </p>
-            </div>
+        <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 shadow-2xs space-y-2">
+          <div className="flex items-center space-x-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
+            <HelpCircle className="h-4 w-4 text-sky-500" />
+            <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
+              {isTh ? "คำถามที่พบบ่อย (FAQs)" : "Frequently Asked Questions"}
+            </h3>
           </div>
 
-          <div className="space-y-2">
-            {filteredFaqs.map((faq, index) => {
-              const isOpen = openFaqIndex === index;
+          <div className="space-y-1.5">
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
               return (
                 <div
-                  key={index}
-                  className="rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800/80 overflow-hidden transition-all"
+                  key={idx}
+                  className="rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden"
                 >
                   <button
-                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                    className="w-full flex items-center justify-between p-3 sm:p-4 text-left bg-slate-50/50 hover:bg-slate-50 dark:bg-slate-800/30 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    className="w-full flex items-center justify-between p-2.5 text-left text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                   >
-                    <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 pr-3">
-                      {faq.q}
-                    </span>
-                    {isOpen ? (
-                      <ChevronUp className="h-4 w-4 text-purple-500 shrink-0" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />
-                    )}
+                    <span className="pr-2">{faq.q}</span>
+                    {isOpen ? <ChevronUp className="h-3.5 w-3.5 shrink-0 text-slate-400" /> : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
                   </button>
-
                   {isOpen && (
-                    <div className="p-3 sm:p-4 bg-white dark:bg-slate-900 text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800">
+                    <div className="px-2.5 pb-2.5 pt-1 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-800/20">
                       {faq.a}
                     </div>
                   )}
@@ -654,38 +719,6 @@ export default function UserGuideView({ user, onNavigate, onOpenProfile, onOpenS
           </div>
         </div>
       )}
-
-      {/* 7. Need Help / Urgent Crisis Support Footer */}
-      <div className="rounded-2xl sm:rounded-3xl bg-slate-900 dark:bg-slate-900/90 text-white p-4 sm:p-7 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border border-slate-800">
-        <div className="space-y-1 max-w-xl">
-          <div className="flex items-center space-x-2 text-rose-400 text-[11px] sm:text-xs font-bold">
-            <ShieldAlert className="h-4 w-4 animate-pulse shrink-0" />
-            <span>{isTh ? "สายด่วนสุขภาพจิตพร้อมช่วยเหลือ 24 ชั่วโมง" : "24/7 Mental Health Emergency Directory"}</span>
-          </div>
-          <h4 className="text-sm sm:text-base font-bold">
-            {t.guide.supportTitle}
-          </h4>
-          <p className="text-[11px] sm:text-xs text-slate-400 leading-relaxed">
-            {t.guide.supportText}
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 shrink-0 pt-2 sm:pt-0">
-          <button
-            onClick={() => onNavigate("aiChat")}
-            className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer text-center"
-          >
-            {isTh ? "คุยกับ AI Buddy" : "Chat with AI"}
-          </button>
-          <button
-            onClick={onOpenSOS}
-            className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-900/20 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
-          >
-            <ShieldAlert className="h-4 w-4" />
-            <span>{isTh ? "เปิดเมนู SOS" : "Open SOS"}</span>
-          </button>
-        </div>
-      </div>
 
     </div>
   );
