@@ -111,14 +111,24 @@ export default function SettingsView({
                   {user.avatar || "🧘"}
                 </div>
                 <div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{user.name.replace(/!+$/, '')}</h3>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300">
                       {user.role === "student" ? (isEn ? "Student" : "นักศึกษา") : (isEn ? "Working Adult" : "วัยทำงาน")}
                     </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      user.packageType === "premium"
+                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
+                        : user.packageType === "b2b"
+                        ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300"
+                        : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    }`}>
+                      {user.packageType === "premium" ? "B2C Premium" : user.packageType === "b2b" ? "B2B School" : "B2C Basic (ฟรี)"}
+                    </span>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Lv. {user.level} • {user.xp} XP • {user.streak} {isEn ? "Days Streak" : "วันต่อเนื่อง"}
+                    {user.emailOrPhone && ` • 📞 ${user.emailOrPhone}`}
                   </p>
                 </div>
               </div>

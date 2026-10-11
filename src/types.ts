@@ -18,6 +18,8 @@ export interface UserProfile {
   avatar?: string;
   password?: string;
   isRegistered?: boolean;
+  emailOrPhone?: string;
+  packageType?: 'basic' | 'premium' | 'b2b';
 }
 
 export type MoodType = 'excellent' | 'good' | 'neutral' | 'bad' | 'terrible';

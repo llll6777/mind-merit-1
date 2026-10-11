@@ -13,7 +13,9 @@ import {
   EyeOff,
   ArrowRight,
   UserCheck,
-  Check
+  Check,
+  Mail,
+  Phone
 } from "lucide-react";
 import { UserProfile } from "../types";
 
@@ -24,6 +26,7 @@ export interface RegisteredAccount {
   avatar: string;
   passcode: string;
   packageType: string;
+  emailOrPhone?: string;
   createdAt: string;
   xp?: number;
   level?: number;
@@ -49,6 +52,8 @@ export default function AuthModal({
 }: AuthModalProps) {
   const isEn = language === "en";
   const [mode, setMode] = useState<"login" | "register">(initialMode);
+  const [currentPackage, setCurrentPackage] = useState<"basic" | "premium" | "b2b">(selectedPackage);
+  const [contactInfo, setContactInfo] = useState("");
 
   // Form states
   const [name, setName] = useState("");
@@ -73,6 +78,8 @@ export default function AuthModal({
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
+      setCurrentPackage(selectedPackage);
+      setContactInfo("");
       setErrorMessage("");
       setSuccessMessage("");
       try {
@@ -91,7 +98,7 @@ export default function AuthModal({
         console.error("Failed to load saved accounts", e);
       }
     }
-  }, [isOpen, initialMode]);
+  }, [isOpen, initialMode, selectedPackage]);
 
   if (!isOpen) return null;
 
@@ -134,6 +141,29 @@ export default function AuthModal({
       return;
     }
 
+    // ถ้าจะสมัคร package ที่ไม่ใช่ฟรี ให้ใส่อีเมลหรือเบอร์โทรด้วย
+    const trimmedContact = contactInfo.trim();
+    if (currentPackage !== "basic") {
+      if (!trimmedContact) {
+        setErrorMessage(
+          isEn 
+            ? "Please enter your email or phone number for this paid package." 
+            : "ถ้าจะสมัคร package ที่ไม่ใช่ฟรี ให้ใส่อีเมลหรือเบอร์โทรด้วย"
+        );
+        return;
+      }
+      const hasEmailFormat = trimmedContact.includes("@") && trimmedContact.includes(".");
+      const digitsOnly = trimmedContact.replace(/\D/g, "");
+      if (!hasEmailFormat && digitsOnly.length < 9) {
+        setErrorMessage(
+          isEn 
+            ? "Please enter a valid email address or 9-10 digit phone number." 
+            : "กรุณากรอกอีเมลที่ถูกต้อง (เช่น yourname@email.com) หรือเบอร์โทรศัพท์อย่างน้อย 9-10 หลัก"
+        );
+        return;
+      }
+    }
+
     // Create new account
     const newAccount: RegisteredAccount = {
       id: "usr-" + Date.now(),
@@ -141,7 +171,8 @@ export default function AuthModal({
       role,
       avatar,
       passcode,
-      packageType: selectedPackage,
+      packageType: currentPackage,
+      emailOrPhone: trimmedContact || undefined,
       createdAt: new Date().toISOString(),
       xp: 50, // Welcome XP bonus!
       level: 1,
@@ -169,7 +200,9 @@ export default function AuthModal({
       visitsToday: 1,
       lastVisitDate: new Date().toISOString().split("T")[0],
       isRegistered: true,
-      password: passcode
+      password: passcode,
+      emailOrPhone: trimmedContact || undefined,
+      packageType: currentPackage
     };
 
     setSuccessMessage(isEn ? "Registration successful! Welcome to MIND MERIT." : "สมัครใช้งานสำเร็จ! กำลังเข้าสู่ระบบ...");
@@ -241,7 +274,9 @@ export default function AuthModal({
       visitsToday: 1,
       lastVisitDate: new Date().toISOString().split("T")[0],
       isRegistered: true,
-      password: matchedAccount.passcode
+      password: matchedAccount.passcode,
+      emailOrPhone: matchedAccount.emailOrPhone,
+      packageType: (matchedAccount.packageType as any) || "basic"
     };
 
     setSuccessMessage(isEn ? "Login successful! Welcome back." : "เข้าสู่ระบบสำเร็จ ยินดีต้อนรับกลับมา!");
@@ -256,6 +291,8 @@ export default function AuthModal({
     setName(acc.name);
     setRole(acc.role);
     setAvatar(acc.avatar);
+    if (acc.emailOrPhone) setContactInfo(acc.emailOrPhone);
+    if (acc.packageType) setCurrentPackage(acc.packageType as any);
     setPasscode("");
     setErrorMessage("");
   };
@@ -297,19 +334,66 @@ export default function AuthModal({
                   : "พิมพ์ชื่อที่ตั้งไว้และรหัส 6 หลัก เพื่อเข้าใช้ได้ทันทีโดยไม่ต้องสมัครใหม่")}
           </p>
 
-          {/* Package Badge if registering */}
+          {/* Package Selection if registering */}
           {mode === "register" && (
-            <div className="pt-1">
-              <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-[11px] font-bold bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200/60">
-                <ShieldCheck className="h-3 w-3 text-sky-500" />
-                <span>
-                  {selectedPackage === "premium" 
-                    ? (isEn ? "Package: B2C Premium (100 THB/mo)" : "แพ็กเกจ: B2C Premium (100 บาท/เดือน)")
-                    : selectedPackage === "b2b"
-                    ? (isEn ? "Package: B2B Enterprise / School" : "แพ็กเกจ: B2B Enterprise / โรงเรียน")
-                    : (isEn ? "Package: B2C Basic (Free)" : "แพ็กเกจ: B2C Basic (ฟรี)")}
+            <div className="pt-2 text-left space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  {isEn ? "Select Package:" : "เลือกแพ็กเกจ:"}
                 </span>
-              </span>
+                <span className="text-[10px] text-slate-400">
+                  {currentPackage === "basic" ? (isEn ? "Free forever" : "ฟรีตลอดไป") : (isEn ? "Paid plan (Email/Phone required)" : "ต้องใส่อีเมลหรือเบอร์โทร")}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => { setCurrentPackage("basic"); setErrorMessage(""); }}
+                  className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                    currentPackage === "basic"
+                      ? "border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-100 ring-2 ring-emerald-400/50"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-300"
+                  }`}
+                >
+                  <div className="text-[11px] font-black flex items-center justify-between">
+                    <span>B2C Basic</span>
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">ฟรี</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-0.5">0 บาท</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setCurrentPackage("premium"); setErrorMessage(""); }}
+                  className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                    currentPackage === "premium"
+                      ? "border-sky-500 bg-sky-50/80 dark:bg-sky-950/40 text-sky-900 dark:text-sky-100 ring-2 ring-sky-400/50"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-sky-300"
+                  }`}
+                >
+                  <div className="text-[11px] font-black flex items-center justify-between">
+                    <span>Premium</span>
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-sky-100 text-sky-800 font-bold">100 บ.</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-0.5">/ด./คน</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setCurrentPackage("b2b"); setErrorMessage(""); }}
+                  className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                    currentPackage === "b2b"
+                      ? "border-indigo-500 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-100 ring-2 ring-indigo-400/50"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-300"
+                  }`}
+                >
+                  <div className="text-[11px] font-black flex items-center justify-between">
+                    <span>B2B School</span>
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-100 text-indigo-800 font-bold">990 บ.</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-0.5">/ด./โรงเรียน</p>
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -456,6 +540,39 @@ export default function AuthModal({
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* 3.1 Email or Phone Field (จำเป็นถ้าจะสมัคร package ที่ไม่ใช่ฟรี) */}
+          {mode === "register" && currentPackage !== "basic" && (
+            <div className="space-y-1.5 p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 animate-in fade-in">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center space-x-1.5">
+                  <Mail className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>{isEn ? "Email or Phone Number *" : "อีเมลหรือเบอร์โทรศัพท์ *"}</span>
+                </label>
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-200/90 text-amber-900 dark:bg-amber-900 dark:text-amber-200">
+                  {isEn ? "Required for paid plan" : "จำเป็นสำหรับแพ็กเกจนี้"}
+                </span>
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  value={contactInfo}
+                  onChange={(e) => {
+                    setContactInfo(e.target.value);
+                    setErrorMessage("");
+                  }}
+                  placeholder={isEn ? "e.g. 081-234-5678 or you@email.com" : "เช่น 081-234-5678 หรือ you@email.com"}
+                  className="w-full px-3 py-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium"
+                />
+              </div>
+              <p className="text-[10px] text-amber-800 dark:text-amber-300 leading-snug">
+                💡 {isEn 
+                  ? "Required for paid package: Please provide your email or phone number for confirmation." 
+                  : "ถ้าจะสมัคร package ที่ไม่ใช่ฟรี ให้ใส่อีเมลหรือเบอร์โทรด้วย เพื่อยืนยันสิทธิ์และการติดต่อ"}
+              </p>
             </div>
           )}
 

@@ -448,7 +448,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen text-slate-800 dark:text-slate-100 font-sans transition-colors duration-300 pt-16">
+    <div className="min-h-screen text-slate-800 dark:text-slate-100 font-sans transition-colors duration-300 pt-14 sm:pt-16">
       
       {/* 0. Brand Logo Splash Screen on Initial Link Open (พื้นหลังสีขาว โหลด 5 วิ และเข้าสู่หน้าหลัก) */}
       {showSplash && (
@@ -541,6 +541,10 @@ export default function App() {
         }}
         onOpenGuide={() => setActiveTab("guide")}
         onOpenLanding={() => setActiveTab("landing")}
+        onOpenAuth={() => {
+          setActiveTab("landing");
+          window.dispatchEvent(new CustomEvent("mind_merit_open_auth_modal", { detail: { mode: "register" } }));
+        }}
         onViewLogo={() => setIsLogoModalOpen(true)}
         activeTab={activeTab}
       />

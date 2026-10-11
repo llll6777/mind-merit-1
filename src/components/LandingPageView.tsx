@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Zap, 
   ShieldCheck, 
@@ -24,7 +24,8 @@ import {
   Calendar,
   UserCheck,
   GraduationCap,
-  Briefcase
+  Briefcase,
+  AlertCircle
 } from "lucide-react";
 import { UserProfile } from "../types";
 
@@ -62,6 +63,100 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
   const openLogin = () => {
     setAuthModalMode("login");
     setAuthModalOpen(true);
+  };
+
+  useEffect(() => {
+    const handleTriggerAuth = (e: any) => {
+      const mode = e.detail?.mode || "register";
+      setAuthModalMode(mode);
+      setAuthModalOpen(true);
+    };
+    window.addEventListener("mind_merit_open_auth_modal", handleTriggerAuth);
+    return () => {
+      window.removeEventListener("mind_merit_open_auth_modal", handleTriggerAuth);
+    };
+  }, []);
+
+  // Paid Package Modal State (สำหรับผู้ใช้ที่ต้องการสมัคร package ที่ไม่ใช่ฟรี)
+  const [paidPackageModalOpen, setPaidPackageModalOpen] = useState(false);
+  const [paidPackageTarget, setPaidPackageTarget] = useState<"premium" | "b2b">("premium");
+  const [paidContactInput, setPaidContactInput] = useState("");
+  const [paidError, setPaidError] = useState("");
+  const [paidSuccess, setPaidSuccess] = useState(false);
+
+  const handleOpenSubscribePaid = (pkg: "premium" | "b2b") => {
+    if (user.isRegistered) {
+      setPaidPackageTarget(pkg);
+      setPaidContactInput(user.emailOrPhone || "");
+      setPaidError("");
+      setPaidSuccess(false);
+      setPaidPackageModalOpen(true);
+    } else {
+      openRegister(pkg);
+    }
+  };
+
+  const handleConfirmPaidSubscription = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPaidError("");
+    const trimmed = paidContactInput.trim();
+    if (!trimmed) {
+      setPaidError(
+        isEn 
+          ? "Please enter your email or phone number for this paid package." 
+          : "ถ้าจะสมัคร package ที่ไม่ใช่ฟรี ให้ใส่อีเมลหรือเบอร์โทรด้วย"
+      );
+      return;
+    }
+    const hasEmailFormat = trimmed.includes("@") && trimmed.includes(".");
+    const digitsOnly = trimmed.replace(/\D/g, "");
+    if (!hasEmailFormat && digitsOnly.length < 9) {
+      setPaidError(
+        isEn 
+          ? "Please enter a valid email address or 9-10 digit phone number." 
+          : "กรุณากรอกอีเมลที่ถูกต้อง (เช่น yourname@email.com) หรือเบอร์โทรศัพท์อย่างน้อย 9-10 หลัก"
+      );
+      return;
+    }
+
+    const updated: UserProfile = {
+      ...user,
+      packageType: paidPackageTarget,
+      emailOrPhone: trimmed
+    };
+
+    if (onUpdateUser) {
+      onUpdateUser(updated);
+    }
+
+    try {
+      localStorage.setItem("mind_merit_profile_v1", JSON.stringify(updated));
+      const stored = localStorage.getItem("mind_merit_registered_users_v1");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          const updatedList = parsed.map((acc: any) => {
+            if (acc.name && acc.name.toLowerCase() === user.name.toLowerCase()) {
+              return {
+                ...acc,
+                packageType: paidPackageTarget,
+                emailOrPhone: trimmed
+              };
+            }
+            return acc;
+          });
+          localStorage.setItem("mind_merit_registered_users_v1", JSON.stringify(updatedList));
+        }
+      }
+    } catch (err) {
+      console.error("Error updating user package:", err);
+    }
+
+    setPaidSuccess(true);
+    setTimeout(() => {
+      setPaidPackageModalOpen(false);
+      setPaidSuccess(false);
+    }, 1800);
   };
   
   // Private Expert Consultation Modal State
@@ -113,19 +208,19 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       {/* =========================================================================
           SECTION 1: Header / Navigation Bar (แถบเมนูด้านบนของหน้าหลัก)
           ========================================================================= */}
-      <header className="relative w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border border-sky-100/60 dark:border-slate-800/80 transition-all rounded-2xl sm:rounded-3xl shadow-sm px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between mb-4 sm:mb-8">
+      <header className="relative w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border border-sky-100/60 dark:border-slate-800/80 transition-all rounded-2xl sm:rounded-3xl shadow-sm px-2.5 sm:px-6 py-2 sm:py-3.5 flex items-center justify-between mb-3 sm:mb-8">
         
         {/* ฝั่งซ้าย: โลโก้แบรนด์ และปุ่มดูโลโก้ */}
-        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+        <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0 min-w-0">
           <div 
             onClick={openLogoView}
-            className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-sky-500/10 hover:scale-110 active:scale-95 transition-transform bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700 cursor-pointer group"
+            className="relative flex h-7 w-7 sm:h-9 sm:w-9 md:h-10 md:w-10 items-center justify-center rounded-lg sm:rounded-2xl overflow-hidden shadow-xs hover:scale-105 active:scale-95 transition-transform bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700 cursor-pointer group shrink-0"
             title={isEn ? "Click to view full Logo" : "คลิกเพื่อดูโลโก้เว็บขนาดเต็ม"}
           >
             <img 
               src="/logo.png" 
               alt="MIND MERIT" 
-              className="h-full w-full object-cover rounded-xl sm:rounded-2xl"
+              className="h-full w-full object-cover rounded-lg sm:rounded-2xl"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 const parent = e.currentTarget.parentElement;
@@ -136,20 +231,20 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               }}
             />
             <div className="brand-fallback hidden absolute inset-0 items-center justify-center bg-gradient-to-tr from-sky-400 via-emerald-400 via-pink-400 to-amber-300">
-              <span className="font-sans text-base sm:text-xl font-black text-white tracking-wider">M</span>
+              <span className="font-sans text-xs sm:text-base font-black text-white tracking-wider">M</span>
             </div>
             <div className="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Sparkles className="h-3.5 w-3.5 text-white" />
+              <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-white" />
             </div>
           </div>
           
           <div 
             onClick={openLogoView}
-            className="cursor-pointer group"
+            className="cursor-pointer group min-w-0"
             title={isEn ? "Click to view brand logo" : "คลิกเพื่อดูโลโก้เว็บ"}
           >
             <div className="flex items-center space-x-2">
-              <span className="font-black text-sm sm:text-lg text-slate-800 dark:text-slate-100 tracking-tight group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+              <span className="font-black text-xs sm:text-base md:text-lg text-slate-800 dark:text-slate-100 tracking-tight group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors truncate">
                 MIND MERIT
               </span>
             </div>
@@ -192,49 +287,22 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </button>
         </nav>
 
-        {/* ฝั่งขวา: ปุ่ม เข้าสู่ระบบ / สมัครใช้งาน หรือโปรไฟล์เมื่อล็อกอินแล้ว */}
-        <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
-          {user.isRegistered ? (
-            <div className="flex items-center space-x-2">
+        {/* ฝั่งขวา: โปรไฟล์และปุ่มเข้าสู่แดชบอร์ดเมื่อล็อกอินแล้วเท่านั้น (นำปุ่มเข้าสู่ระบบ/สมัครใช้งานออกตามที่เลือก) */}
+        <div className="flex items-center space-x-1 sm:space-x-3 shrink-0">
+          {user.isRegistered && (
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
               <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-2xl bg-sky-50 dark:bg-slate-800 border border-sky-100 dark:border-slate-700">
                 <span className="text-base">{user.avatar || "🧘"}</span>
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-100">{user.name.replace(/!+$/, '')}</span>
               </div>
               <button
                 onClick={onEnterApp}
-                className="px-3.5 sm:px-4 py-2 text-xs font-bold text-white rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center space-x-1.5"
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-white rounded-lg sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 shadow-xs sm:shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center space-x-1 sm:space-x-1.5 whitespace-nowrap"
               >
-                <LayoutDashboard className="h-4 w-4" />
+                <LayoutDashboard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>{isEn ? "Go to Dashboard" : "เข้าสู่แดชบอร์ด"}</span>
               </button>
             </div>
-          ) : (
-            <>
-              <button
-                onClick={openLogin}
-                className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-sky-600 dark:hover:text-sky-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-              >
-                {isEn ? "Log In" : "เข้าสู่ระบบ"}
-              </button>
-
-              <button
-                onClick={() => openRegister("basic")}
-                className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-white rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center space-x-1 sm:space-x-1.5"
-              >
-                <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                <span>{isEn ? "Sign Up Free" : "สมัครใช้งาน"}</span>
-              </button>
-
-              {/* Quick jump directly into live app */}
-              <button
-                onClick={onEnterApp}
-                title={isEn ? "Launch App" : "เข้าสู่แอป"}
-                className="p-2 text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-2xl hover:bg-sky-100 transition-all cursor-pointer hidden md:flex items-center space-x-1"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                <span className="text-[11px]">{isEn ? "Dashboard" : "แดชบอร์ด"}</span>
-              </button>
-            </>
           )}
         </div>
       </header>
@@ -281,24 +349,37 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               : "แพลตฟอร์มดูแลสุขภาพจิตอัจฉริยะสำหรับนักเรียน นักศึกษา และคนทำงาน ช่วยวิเคราะห์ความรู้สึกและตรวจจับความเครียดอัตโนมัติ แม่นยำ ปลอดภัย พร้อมคู่หู AI และเกียรติบัตรรับรอง"}
           </p>
 
-          {/* ปุ่ม Call-to-Action (CTA) */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              onClick={() => openRegister("basic")}
-              className="w-full sm:w-auto px-7 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
-            >
-              <span>{isEn ? "Sign Up Free" : "สมัครใช้งาน (ฟรี)"}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
+          {/* ปุ่ม Call-to-Action (CTA) - เมือ่สมัครผู้ใช้งานแล้ว ในหน้าหลักไม่ต้องมีสมัครใช้งานและเข้าสู่ระบบแล้ว */}
+          {user.isRegistered ? (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                onClick={onEnterApp}
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
+              >
+                <span className="text-base">{user.avatar || "🧘"}</span>
+                <span>{isEn ? `Go to Dashboard (${user.name.replace(/!+$/, '')})` : `เข้าสู่แดชบอร์ดของคุณ (${user.name.replace(/!+$/, '')})`}</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => openRegister("basic")}
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
+              >
+                <span>{isEn ? "Sign Up Free" : "สมัครใช้งาน (ฟรี)"}</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
 
-            <button
-              onClick={openLogin}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-bold text-xs sm:text-sm border border-sky-200/80 dark:border-sky-800 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
-            >
-              <UserCheck className="h-4 w-4 text-sky-500" />
-              <span>{isEn ? "Log In" : "เข้าสู่ระบบ"}</span>
-            </button>
-          </div>
+              <button
+                onClick={openLogin}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-bold text-xs sm:text-sm border border-sky-200/80 dark:border-sky-800 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
+              >
+                <UserCheck className="h-4 w-4 text-sky-500" />
+                <span>{isEn ? "Log In" : "เข้าสู่ระบบ"}</span>
+              </button>
+            </div>
+          )}
 
           {/* 4 Feature Highlights */}
           <div className="pt-4 flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 text-[10px] sm:text-[11px] font-semibold text-slate-600 dark:text-slate-400">
@@ -508,18 +589,6 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
           </div>
 
         </div>
-
-        {/* CTA below steps */}
-        <div className="text-center pt-1">
-          <button
-            onClick={onEnterApp}
-            className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl sm:rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-xs hover:opacity-90 transition-all cursor-pointer shadow-md"
-          >
-            <span>{isEn ? "Try The 3 Steps Now" : "ทดลองใช้งาน 3 ขั้นตอนนี้เลย"}</span>
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-
       </section>
 
       {/* =========================================================================
@@ -597,13 +666,23 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               </div>
             </div>
 
-            <button
-              onClick={() => openRegister("basic")}
-              className="w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <span>{isEn ? "Apply B2C Basic (Free)" : "สมัครใช้งาน B2C Basic (ฟรี)"}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
+            {user.isRegistered ? (
+              <button
+                onClick={onEnterApp}
+                className="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>{user.packageType === "premium" ? (isEn ? "Go to Dashboard (Premium active)" : "เข้าสู่แอป (มีสิทธิ์ Premium)") : (isEn ? "Active Plan: Free (Go to Dashboard)" : "ใช้งานแพ็กเกจนี้อยู่ (ฟรี)")}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => openRegister("basic")}
+                className="w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span>{isEn ? "Apply B2C Basic (Free)" : "สมัครใช้งาน B2C Basic (ฟรี)"}</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           {/* Package 2: B2C Premium Package (แพ็กเกจบุคคล - ขั้นสูง) [FEATURED] */}
@@ -640,7 +719,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 </div>
                 <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 bg-sky-50/80 dark:bg-sky-950/40 p-2.5 rounded-xl border border-sky-100 dark:border-sky-900/40 leading-relaxed">
                   <span className="font-bold text-sky-700 dark:text-sky-300">เงื่อนไข: </span>
-                  ชำระค่าบริการเป็นรายเดือนต่อผู้ใช้งาน สำหรับผู้ที่ต้องการระบบวิเคราะห์และคำแนะนำเฉพาะบุคคล
+                  ชำระค่าบริการเป็นรายเดือนต่อผู้ใช้งาน สำหรับผู้ที่ต้องการระบบวิเคราะห์และคำแนะนำเฉพาะบุคคล (ต้องใส่อีเมลหรือเบอร์โทร)
                 </div>
               </div>
 
@@ -667,11 +746,15 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
             </div>
 
             <button
-              onClick={() => openRegister("premium")}
+              onClick={() => handleOpenSubscribePaid("premium")}
               className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-pink-500 hover:from-sky-600 hover:to-pink-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-500/25 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span>{isEn ? "Apply B2C Premium (100 THB/mo)" : "สมัคร B2C Premium Package"}</span>
               <Sparkles className="h-4 w-4" />
+              <span>
+                {user.isRegistered && user.packageType === "premium"
+                  ? (isEn ? "Active Plan: B2C Premium (100 THB/mo)" : "กำลังใช้งาน B2C Premium อยู่ (100 บ./ด.)")
+                  : (isEn ? "Apply B2C Premium (100 THB/mo)" : "สมัคร B2C Premium Package (100 บ./ด.)")}
+              </span>
             </button>
           </div>
 
@@ -702,7 +785,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 </div>
                 <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 bg-indigo-50/60 dark:bg-indigo-950/30 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/40 leading-relaxed">
                   <span className="font-bold text-indigo-700 dark:text-indigo-300">เงื่อนไข: </span>
-                  ชำระบริการเป็นรายเดือนต่อ 1 โรงเรียน
+                  ชำระบริการเป็นรายเดือนต่อ 1 โรงเรียน (ต้องใส่อีเมลหรือเบอร์โทรผู้ประสานงาน)
                 </div>
               </div>
 
@@ -729,10 +812,10 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
             </div>
 
             <button
-              onClick={() => setContactModalOpen(true)}
+              onClick={() => handleOpenSubscribePaid("b2b")}
               className="w-full py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 transition-all cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span>{isEn ? "Inquire B2B School Package" : "ติดต่อฝ่ายวิชาการ / สนใจ B2B School Package"}</span>
+              <span>{isEn ? "Subscribe B2B School Package (990 THB/mo)" : "สมัคร B2B School Package (990 บ./ด.)"}</span>
               <Building2 className="h-4 w-4" />
             </button>
           </div>
@@ -1045,13 +1128,23 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                   </ul>
                 </div>
 
-                <button
-                  onClick={() => { setPricingModalOpen(false); openRegister("basic"); }}
-                  className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-1.5"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span>{isEn ? "Apply B2C Basic (Free)" : "สมัครใช้งาน B2C Basic (ฟรี)"}</span>
-                </button>
+                {user.isRegistered ? (
+                  <button
+                    onClick={() => { setPricingModalOpen(false); onEnterApp(); }}
+                    className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>{isEn ? "Active Plan (Go to App)" : "ใช้งานแพ็กเกจนี้อยู่ (เข้าสู่แอป)"}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setPricingModalOpen(false); openRegister("basic"); }}
+                    className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span>{isEn ? "Apply B2C Basic (Free)" : "สมัครใช้งาน B2C Basic (ฟรี)"}</span>
+                  </button>
+                )}
               </div>
 
               {/* Package 2: B2C Premium Package */}
@@ -1075,7 +1168,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
 
                   <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-slate-800/60 p-2 rounded-xl border border-sky-100 dark:border-sky-900/40">
                     <span className="font-bold text-sky-700 dark:text-sky-300">เงื่อนไข: </span>
-                    ชำระเป็นรายเดือนต่อผู้ใช้งาน สำหรับผู้ที่ต้องการวิเคราะห์เฉพาะบุคคล
+                    ชำระเป็นรายเดือนต่อผู้ใช้งาน สำหรับผู้ที่ต้องการวิเคราะห์เฉพาะบุคคล (ต้องใส่อีเมลหรือเบอร์โทร)
                   </div>
 
                   <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
@@ -1095,11 +1188,15 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 </div>
 
                 <button
-                  onClick={() => { setPricingModalOpen(false); openRegister("premium"); }}
+                  onClick={() => { setPricingModalOpen(false); handleOpenSubscribePaid("premium"); }}
                   className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-500 to-pink-500 hover:from-sky-600 hover:to-pink-600 text-white font-bold text-xs shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
                 >
                   <Sparkles className="h-4 w-4" />
-                  <span>{isEn ? "Apply B2C Premium" : "สมัคร B2C Premium Package"}</span>
+                  <span>
+                    {user.isRegistered && user.packageType === "premium"
+                      ? (isEn ? "Active Plan: B2C Premium" : "ใช้งาน B2C Premium อยู่แล้ว")
+                      : (isEn ? "Apply B2C Premium (100 THB/mo)" : "สมัคร B2C Premium Package (100 บ./ด.)")}
+                  </span>
                 </button>
               </div>
 
@@ -1124,7 +1221,7 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
 
                   <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-slate-800/60 p-2 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
                     <span className="font-bold text-indigo-700 dark:text-indigo-300">เงื่อนไข: </span>
-                    ชำระบริการเป็นรายเดือนต่อ 1 โรงเรียน
+                    ชำระบริการเป็นรายเดือนต่อ 1 โรงเรียน (ต้องใส่อีเมลหรือเบอร์โทรผู้ประสานงาน)
                   </div>
 
                   <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
@@ -1144,11 +1241,11 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                 </div>
 
                 <button
-                  onClick={() => { setPricingModalOpen(false); setContactModalOpen(true); }}
+                  onClick={() => { setPricingModalOpen(false); handleOpenSubscribePaid("b2b"); }}
                   className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center space-x-1.5"
                 >
                   <Building2 className="h-4 w-4" />
-                  <span>ติดต่อฝ่ายวิชาการ / สนใจ Package</span>
+                  <span>{isEn ? "Subscribe B2B School (990 THB/mo)" : "สมัคร B2B School Package (990 บ./ด.)"}</span>
                 </button>
               </div>
 
@@ -1358,6 +1455,166 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
                   ส่งข้อความถึงทีมงาน
                 </button>
               </form>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* 4. Modal สำหรับสมัคร Package ที่ไม่ใช่ฟรี (ถ้าจะสมัคร package ที่ไม่ใช่ฟรี ให้ใส่อีเมลหรือเบอร์โทรด้วย) */}
+      {paidPackageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-sky-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 overflow-hidden text-slate-800 dark:text-slate-100 max-h-[92vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Decorative Pastel Line */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-400 via-indigo-400 via-pink-400 to-amber-300" />
+
+            {/* Close Button */}
+            <button
+              onClick={() => setPaidPackageModalOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-500 to-pink-500 text-white shadow-md shadow-sky-500/20">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                {paidPackageTarget === "premium" 
+                  ? (isEn ? "Subscribe to B2C Premium Package" : "สมัครใช้งาน B2C Premium Package")
+                  : (isEn ? "Subscribe to B2B School Package" : "สมัครใช้งาน B2B School Package")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                {paidPackageTarget === "premium"
+                  ? (isEn ? "100 THB / month / user - Deep Personalized AI Analytics & Insights" : "100 บาท / เดือน / คน - วิเคราะห์เจาะลึกเฉพาะบุคคลและคำแนะนำพิเศษ")
+                  : (isEn ? "990 THB / month / school - Real-time School Mental Health Dashboard" : "990 บาท / เดือน / โรงเรียน - แดชบอร์ดสรุปสุขภาพจิตนักเรียนทั้งโรงเรียน")}
+              </p>
+            </div>
+
+            {/* User Account Info */}
+            <div className="mt-4 p-3.5 rounded-2xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/40 flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <span className="text-2xl">{user.avatar || "🧘"}</span>
+                <div>
+                  <div className="text-xs font-black text-slate-800 dark:text-slate-100">
+                    {user.name.replace(/!+$/, '')}
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {user.role === "student" ? (isEn ? "Student" : "นักศึกษา") : (isEn ? "Working Adult" : "วัยทำงาน")} • {isEn ? "Logged-in Account" : "บัญชีผู้ใช้ปัจจุบัน"}
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                {isEn ? "Active Account" : "เข้าสู่ระบบแล้ว"}
+              </span>
+            </div>
+
+            {/* Success Message */}
+            {paidSuccess && (
+              <div className="mt-4 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs flex items-center space-x-2 animate-in fade-in">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                <div className="font-bold">
+                  {isEn 
+                    ? `Subscription successful! Package upgraded to ${paidPackageTarget === "premium" ? "B2C Premium" : "B2B School"}.` 
+                    : `สมัครแพ็กเกจสำเร็จ! ระบบได้บันทึกข้อมูลการติดต่อและอัปเกรดเป็น ${paidPackageTarget === "premium" ? "B2C Premium" : "B2B School"} เรียบร้อยแล้ว`}
+                </div>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {paidError && (
+              <div className="mt-4 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-300 text-xs flex items-center space-x-2 animate-in fade-in">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+                <span className="font-bold leading-tight">{paidError}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            {!paidSuccess && (
+              <form onSubmit={handleConfirmPaidSubscription} className="mt-4 space-y-4">
+                {/* Notice Banner */}
+                <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-1">
+                  <div className="flex items-center space-x-1.5 text-xs font-bold text-amber-900 dark:text-amber-200">
+                    <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <span>{isEn ? "Contact Information Requirement" : "เงื่อนไขการสมัครแพ็กเกจที่ไม่ใช่ฟรี"}</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed font-semibold">
+                    💡 {isEn 
+                      ? "If you want to apply for a non-free package, please provide your email or phone number." 
+                      : "ถ้าจะสมัคร package ที่ไม่ใช่ฟรี ให้ใส่อีเมลหรือเบอร์โทรด้วย เพื่อใช้ในการติดต่อ ยืนยันสิทธิ์ และส่งมอบบริการ"}
+                  </p>
+                </div>
+
+                {/* Email or Phone Input Field */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+                      <Mail className="h-3.5 w-3.5 text-sky-500" />
+                      <span>{isEn ? "Email or Phone Number *" : "อีเมลหรือเบอร์โทรศัพท์ *"}</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-rose-500">
+                      {isEn ? "(Required)" : "(จำเป็นต้องระบุ)"}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={paidContactInput}
+                      onChange={(e) => {
+                        setPaidContactInput(e.target.value);
+                        setPaidError("");
+                      }}
+                      placeholder={isEn ? "e.g. 081-234-5678 or yourname@email.com" : "เช่น 081-234-5678 หรือ yourname@email.com"}
+                      className="w-full px-3.5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 font-medium shadow-2xs"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {isEn 
+                      ? "Enter a valid email address (with @ and .) or 9-10 digit phone number" 
+                      : "กรอกอีเมล (เช่น yourname@email.com) หรือเบอร์โทรศัพท์ 9-10 หลัก"}
+                  </p>
+                </div>
+
+                {/* Buttons */}
+                <div className="pt-2 flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaidPackageModalOpen(false)}
+                    className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer"
+                  >
+                    {isEn ? "Cancel" : "ยกเลิก"}
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-pink-500 hover:from-sky-600 hover:to-pink-600 text-white font-bold text-xs shadow-md shadow-sky-500/25 transition-all cursor-pointer flex items-center justify-center space-x-1.5 hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <span>{isEn ? "Confirm Subscription" : "ยืนยันการสมัครแพ็กเกจ"}</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {paidSuccess && (
+              <div className="mt-4 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaidPackageModalOpen(false);
+                    onEnterApp();
+                  }}
+                  className="w-full py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer flex items-center justify-center space-x-2"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span>{isEn ? "Go to Dashboard with New Package ➜" : "เข้าสู่แดชบอร์ดพร้อมแพ็กเกจใหม่ ➜"}</span>
+                </button>
+              </div>
             )}
 
           </div>

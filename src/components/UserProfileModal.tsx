@@ -203,9 +203,29 @@ export default function UserProfileModal({
                     </button>
                   </div>
                 )}
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/25 text-white backdrop-blur-md border border-white/30">
-                  {user.role === "student" ? (isEn ? "Student" : "นักศึกษา") : (isEn ? "Working Adult" : "วัยทำงาน")}
-                </span>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 pt-0.5">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/25 text-white backdrop-blur-md border border-white/30">
+                    {user.role === "student" ? (isEn ? "Student" : "นักศึกษา") : (isEn ? "Working Adult" : "วัยทำงาน")}
+                  </span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border backdrop-blur-md ${
+                    user.packageType === "premium" 
+                      ? "bg-amber-400/30 text-amber-100 border-amber-300/40" 
+                      : user.packageType === "b2b"
+                      ? "bg-indigo-400/30 text-indigo-100 border-indigo-300/40"
+                      : "bg-emerald-400/25 text-emerald-100 border-emerald-300/30"
+                  }`}>
+                    {user.packageType === "premium" 
+                      ? "B2C Premium" 
+                      : user.packageType === "b2b"
+                      ? "B2B School"
+                      : "B2C Basic (ฟรี)"}
+                  </span>
+                  {user.emailOrPhone && (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-black/20 text-white/90 border border-white/20">
+                      📞 {user.emailOrPhone}
+                    </span>
+                  )}
+                </div>
               </div>
               <p className="text-xs text-purple-100 italic">
                 "{bio}"
