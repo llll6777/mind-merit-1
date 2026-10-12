@@ -1263,15 +1263,15 @@ export default function AdminView({ user, certificates, moodLogs }: AdminViewPro
                 </h3>
                 <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
                   {isEn
-                    ? "Store all user registrations, subscription packages, mood logs, and certificates in your personal Google Drive spreadsheet. Completely private and restricted exclusively to your authorized email."
-                    : "จัดเก็บข้อมูลสมาชิกผู้ใช้งาน, แพ็กเกจที่เลือก, ประวัติการประเมินอารมณ์ และใบประกาศนียบัตรลงใน Google Sheets บน Google Drive ส่วนตัวของคุณ ปลอดภัย 100% ไม่อยู่ในหน้าจอผู้ใช้ทั่วไป"}
+                    ? "Store strictly user emails and verification statuses in your personal Google Drive spreadsheet. Absolutely zero personal data, journals, or private logs are ever accessed or stored. Strictly restricted exclusively to your authorized email."
+                    : "จัดเก็บเฉพาะ 'อีเมลผู้ใช้' และสถานะการยืนยันตัวตนลงใน Google Sheets บน Google Drive ส่วนตัวของคุณ ปลอดภัย 100% ไม่เข้าถึงและไม่เก็บข้อมูลส่วนตัว ชื่อจริง หรือบันทึกไดอารี่อารมณ์ของผู้ใช้เด็ดขาด"}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-2 text-[11px] font-semibold text-emerald-200">
                   <span className="px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-400/40 text-emerald-200 font-bold flex items-center space-x-1.5">
                     <Lock className="h-3.5 w-3.5 text-emerald-300" />
                     <span>จำกัดสิทธิ์เฉพาะ: {AUTHORIZED_SHEETS_EMAIL}</span>
                   </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10">📊 3 Structured Sheets: Users / MoodLogs / Certificates</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10">🛡️ Zero Personal Data (บันทึกเฉพาะอีเมลเท่านั้น)</span>
                   <span className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10">☁️ Real-time Google Drive Sync</span>
                 </div>
               </div>
@@ -1506,14 +1506,16 @@ export default function AdminView({ user, certificates, moodLogs }: AdminViewPro
                 {/* Action Buttons Grid */}
                 <div className="grid gap-3 sm:grid-cols-2">
                   
-                  {/* Action 1: Sync Users */}
+                  {/* Action 1: Sync Users Email Directory */}
                   <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 space-y-2">
                     <div className="flex items-center space-x-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
                       <Users className="h-4 w-4 shrink-0 text-emerald-600" />
-                      <span>ซิงค์ข้อมูลผู้ใช้งาน (Users)</span>
+                      <span>{isEn ? "Sync User Emails (Email Only)" : "ซิงค์เฉพาะอีเมลผู้ใช้ (Email Directory)"}</span>
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">
-                      ส่งข้อมูลบัญชีผู้ใช้, ระดับเลเวล, แพ็กเกจที่สมัคร, และแต้มสะสมทั้งหมดเข้าชีตแท็บ Users
+                      {isEn 
+                        ? "Exports strictly user emails and verification statuses into the Users sheet. Zero personal data." 
+                        : "ส่งเฉพาะข้อมูลอีเมลผู้ใช้และสถานะการยืนยันตัวตนเข้าชีต Users (ไม่ส่งออกชื่อจริง เบอร์โทร หรือประวัติส่วนตัวเด็ดขาด)"}
                     </p>
                     <button
                       onClick={handleCreateOrSyncSheet}
@@ -1522,27 +1524,28 @@ export default function AdminView({ user, certificates, moodLogs }: AdminViewPro
                       className="w-full mt-2 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <RefreshCw className={`h-3.5 w-3.5 ${isSyncingSheets ? 'animate-spin' : ''}`} />
-                      <span>{isSyncingSheets ? "กำลังซิงค์..." : !isGoogleAuthorized ? "ล็อกสิทธิ์เฉพาะเจ้าของ" : "ซิงค์ข้อมูลผู้ใช้ทันที"}</span>
+                      <span>{isSyncingSheets ? "กำลังซิงค์..." : !isGoogleAuthorized ? "ล็อกสิทธิ์เฉพาะเจ้าของ" : "ซิงค์เฉพาะอีเมลทันที"}</span>
                     </button>
                   </div>
 
-                  {/* Action 2: Sync Mood Logs */}
+                  {/* Action 2: Zero Personal Data & Privacy Guarantee */}
                   <div className="p-4 rounded-2xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/60 space-y-2">
                     <div className="flex items-center space-x-2 text-sky-800 dark:text-sky-300 font-bold text-xs">
-                      <Activity className="h-4 w-4 shrink-0 text-sky-600" />
-                      <span>ซิงค์บันทึกอารมณ์ (MoodLogs)</span>
+                      <ShieldCheck className="h-4 w-4 shrink-0 text-sky-600" />
+                      <span>{isEn ? "Zero Personal Data Policy" : "การคุ้มครองข้อมูลส่วนบุคคล (Zero Personal Data)"}</span>
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">
-                      ส่งข้อมูลคะแนนอารมณ์, ดัชนีความเครียด, ชั่วโมงนอน, และการวิเคราะห์ AI เข้าชีตแท็บ MoodLogs
+                      {isEn 
+                        ? "Mood logs and personal diaries are strictly locked to the user device and NEVER uploaded to external sheets." 
+                        : "บันทึกอารมณ์และไดอารี่ส่วนตัวของผู้ใช้ได้รับการล็อกความเป็นส่วนตัวสูงสุด ไม่ถูกส่งออกไปยัง Google Sheets ภายนอก"}
                     </p>
                     <button
                       onClick={handleSyncMoodLogs}
-                      disabled={isSyncingSheets || !isGoogleAuthorized}
-                      title={!isGoogleAuthorized ? `อนุญาตเฉพาะ ${AUTHORIZED_SHEETS_EMAIL} เท่านั้น` : undefined}
-                      className="w-full mt-2 py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isSyncingSheets}
+                      className="w-full mt-2 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-sky-300 text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer"
                     >
-                      <RefreshCw className={`h-3.5 w-3.5 ${isSyncingSheets ? 'animate-spin' : ''}`} />
-                      <span>{isSyncingSheets ? "กำลังซิงค์..." : !isGoogleAuthorized ? "ล็อกสิทธิ์เฉพาะเจ้าของ" : "ซิงค์บันทึกอารมณ์ทันที"}</span>
+                      <Lock className="h-3.5 w-3.5 text-emerald-400" />
+                      <span>{isEn ? "Check Privacy Policy" : "ตรวจสอบการคุ้มครองข้อมูล"}</span>
                     </button>
                   </div>
 
@@ -1553,7 +1556,7 @@ export default function AdminView({ user, certificates, moodLogs }: AdminViewPro
                       <span>สร้าง Google Sheet ไฟล์ใหม่</span>
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">
-                      สร้างสเปรดชีตเล่มใหม่บน Drive ของ {AUTHORIZED_SHEETS_EMAIL} พร้อมเตรียม 3 แท็บมาตรฐาน
+                      สร้างสเปรดชีตเล่มใหม่บน Drive ของ {AUTHORIZED_SHEETS_EMAIL} สำหรับบันทึกเฉพาะอีเมลผู้ใช้
                     </p>
                     <button
                       onClick={handleCreateNewSheet}

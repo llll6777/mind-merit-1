@@ -3,6 +3,7 @@ import {
   Settings as SettingsIcon, 
   LogOut, 
   User, 
+  Mail,
   ShieldCheck, 
   Moon, 
   Sun, 
@@ -128,7 +129,7 @@ export default function SettingsView({
                   </div>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Lv. {user.level} • {user.xp} XP • {user.streak} {isEn ? "Days Streak" : "วันต่อเนื่อง"}
-                    {user.emailOrPhone && ` • 📞 ${user.emailOrPhone}`}
+                    {(user.email || (user.emailOrPhone && user.emailOrPhone.includes("@"))) && ` • ✉️ ${user.email || user.emailOrPhone}`}
                   </p>
                 </div>
               </div>
@@ -140,6 +141,42 @@ export default function SettingsView({
               >
                 <span>{isEn ? "View Profile & Edit Name" : "ดูโปรไฟล์และแก้ไขชื่อ"}</span>
                 <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* Email & Identity Verification Status Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/40 gap-3 text-xs">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-2xs border border-sky-100 dark:border-slate-700">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {user.email ? user.email : (isEn ? "No email linked" : "ยังไม่ได้ผูกอีเมลสำหรับยืนยันตัวตน")}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                      user.isEmailVerified
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300"
+                        : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
+                    }`}>
+                      {user.isEmailVerified ? (isEn ? "Verified ✅" : "ยืนยันตัวตนแล้ว ✅") : (isEn ? "Unverified ⚠️" : "ยังไม่ได้ยืนยัน ⚠️")}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {user.isEmailVerified
+                      ? (isEn ? "Email identity verified. Used for login & account protection." : "ยืนยันตัวตนด้วยอีเมลสำเร็จ ใช้ล็อกอินและปกป้องบัญชีของคุณ")
+                      : (isEn ? "Verify your email in Profile to ensure secure login." : "กดยืนยันตัวตนด้วยอีเมลในหน้าโปรไฟล์เพื่อเปิดใช้งานสิทธิ์การล็อกอินด้วยอีเมล")}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={onOpenProfile}
+                className="px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[11px] font-bold transition-all cursor-pointer shadow-xs self-start sm:self-auto flex items-center space-x-1"
+              >
+                <span>{user.isEmailVerified ? (isEn ? "Manage Email" : "จัดการอีเมล") : (isEn ? "Verify Identity" : "ยืนยันตัวตนด้วยอีเมล")}</span>
+                <ChevronRight className="h-3 w-3" />
               </button>
             </div>
 
@@ -155,8 +192,8 @@ export default function SettingsView({
                   </div>
                   <p className="text-[11px] text-rose-700/80 dark:text-rose-400/80 leading-relaxed max-w-xl">
                     {isEn
-                      ? "When you sign out, your level, XP points, continuous streak, and certificates are saved safely in the system. You can log back in anytime using your registered name and 6-digit passcode to restore all your data."
-                      : "เมื่อกดยกเลิกการเข้าสู่ระบบ ระบบจะบันทึกข้อมูล เลเวล ({user.level}), คะแนน ({user.xp} XP), สถิติต่อเนื่อง ({user.streak} วัน) และเกียรติบัตรทั้งหมดของคุณไว้อย่างปลอดภัยในระบบ หากต้องการกลับมาใช้งานต่อ สามารถกด 'เข้าสู่ระบบ' ด้วยชื่อของคุณและรหัส 6 หลักเดิมเพื่อดึงข้อมูลกลับมาได้ทุกเมื่อ"}
+                      ? "When you sign out, your level, XP points, continuous streak, and certificates are saved safely in the system. You can log back in anytime using your email and 6-digit passcode to restore all your data."
+                      : `เมื่อกดยกเลิกการเข้าสู่ระบบ ข้อมูล เลเวล (${user.level}), คะแนน (${user.xp} XP), สถิติต่อเนื่อง (${user.streak} วัน) จะถูกบันทึกไว้อย่างปลอดภัย สามารถเข้าสู่ระบบใหม่ได้ทุกเมื่อด้วย 'อีเมล' หรือชื่อของคุณและรหัส 6 หลักเดิม`}
                   </p>
                 </div>
               </div>

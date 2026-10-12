@@ -27,7 +27,7 @@ export const getSpreadsheetUrl = (spreadsheetId: string) => {
 };
 
 /**
- * Creates a structured Google Sheet with 3 worksheets (Users, MoodLogs, Certificates)
+ * Creates a structured Google Sheet for Email Directory (Strict Privacy - Zero Personal Data)
  */
 export const createDatabaseSpreadsheet = async (): Promise<SheetDatabaseInfo> => {
   if (!auth.currentUser || !isAuthorizedSheetsEmail(auth.currentUser.email)) {
@@ -47,24 +47,12 @@ export const createDatabaseSpreadsheet = async (): Promise<SheetDatabaseInfo> =>
     },
     body: JSON.stringify({
       properties: {
-        title: "MIND MERIT - Database & User Records (Admin Private)",
+        title: "MIND MERIT - User Emails & Verification (Strict Privacy - Email Only)",
       },
       sheets: [
         {
           properties: {
             title: "Users",
-            gridProperties: { frozenRowCount: 1 },
-          },
-        },
-        {
-          properties: {
-            title: "MoodLogs",
-            gridProperties: { frozenRowCount: 1 },
-          },
-        },
-        {
-          properties: {
-            title: "Certificates",
             gridProperties: { frozenRowCount: 1 },
           },
         },
@@ -81,7 +69,7 @@ export const createDatabaseSpreadsheet = async (): Promise<SheetDatabaseInfo> =>
   const spreadsheetId = data.spreadsheetId;
   saveSpreadsheetId(spreadsheetId);
 
-  // Set up header columns for each sheet
+  // Set up header columns for Users sheet (Email only, no personal data)
   await initializeSheetHeaders(spreadsheetId, token);
 
   return {
@@ -91,51 +79,19 @@ export const createDatabaseSpreadsheet = async (): Promise<SheetDatabaseInfo> =>
 };
 
 /**
- * Populates header rows for Users, MoodLogs, and Certificates
+ * Populates header rows for Users sheet (Zero personal data - strictly Email only)
  */
 const initializeSheetHeaders = async (spreadsheetId: string, token: string) => {
   const userHeaders = [
     [
-      "Registered At",
-      "Full Name / Display Name",
-      "Role",
-      "Package Type",
-      "Email or Phone",
-      "Level",
-      "Total XP",
-      "Day Streak",
-      "Status",
+      "Registered At (วัน-เวลา)",
+      "User Email (อีเมลผู้ใช้ - ข้อมูลเดียวที่จัดเก็บ)",
+      "Verification Status (สถานะยืนยันตัวตน)",
+      "Privacy Policy (นโยบายความเป็นส่วนตัว)",
     ],
   ];
 
-  const moodHeaders = [
-    [
-      "Date",
-      "User Name",
-      "Mood Rating",
-      "Stress (1-10)",
-      "Sleep (hrs)",
-      "Exercise (mins)",
-      "Gratitude Note",
-      "Journal Entry",
-      "AI Counselor Feedback",
-    ],
-  ];
-
-  const certHeaders = [
-    [
-      "Issued At",
-      "User Name",
-      "Certificate Title (EN)",
-      "Certificate Title (TH)",
-      "Certificate ID",
-      "Digital Signature",
-    ],
-  ];
-
-  await updateSheetRange(spreadsheetId, "Users!A1:I1", userHeaders, token);
-  await updateSheetRange(spreadsheetId, "MoodLogs!A1:I1", moodHeaders, token);
-  await updateSheetRange(spreadsheetId, "Certificates!A1:F1", certHeaders, token);
+  await updateSheetRange(spreadsheetId, "Users!A1:D1", userHeaders, token);
 };
 
 const updateSheetRange = async (
@@ -208,22 +164,24 @@ export const syncAllUsersToSheet = async (
     throw new Error("No Google access token found. Please sign in with Google.");
   }
 
-  const rows = users.map((u) => [
-    u.lastVisitDate || new Date().toISOString(),
-    u.name,
-    u.role,
-    u.packageType || "basic",
-    u.emailOrPhone || "-",
-    u.level,
-    u.xp,
-    u.streak,
-    u.isRegistered ? "Registered" : "Guest",
-  ]);
+  // STRICT PRIVACY: Zero personal data - collect ONLY Email and verification status
+  const rows = users
+    .map((u) => {
+      const emailAddr = u.email || (u.emailOrPhone?.includes("@") ? u.emailOrPhone : null);
+      if (!emailAddr) return null;
+      return [
+        u.emailVerifiedAt || u.lastVisitDate || new Date().toISOString(),
+        emailAddr,
+        u.isEmailVerified ? "Verified (ยืนยันแล้ว)" : "Unverified (รอการยืนยัน)",
+        "Zero Personal Data Policy Enforced (คุ้มครองข้อมูลส่วนบุคคล 100%)",
+      ];
+    })
+    .filter(Boolean) as any[][];
 
   await initializeSheetHeaders(targetId, token);
 
   await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values/Users!A2:I1000:clear`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values/Users!A2:D1000:clear`,
     {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -231,7 +189,7 @@ export const syncAllUsersToSheet = async (
   );
 
   if (rows.length > 0) {
-    await updateSheetRange(targetId, `Users!A2:I${rows.length + 1}`, rows, token);
+    await updateSheetRange(targetId, `Users!A2:D${rows.length + 1}`, rows, token);
   }
 
   const now = new Date().toLocaleString("th-TH");
@@ -244,108 +202,53 @@ export const syncAllUsersToSheet = async (
 };
 
 /**
- * Syncs mood logs to the MoodLogs sheet
+ * Mood logs sync: Strictly disabled for external sync to ensure 100% privacy
+ * "ห้าม เข้าถึงข้อมูลส่วนตัวของผู้ใช้เด็ดขาด เอาแค่ อีเมล เฉยๆ"
  */
 export const syncMoodLogsToSheet = async (
-  logs: MoodCheckIn[],
-  userName: string,
-  spreadsheetId?: string
-): Promise<{ count: number }> => {
-  if (!auth.currentUser || !isAuthorizedSheetsEmail(auth.currentUser.email)) {
-    throw new Error(`ไม่อนุญาต: เฉพาะบัญชี ${AUTHORIZED_SHEETS_EMAIL} เท่านั้นที่มีสิทธิ์ซิงค์ข้อมูล Google Sheets`);
-  }
-
-  const targetId = spreadsheetId || getSavedSpreadsheetId();
-  if (!targetId) {
-    throw new Error("No Google Spreadsheet configured.");
-  }
-
-  const token = await getAccessToken();
-  if (!token) {
-    throw new Error("No Google access token found.");
-  }
-
-  const rows = logs.map((log) => [
-    log.date,
-    userName,
-    log.mood,
-    log.stress,
-    log.sleep,
-    log.exercise,
-    log.gratitude || "-",
-    log.journal || "-",
-    log.aiAnalysis || "-",
-  ]);
-
-  await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values/MoodLogs!A2:I1000:clear`,
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-
-  if (rows.length > 0) {
-    await updateSheetRange(targetId, `MoodLogs!A2:I${rows.length + 1}`, rows, token);
-  }
-
-  return { count: rows.length };
+  _logs: MoodCheckIn[],
+  _userName: string,
+  _spreadsheetId?: string
+): Promise<{ count: number; message: string }> => {
+  // STRICT PRIVACY: Personal mood journals and mental health logs are confidential to the user's device
+  return { 
+    count: 0,
+    message: "ข้อมูลบันทึกอารมณ์และบันทึกส่วนตัวถูกล็อกความเป็นส่วนตัวสูงสุด (ไม่ส่งออกไปยังชีตภายนอก ตามนโยบาย 'เอาแค่อีเมลเฉยๆ')" 
+  };
 };
 
 /**
- * Appends a single newly registered user to the spreadsheet in real time
+ * Appends a single newly registered user to the spreadsheet in real time (ONLY Email)
  */
 export const appendSingleUserToSheet = async (user: UserProfile) => {
   const targetId = getSavedSpreadsheetId();
   if (!targetId) return;
 
+  const userEmail = user.email || (user.emailOrPhone?.includes("@") ? user.emailOrPhone : undefined);
+  if (!userEmail) return;
+
   const token = await getAccessToken();
   if (!token) return;
 
+  // STRICT PRIVACY: Only email is saved
   const row = [
     new Date().toISOString(),
-    user.name,
-    user.role,
-    user.packageType || "basic",
-    user.emailOrPhone || "-",
-    user.level,
-    user.xp,
-    user.streak,
-    "Registered",
+    userEmail,
+    user.isEmailVerified ? "Verified (ยืนยันแล้ว)" : "Unverified (รอการยืนยัน)",
+    "Zero Personal Data Policy Enforced",
   ];
 
   try {
-    await appendSheetRows(targetId, "Users!A:I", [row], token);
+    await appendSheetRows(targetId, "Users!A:D", [row], token);
   } catch (err) {
-    console.error("Auto-sync single user to Google Sheets failed:", err);
+    console.error("Auto-sync email to Google Sheets failed:", err);
   }
 };
 
 /**
- * Appends a single mood check-in to the spreadsheet in real time
+ * Appends mood check-in: Disabled to enforce strict user privacy
  */
-export const appendSingleMoodLogToSheet = async (log: MoodCheckIn, userName: string) => {
-  const targetId = getSavedSpreadsheetId();
-  if (!targetId) return;
-
-  const token = await getAccessToken();
-  if (!token) return;
-
-  const row = [
-    log.date,
-    userName,
-    log.mood,
-    log.stress,
-    log.sleep,
-    log.exercise,
-    log.gratitude || "-",
-    log.journal || "-",
-    log.aiAnalysis || "-",
-  ];
-
-  try {
-    await appendSheetRows(targetId, "MoodLogs!A:I", [row], token);
-  } catch (err) {
-    console.error("Auto-sync mood log to Google Sheets failed:", err);
-  }
+export const appendSingleMoodLogToSheet = async (_log: MoodCheckIn, _userName: string) => {
+  // STRICT PRIVACY: Personal diaries are never uploaded to Google Sheets
 };
+

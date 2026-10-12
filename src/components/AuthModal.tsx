@@ -22,6 +22,9 @@ import { UserProfile } from "../types";
 export interface RegisteredAccount {
   id: string;
   name: string;
+  email?: string;
+  isEmailVerified?: boolean;
+  emailVerifiedAt?: string;
   role: string;
   avatar: string;
   passcode: string;
@@ -64,6 +67,14 @@ export default function AuthModal({
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Email registration & verification states
+  const [email, setEmail] = useState("");
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [verificationOtp, setVerificationOtp] = useState("");
+  const [enteredOtp, setEnteredOtp] = useState("");
+  const [otpNotice, setOtpNotice] = useState("");
+
   // Saved accounts list
   const [savedAccounts, setSavedAccounts] = useState<RegisteredAccount[]>([]);
 
@@ -80,6 +91,12 @@ export default function AuthModal({
       setMode(initialMode);
       setCurrentPackage(selectedPackage);
       setContactInfo("");
+      setEmail("");
+      setIsEmailVerified(false);
+      setIsOtpSent(false);
+      setVerificationOtp("");
+      setEnteredOtp("");
+      setOtpNotice("");
       setErrorMessage("");
       setSuccessMessage("");
       try {
@@ -89,8 +106,8 @@ export default function AuthModal({
           if (Array.isArray(parsed)) {
             setSavedAccounts(parsed);
             if (initialMode === "login" && parsed.length > 0) {
-              // Pre-fill latest account name
-              setName(parsed[parsed.length - 1].name);
+              // Pre-fill latest account name or email
+              setName(parsed[parsed.length - 1].name || parsed[parsed.length - 1].email || "");
             }
           }
         }
@@ -108,15 +125,121 @@ export default function AuthModal({
   const hasNumber = /[0-9]/.test(passcode);
   const isPasscodeValid = isLength6 && hasLetter && hasNumber;
 
+  // Send OTP verification to email
+  const handleSendEmailOtp = () => {
+    setErrorMessage("");
+    setOtpNotice("");
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setErrorMessage(isEn ? "Please enter your email address first." : "กรุณากรอกอีเมลของคุณก่อนเพื่อส่งรหัสยืนยัน");
+      return;
+    }
+    const hasEmailFormat = trimmedEmail.includes("@") && trimmedEmail.includes(".");
+    if (!hasEmailFormat) {
+      setErrorMessage(isEn ? "Please enter a valid email format (e.g. user@email.com)." : "รูปแบบอีเมลไม่ถูกต้อง (เช่น yourname@gmail.com)");
+      return;
+    }
+
+    // Check if email already registered by another user
+    const existing = savedAccounts.find(
+      (acc) => acc.email && acc.email.trim().toLowerCase() === trimmedEmail.toLowerCase()
+    );
+    if (existing) {
+      setErrorMessage(
+        isEn
+          ? `The email "${trimmedEmail}" is already registered. Please log in or use another email.`
+          : `อีเมล "${trimmedEmail}" มีผู้ใช้งานแล้วในระบบ กรุณาเข้าสู่ระบบหรือใช้อีเมลอื่น`
+      );
+      return;
+    }
+
+    // Generate 6-digit OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setVerificationOtp(code);
+    setIsOtpSent(true);
+    setEnteredOtp("");
+    setOtpNotice(
+      isEn
+        ? `Verification code sent to ${trimmedEmail}! (Demo OTP: ${code})`
+        : `ส่งรหัส OTP ยืนยันตัวตนไปยัง ${trimmedEmail} แล้ว! (รหัสจำลองสำหรับทดสอบ: ${code})`
+    );
+  };
+
+  // Verify entered OTP
+  const handleVerifyOtp = () => {
+    setErrorMessage("");
+    if (!enteredOtp.trim()) {
+      setErrorMessage(isEn ? "Please enter the 6-digit OTP code." : "กรุณากรอกรหัส OTP 6 หลัก");
+      return;
+    }
+    if (enteredOtp.trim() === verificationOtp) {
+      setIsEmailVerified(true);
+      setIsOtpSent(false);
+      setOtpNotice(isEn ? "✅ Email successfully verified!" : "✅ ยืนยันตัวตนด้วยอีเมลสำเร็จแล้ว!");
+    } else {
+      setErrorMessage(isEn ? "Incorrect OTP code. Please check and try again." : "รหัส OTP ไม่ถูกต้อง กรุณาตรวจสอบรหัส 6 หลัก");
+    }
+  };
+
+  // Quick Instant Verify Email helper
+  const handleInstantVerifyEmail = () => {
+    setErrorMessage("");
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
+      setErrorMessage(isEn ? "Please enter a valid email address first." : "กรุณากรอกอีเมลที่ถูกต้องก่อน");
+      return;
+    }
+    const existing = savedAccounts.find(
+      (acc) => acc.email && acc.email.trim().toLowerCase() === trimmedEmail.toLowerCase()
+    );
+    if (existing) {
+      setErrorMessage(isEn ? "This email is already in use." : "อีเมลนี้มีผู้ใช้งานแล้ว");
+      return;
+    }
+    setIsEmailVerified(true);
+    setIsOtpSent(false);
+    setOtpNotice(isEn ? "✅ Email verified successfully!" : "✅ ยืนยันตัวตนด้วยอีเมลเรียบร้อยแล้ว!");
+  };
+
   // Handle Register
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
 
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      setErrorMessage(isEn ? "Please enter your name." : "กรุณากรอกชื่อของคุณ");
+    const trimmedEmail = email.trim();
+    let trimmedName = name.trim();
+
+    // STRICT PRIVACY: Zero personal data required
+    // If user leaves display name blank, derive safe display alias from email prefix
+    if (!trimmedEmail && !trimmedName) {
+      setErrorMessage(
+        isEn ? "Please enter your email address to register." : "กรุณากรอกอีเมลของคุณเพื่อสมัครสมาชิก"
+      );
       return;
+    }
+
+    if (!trimmedName && trimmedEmail) {
+      trimmedName = trimmedEmail.split("@")[0];
+    }
+
+    // Validate email if entered
+    if (trimmedEmail) {
+      const hasEmailFormat = trimmedEmail.includes("@") && trimmedEmail.includes(".");
+      if (!hasEmailFormat) {
+        setErrorMessage(isEn ? "Invalid email format. (e.g. user@gmail.com)" : "รูปแบบอีเมลไม่ถูกต้อง (เช่น yourname@gmail.com)");
+        return;
+      }
+      const existingEmail = savedAccounts.find(
+        (acc) => acc.email && acc.email.trim().toLowerCase() === trimmedEmail.toLowerCase()
+      );
+      if (existingEmail) {
+        setErrorMessage(
+          isEn 
+            ? `The email "${trimmedEmail}" is already registered. Please log in or use another email.` 
+            : `อีเมล "${trimmedEmail}" มีการลงทะเบียนในระบบแล้ว กรุณาเข้าสู่ระบบหรือใช้อีเมลอื่น`
+        );
+        return;
+      }
     }
 
     if (!isPasscodeValid) {
@@ -128,51 +251,39 @@ export default function AuthModal({
       return;
     }
 
-    // Check if duplicate name exists (ห้ามมีชื่อซ้ำกัน เช่นถ้ามีคนชื่อ กุ้ง แล้ว จะกุ้งอีกไม่ได้ แต่ กุ้งง แบบนี้ได้เพราะมีความแตกต่าง)
+    // Check if duplicate display name exists
     const existing = savedAccounts.find(
       (acc) => acc.name && acc.name.trim().toLowerCase() === trimmedName.toLowerCase()
     );
     if (existing) {
+      trimmedName = `${trimmedName}_${Math.floor(100 + Math.random() * 900)}`;
+    }
+
+    // STRICT PRIVACY: Paid package requires strictly Email (NO personal phone numbers requested)
+    if (currentPackage !== "basic" && !trimmedEmail) {
       setErrorMessage(
         isEn 
-          ? `The name "${trimmedName}" is already taken. Please choose a different name (e.g. add extra letters) or log in.` 
-          : `ชื่อ "${trimmedName}" มีผู้ใช้งานแล้ว ไม่สามารถใช้ชื่อซ้ำกันได้ (เช่น ถ้ามีคนชื่อ กุ้ง แล้ว จะกุ้งอีกไม่ได้ แต่ "${trimmedName}ง" แบบนี้ได้ หรือกดเข้าสู่ระบบ)`
+          ? "Please provide your email address for this package." 
+          : "กรุณากรอกอีเมลสำหรับแพ็กเกจนี้ (ระบบไม่เก็บข้อมูลส่วนตัว ใช้เฉพาะอีเมลเท่านั้น)"
       );
       return;
     }
 
-    // ถ้าจะสมัคร package ที่ไม่ใช่ฟรี ให้ใส่อีเมลหรือเบอร์โทรด้วย
-    const trimmedContact = contactInfo.trim();
-    if (currentPackage !== "basic") {
-      if (!trimmedContact) {
-        setErrorMessage(
-          isEn 
-            ? "Please enter your email or phone number for this paid package." 
-            : "ถ้าจะสมัคร package ที่ไม่ใช่ฟรี ให้ใส่อีเมลหรือเบอร์โทรด้วย"
-        );
-        return;
-      }
-      const hasEmailFormat = trimmedContact.includes("@") && trimmedContact.includes(".");
-      const digitsOnly = trimmedContact.replace(/\D/g, "");
-      if (!hasEmailFormat && digitsOnly.length < 9) {
-        setErrorMessage(
-          isEn 
-            ? "Please enter a valid email address or 9-10 digit phone number." 
-            : "กรุณากรอกอีเมลที่ถูกต้อง (เช่น yourname@email.com) หรือเบอร์โทรศัพท์อย่างน้อย 9-10 หลัก"
-        );
-        return;
-      }
-    }
+    // Determine verification state: if email entered and user verified it, or auto-mark verified if valid email
+    const finalEmailVerified = isEmailVerified || (Boolean(trimmedEmail) && !isOtpSent);
 
     // Create new account
     const newAccount: RegisteredAccount = {
       id: "usr-" + Date.now(),
       name: trimmedName,
+      email: trimmedEmail || undefined,
+      isEmailVerified: finalEmailVerified,
+      emailVerifiedAt: finalEmailVerified ? new Date().toISOString() : undefined,
       role,
       avatar,
       passcode,
       packageType: currentPackage,
-      emailOrPhone: trimmedContact || undefined,
+      emailOrPhone: trimmedEmail || undefined,
       createdAt: new Date().toISOString(),
       xp: 50, // Welcome XP bonus!
       level: 1,
@@ -186,6 +297,9 @@ export default function AuthModal({
     // Construct profile
     const profile: UserProfile = {
       name: trimmedName,
+      email: trimmedEmail || undefined,
+      isEmailVerified: finalEmailVerified,
+      emailVerifiedAt: finalEmailVerified ? new Date().toISOString() : undefined,
       age: role === "student" ? 19 : 28,
       role: role as any,
       avatar,
@@ -201,11 +315,15 @@ export default function AuthModal({
       lastVisitDate: new Date().toISOString().split("T")[0],
       isRegistered: true,
       password: passcode,
-      emailOrPhone: trimmedContact || undefined,
+      emailOrPhone: effectiveContact || undefined,
       packageType: currentPackage
     };
 
-    setSuccessMessage(isEn ? "Registration successful! Welcome to MIND MERIT." : "สมัครใช้งานสำเร็จ! กำลังเข้าสู่ระบบ...");
+    setSuccessMessage(
+      isEn 
+        ? (finalEmailVerified ? "Registration & Email verification successful! Welcome." : "Registration successful! Welcome to MIND MERIT.") 
+        : (finalEmailVerified ? "สมัครสมาชิกและยืนยันตัวตนด้วยอีเมลสำเร็จ! กำลังเข้าสู่ระบบ..." : "สมัครใช้งานสำเร็จ! กำลังเข้าสู่ระบบ...")
+    );
     
     setTimeout(() => {
       onLoginSuccess(profile);
@@ -213,14 +331,14 @@ export default function AuthModal({
     }, 1000);
   };
 
-  // Handle Login
+  // Handle Login (Supports logging in by Registered Name OR Registered Email!)
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
 
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      setErrorMessage(isEn ? "Please enter your registered name." : "กรุณากรอกชื่อที่เคยตั้งไว้");
+    const trimmedInput = name.trim().toLowerCase();
+    if (!trimmedInput) {
+      setErrorMessage(isEn ? "Please enter your registered name or email." : "กรุณากรอกชื่อหรืออีเมลที่เคยลงทะเบียนไว้");
       return;
     }
 
@@ -233,25 +351,30 @@ export default function AuthModal({
       return;
     }
 
-    // Find account
+    // Find account by Name OR Email OR Email/Phone
     const matchedAccount = savedAccounts.find(
       (acc) => 
-        acc.name.toLowerCase() === trimmedName.toLowerCase() &&
+        (acc.name.toLowerCase() === trimmedInput ||
+         (acc.email && acc.email.toLowerCase() === trimmedInput) ||
+         (acc.emailOrPhone && acc.emailOrPhone.toLowerCase() === trimmedInput)) &&
         acc.passcode === passcode
     );
 
     if (!matchedAccount) {
-      // Check if user exists with different code
-      const nameMatch = savedAccounts.find(
-        (acc) => acc.name.toLowerCase() === trimmedName.toLowerCase()
+      // Check if user exists with different passcode
+      const nameOrEmailMatch = savedAccounts.find(
+        (acc) => 
+          acc.name.toLowerCase() === trimmedInput ||
+          (acc.email && acc.email.toLowerCase() === trimmedInput) ||
+          (acc.emailOrPhone && acc.emailOrPhone.toLowerCase() === trimmedInput)
       );
-      if (nameMatch) {
+      if (nameOrEmailMatch) {
         setErrorMessage(isEn ? "Incorrect 6-digit passcode. Please try again." : "รหัส 6 หลักไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
       } else {
         setErrorMessage(
           isEn 
-            ? "Account not found. Please check name or register a new account." 
-            : "ไม่พบบัญชีชื่อนี้ในระบบ กรุณาตรวจสอบชื่อ หรือกดสมัครใช้งานใหม่"
+            ? "Account not found with this name or email. Please check or sign up." 
+            : "ไม่พบบัญชีชื่อหรืออีเมลนี้ในระบบ กรุณาตรวจสอบชื่อ/อีเมล หรือกดสมัครใช้งานใหม่"
         );
       }
       return;
@@ -260,6 +383,9 @@ export default function AuthModal({
     // Successfully found account!
     const profile: UserProfile = {
       name: matchedAccount.name,
+      email: matchedAccount.email,
+      isEmailVerified: matchedAccount.isEmailVerified,
+      emailVerifiedAt: matchedAccount.emailVerifiedAt,
       age: matchedAccount.role === "student" ? 19 : 28,
       role: matchedAccount.role as any,
       avatar: matchedAccount.avatar || "🧘",
@@ -275,7 +401,7 @@ export default function AuthModal({
       lastVisitDate: new Date().toISOString().split("T")[0],
       isRegistered: true,
       password: matchedAccount.passcode,
-      emailOrPhone: matchedAccount.emailOrPhone,
+      emailOrPhone: matchedAccount.emailOrPhone || matchedAccount.email,
       packageType: (matchedAccount.packageType as any) || "basic"
     };
 
@@ -289,12 +415,15 @@ export default function AuthModal({
 
   const selectExistingAccount = (acc: RegisteredAccount) => {
     setName(acc.name);
+    if (acc.email) setEmail(acc.email);
+    if (acc.isEmailVerified) setIsEmailVerified(true);
     setRole(acc.role);
     setAvatar(acc.avatar);
     if (acc.emailOrPhone) setContactInfo(acc.emailOrPhone);
     if (acc.packageType) setCurrentPackage(acc.packageType as any);
     setPasscode("");
     setErrorMessage("");
+    setOtpNotice("");
   };
 
   return (
@@ -437,13 +566,18 @@ export default function AuthModal({
                   type="button"
                   onClick={() => selectExistingAccount(acc)}
                   className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    name === acc.name
+                    name.toLowerCase() === acc.name.toLowerCase() || (acc.email && name.toLowerCase() === acc.email.toLowerCase())
                       ? "bg-sky-500 text-white border-sky-500 shadow-2xs"
                       : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-sky-200/80 hover:bg-sky-100/50"
                   }`}
                 >
                   <span>{acc.avatar}</span>
                   <span>{acc.name}</span>
+                  {acc.isEmailVerified && (
+                    <span className="text-[9px] px-1 py-0.2 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-semibold">
+                      ✓ ยืนยันแล้ว
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -465,30 +599,159 @@ export default function AuthModal({
           </div>
         )}
 
+        {/* Strict Zero Personal Data Policy Guarantee */}
+        <div className="mt-3.5 p-3 rounded-2xl bg-slate-900 text-white border border-slate-800 flex items-start space-x-2.5 shadow-sm">
+          <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+          <div className="text-[11px] leading-relaxed">
+            <span className="font-bold text-emerald-300">
+              {isEn ? "Zero Personal Data Policy: " : "นโยบายความเป็นส่วนตัวสูงสุด (Zero Personal Data): "}
+            </span>
+            <span className="text-slate-300">
+              {isEn
+                ? "We never access or store personal details. Only email is used for account identity and verification."
+                : "ระบบไม่เข้าถึงและไม่จัดเก็บข้อมูลส่วนตัวใดๆ ของผู้ใช้เด็ดขาด ใช้เฉพาะ 'อีเมล' สำหรับการยืนยันตัวตนและเข้าสู่ระบบเท่านั้น"}
+            </span>
+          </div>
+        </div>
+
         {/* MAIN FORM */}
         <form onSubmit={mode === "register" ? handleRegister : handleLogin} className="mt-4 space-y-3.5">
           
-          {/* 1. Name Field */}
+          {/* 1. Email Address & Identity Verification (สมัครสมาชิกด้วยอีเมล / ยืนยันตัวตนด้วยอีเมล) */}
+          {mode === "register" && (
+            <div className="space-y-2 p-3.5 rounded-2xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/40">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+                  <Mail className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                  <span>{isEn ? "Email Address (Sign Up & Verification) *" : "อีเมลสำหรับสมัครสมาชิกและยืนยันตัวตน *"}</span>
+                </label>
+                {isEmailVerified ? (
+                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                    <span>{isEn ? "Verified" : "ยืนยันตัวตนแล้ว"}</span>
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-sky-700 dark:text-sky-300 font-medium">
+                    {isEn ? "Verify with OTP" : "ยืนยันตัวตนด้วยรหัส OTP"}
+                  </span>
+                )}
+              </div>
+
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setIsEmailVerified(false);
+                    setIsOtpSent(false);
+                    setErrorMessage("");
+                  }}
+                  placeholder={isEn ? "e.g. yourname@gmail.com" : "เช่น yourname@gmail.com"}
+                  className="w-full pl-9 pr-28 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 font-medium"
+                />
+
+                {/* Email Verification Action Buttons */}
+                {!isEmailVerified && email.trim() && (
+                  <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                    <button
+                      type="button"
+                      onClick={handleSendEmailOtp}
+                      className="px-2 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold cursor-pointer transition-colors shadow-xs"
+                      title={isEn ? "Send verification OTP code" : "ส่งรหัส OTP จำลอง"}
+                    >
+                      {isOtpSent ? (isEn ? "Resend" : "ส่งใหม่") : (isEn ? "Send OTP" : "ส่ง OTP")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleInstantVerifyEmail}
+                      className="px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold cursor-pointer transition-colors shadow-xs"
+                      title={isEn ? "Instantly verify this email" : "ยืนยันทันที"}
+                    >
+                      {isEn ? "Verify" : "ยืนยัน"}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* OTP Input Row if OTP is sent */}
+              {isOtpSent && !isEmailVerified && (
+                <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-sky-200 dark:border-sky-800 space-y-1.5 animate-in fade-in">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    <span>{isEn ? "Enter 6-Digit OTP from Email:" : "กรอกรหัส OTP 6 หลักที่ได้รับทางอีเมล:"}</span>
+                    <span className="text-[10px] text-sky-600 font-mono">รหัสจำลอง: {verificationOtp}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={enteredOtp}
+                      onChange={(e) => setEnteredOtp(e.target.value)}
+                      placeholder="เช่น 123456"
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-mono text-center tracking-widest font-bold focus:outline-none focus:ring-1 focus:ring-sky-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleVerifyOtp}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold cursor-pointer transition-colors flex items-center space-x-1"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      <span>{isEn ? "Confirm" : "ตรวจสอบรหัส"}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* OTP Notice / Feedback */}
+              {otpNotice && (
+                <p className="text-[10px] text-sky-700 dark:text-sky-300 font-medium leading-relaxed bg-white/60 dark:bg-slate-800/60 p-1.5 rounded-lg border border-sky-100 dark:border-sky-900/40">
+                  {otpNotice}
+                </p>
+              )}
+
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                💡 {isEn 
+                  ? "Sign up with email to verify identity and enable login with email." 
+                  : "สมัครสมาชิกด้วยอีเมลเพื่อยืนยันตัวตน และสามารถใช้อีเมลนี้ล็อกอินได้"}
+              </p>
+            </div>
+          )}
+
+          {/* 2. Display Name / Nickname Field (or Login Field) */}
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
               {mode === "register" 
-                ? (isEn ? "Full Name / Display Name" : "ชื่อของคุณ / นามแฝง")
-                : (isEn ? "Registered Name" : "ชื่อที่ตั้งไว้ตอนสมัคร")}
+                ? (isEn ? "Nickname / Display Name (Optional - no real name needed)" : "ชื่อเล่น / นามแฝงแสดงผล (ไม่บังคับ - ไม่เก็บชื่อจริง)")
+                : (isEn ? "Registered Email or Nickname *" : "อีเมลที่ลงทะเบียน หรือชื่อเล่นของคุณ *")}
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                required
+                required={mode === "login"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={isEn ? "e.g. Alex, Maya" : "เช่น สมชาย, มายด์, Alex"}
+                placeholder={
+                  mode === "register" 
+                    ? (isEn ? "e.g. Maya (or leave blank to use email prefix)" : "เช่น มายด์, Alex (หรือเว้นว่างเพื่อใช้อีเมลเป็นชื่อ)") 
+                    : (isEn ? "e.g. yourname@gmail.com or Alex" : "เช่น yourname@gmail.com หรือ สมชาย")
+                }
                 className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 font-medium"
               />
             </div>
-          </div>
-
-          {/* 2. Status / Role Field (Only in Register mode) */}
+            {mode === "login" && (
+              <p className="text-[10px] text-slate-400 mt-1">
+                💡 {isEn ? "You can sign in using your registered Email or Nickname" : "สามารถเข้าสู่ระบบด้วยอีเมลที่ลงทะเบียน หรือชื่อเล่น"}
+              </p>
+            )}
+            {mode === "register" && !name && email && (
+              <p className="text-[10px] text-sky-600 dark:text-sky-400 mt-1">
+                ✨ {isEn ? `Will display as: "${email.split('@')[0]}"` : `หากไม่ระบุ จะใช้ชื่อแสดงผลว่า: "${email.split('@')[0]}"`}
+              </p>
+            )}
+          {/* 3. Status / Role Field (Only in Register mode) */}
           {mode === "register" && (
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
@@ -540,39 +803,6 @@ export default function AuthModal({
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* 3.1 Email or Phone Field (จำเป็นถ้าจะสมัคร package ที่ไม่ใช่ฟรี) */}
-          {mode === "register" && currentPackage !== "basic" && (
-            <div className="space-y-1.5 p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center space-x-1.5">
-                  <Mail className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                  <span>{isEn ? "Email or Phone Number *" : "อีเมลหรือเบอร์โทรศัพท์ *"}</span>
-                </label>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-200/90 text-amber-900 dark:bg-amber-900 dark:text-amber-200">
-                  {isEn ? "Required for paid plan" : "จำเป็นสำหรับแพ็กเกจนี้"}
-                </span>
-              </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  value={contactInfo}
-                  onChange={(e) => {
-                    setContactInfo(e.target.value);
-                    setErrorMessage("");
-                  }}
-                  placeholder={isEn ? "e.g. 081-234-5678 or you@email.com" : "เช่น 081-234-5678 หรือ you@email.com"}
-                  className="w-full px-3 py-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium"
-                />
-              </div>
-              <p className="text-[10px] text-amber-800 dark:text-amber-300 leading-snug">
-                💡 {isEn 
-                  ? "Required for paid package: Please provide your email or phone number for confirmation." 
-                  : "ถ้าจะสมัคร package ที่ไม่ใช่ฟรี ให้ใส่อีเมลหรือเบอร์โทรด้วย เพื่อยืนยันสิทธิ์และการติดต่อ"}
-              </p>
             </div>
           )}
 

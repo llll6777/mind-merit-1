@@ -19,6 +19,9 @@ export interface UserProfile {
   password?: string;
   isRegistered?: boolean;
   emailOrPhone?: string;
+  email?: string;
+  isEmailVerified?: boolean;
+  emailVerifiedAt?: string;
   packageType?: 'basic' | 'premium' | 'b2b';
 }
 

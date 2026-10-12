@@ -361,6 +361,9 @@ export default function App() {
                 streak: user.streak,
                 avatar: user.avatar || acc.avatar,
                 role: user.role,
+                email: user.email || acc.email,
+                isEmailVerified: user.isEmailVerified !== undefined ? user.isEmailVerified : acc.isEmailVerified,
+                emailVerifiedAt: user.emailVerifiedAt || acc.emailVerifiedAt,
                 updatedAt: new Date().toISOString()
               };
             }

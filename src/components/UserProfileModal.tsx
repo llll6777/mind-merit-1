@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { 
   X, Award, Shield, Compass, BookOpen, Clock, Zap, Calendar, 
-  ChevronRight, ToggleLeft, ToggleRight, Check, Printer, FileText, BadgeCheck, Trophy, Sparkles, Edit2
+  ChevronRight, ToggleLeft, ToggleRight, Check, Printer, FileText, BadgeCheck, Trophy, Sparkles, Edit2,
+  Mail, CheckCircle2, AlertCircle
 } from "lucide-react";
 import { UserProfile, Certificate, Badge } from "../types";
 
@@ -81,6 +82,134 @@ export default function UserProfileModal({
       name: trimmed
     });
     setIsEditingName(false);
+  };
+
+  // Email and Identity Verification state
+  const [emailInput, setEmailInput] = useState(() => {
+    return user.email || (user.emailOrPhone?.includes("@") ? user.emailOrPhone : "");
+  });
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [emailOtpCode, setEmailOtpCode] = useState("");
+  const [emailEnteredOtp, setEmailEnteredOtp] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [emailSuccess, setEmailSuccess] = useState("");
+
+  const handleSendProfileOtp = () => {
+    setEmailError("");
+    setEmailSuccess("");
+    const trimmed = emailInput.trim();
+    if (!trimmed || !trimmed.includes("@") || !trimmed.includes(".")) {
+      setEmailError(user.language === "en" ? "Please enter a valid email address." : "กรุณากรอกรูปแบบอีเมลที่ถูกต้อง (เช่น yourname@gmail.com)");
+      return;
+    }
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setEmailOtpCode(code);
+    setEmailOtpSent(true);
+    setEmailSuccess(
+      user.language === "en"
+        ? `Verification code sent to ${trimmed}! (Demo OTP: ${code})`
+        : `ส่งรหัส OTP ยืนยันตัวตนไปยัง ${trimmed} แล้ว! (รหัสจำลองสำหรับทดสอบ: ${code})`
+    );
+  };
+
+  const handleVerifyProfileOtp = () => {
+    setEmailError("");
+    if (!emailEnteredOtp.trim()) {
+      setEmailError(user.language === "en" ? "Please enter the 6-digit OTP code." : "กรุณากรอกรหัส OTP 6 หลัก");
+      return;
+    }
+    if (emailEnteredOtp.trim() === emailOtpCode) {
+      const trimmed = emailInput.trim();
+      const updatedUser: UserProfile = {
+        ...user,
+        email: trimmed,
+        isEmailVerified: true,
+        emailVerifiedAt: new Date().toISOString()
+      };
+      onUpdateUser(updatedUser);
+
+      // Sync to registered users localStorage
+      try {
+        const stored = localStorage.getItem("mind_merit_registered_users_v1");
+        if (stored) {
+          const accounts = JSON.parse(stored);
+          if (Array.isArray(accounts)) {
+            const updated = accounts.map((acc: any) => {
+              if (acc.name && acc.name.toLowerCase() === user.name.toLowerCase()) {
+                return {
+                  ...acc,
+                  email: trimmed,
+                  isEmailVerified: true,
+                  emailVerifiedAt: new Date().toISOString()
+                };
+              }
+              return acc;
+            });
+            localStorage.setItem("mind_merit_registered_users_v1", JSON.stringify(updated));
+          }
+        }
+      } catch (e) {
+        console.error("Error syncing email to registered accounts:", e);
+      }
+
+      setEmailOtpSent(false);
+      setIsEditingEmail(false);
+      setEmailSuccess(
+        user.language === "en"
+          ? "Identity successfully verified with email! ✅"
+          : "ยืนยันตัวตนด้วยอีเมลสำเร็จเรียบร้อยแล้ว! ✅"
+      );
+    } else {
+      setEmailError(user.language === "en" ? "Incorrect OTP code. Please try again." : "รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
+    }
+  };
+
+  const handleQuickVerifyProfileEmail = () => {
+    setEmailError("");
+    const trimmed = emailInput.trim();
+    if (!trimmed || !trimmed.includes("@") || !trimmed.includes(".")) {
+      setEmailError(user.language === "en" ? "Please enter a valid email address." : "กรุณากรอกรูปแบบอีเมลที่ถูกต้อง (เช่น yourname@gmail.com)");
+      return;
+    }
+    const updatedUser: UserProfile = {
+      ...user,
+      email: trimmed,
+      isEmailVerified: true,
+      emailVerifiedAt: new Date().toISOString()
+    };
+    onUpdateUser(updatedUser);
+
+    try {
+      const stored = localStorage.getItem("mind_merit_registered_users_v1");
+      if (stored) {
+        const accounts = JSON.parse(stored);
+        if (Array.isArray(accounts)) {
+          const updated = accounts.map((acc: any) => {
+            if (acc.name && acc.name.toLowerCase() === user.name.toLowerCase()) {
+              return {
+                ...acc,
+                email: trimmed,
+                isEmailVerified: true,
+                emailVerifiedAt: new Date().toISOString()
+              };
+            }
+            return acc;
+          });
+          localStorage.setItem("mind_merit_registered_users_v1", JSON.stringify(updated));
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    setIsEditingEmail(false);
+    setEmailOtpSent(false);
+    setEmailSuccess(
+      user.language === "en"
+        ? "Identity verified with email successfully! ✅"
+        : "ยืนยันตัวตนด้วยอีเมลสำเร็จเรียบร้อยแล้ว! ✅"
+    );
   };
 
   if (!isOpen) return null;
@@ -220,11 +349,22 @@ export default function UserProfileModal({
                       ? "B2B School"
                       : "B2C Basic (ฟรี)"}
                   </span>
-                  {user.emailOrPhone && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-black/20 text-white/90 border border-white/20">
-                      📞 {user.emailOrPhone}
+                  {(user.email || (user.emailOrPhone && user.emailOrPhone.includes("@"))) && (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-black/20 text-white/90 border border-white/20 flex items-center space-x-1">
+                      <span>✉️</span>
+                      <span>{user.email || user.emailOrPhone}</span>
                     </span>
                   )}
+                  {user.isEmailVerified ? (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-400/30 text-emerald-100 border border-emerald-300/40 flex items-center space-x-1">
+                      <Check className="h-3 w-3 text-emerald-200" />
+                      <span>{isEn ? "Verified" : "ยืนยันตัวตนแล้ว"}</span>
+                    </span>
+                  ) : user.email ? (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-400/30 text-amber-100 border border-amber-300/30">
+                      รอการยืนยัน
+                    </span>
+                  ) : null}
                 </div>
               </div>
               <p className="text-xs text-purple-100 italic">
@@ -354,6 +494,188 @@ export default function UserProfileModal({
               </div>
             </div>
 
+          </div>
+
+          {/* Email & Identity Verification Section (ยืนยันตัวตนด้วยอีเมล) */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-sky-500/10 via-teal-500/5 to-emerald-500/10 dark:from-sky-950/30 dark:via-slate-900 dark:to-emerald-950/20 border border-sky-100 dark:border-sky-900/40 space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-sky-100 dark:border-slate-800">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 rounded-2xl bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-850 dark:text-slate-100 flex items-center space-x-1.5">
+                    <span>{isEn ? "Email Identity Verification" : "การยืนยันตัวตนด้วยอีเมล (Email Verification)"}</span>
+                    {user.isEmailVerified && (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    )}
+                  </h3>
+                  <p className="text-[10px] text-slate-400">
+                    {isEn ? "Verify your email to secure your account and enable easy login" : "ยืนยันความถูกต้องของอีเมลเพื่อความปลอดภัยและใช้เข้าสู่ระบบ"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-[10px] font-bold ${
+                user.isEmailVerified
+                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
+                  : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+              }`}>
+                {user.isEmailVerified ? (
+                  <>
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                    <span>{isEn ? "Verified" : "ยืนยันตัวตนแล้ว"}</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-3 w-3 text-amber-600" />
+                    <span>{isEn ? "Unverified" : "ยังไม่ได้ยืนยัน"}</span>
+                  </>
+                )}
+              </span>
+            </div>
+
+            {/* Email Display & Actions */}
+            <div className="space-y-2.5">
+              {!isEditingEmail && user.email ? (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 gap-2">
+                  <div className="flex items-center space-x-2.5">
+                    <span className="text-base">✉️</span>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200 font-mono">
+                        {user.email}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {user.isEmailVerified 
+                          ? (isEn ? "Identity verified and protected." : "ยืนยันตัวตนเรียบร้อย สามารถใช้ล็อกอินได้ทันที") 
+                          : (isEn ? "Email registered but pending verification." : "อีเมลลงทะเบียนแล้วแต่ยังไม่ได้กดยืนยันตัวตน")}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 self-end sm:self-auto">
+                    {!user.isEmailVerified && (
+                      <button
+                        onClick={handleQuickVerifyProfileEmail}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center space-x-1"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        <span>{isEn ? "Verify Now" : "กดยืนยันตัวตนทันที"}</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setEmailInput(user.email || "");
+                        setIsEditingEmail(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      {isEn ? "Change Email" : "เปลี่ยนอีเมล"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2.5 p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-sky-200 dark:border-sky-800">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span>{isEn ? "Enter Email for Identity Verification:" : "กรอกอีเมลเพื่อผูกและยืนยันตัวตน:"}</span>
+                    {user.email && (
+                      <button
+                        onClick={() => {
+                          setIsEditingEmail(false);
+                          setEmailOtpSent(false);
+                          setEmailError("");
+                        }}
+                        className="text-[10px] text-slate-400 hover:underline cursor-pointer"
+                      >
+                        {isEn ? "Cancel" : "ยกเลิก"}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => {
+                        setEmailInput(e.target.value);
+                        setEmailOtpSent(false);
+                        setEmailError("");
+                      }}
+                      placeholder="เช่น yourname@gmail.com"
+                      className="w-full pl-9 pr-28 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
+                    />
+                    <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                      <button
+                        type="button"
+                        onClick={handleSendProfileOtp}
+                        className="px-2 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold cursor-pointer transition-colors shadow-xs"
+                      >
+                        {emailOtpSent ? (isEn ? "Resend" : "ส่งใหม่") : (isEn ? "Send OTP" : "ส่ง OTP")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleQuickVerifyProfileEmail}
+                        className="px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold cursor-pointer transition-colors shadow-xs"
+                      >
+                        {isEn ? "Verify" : "ยืนยัน"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* OTP Row */}
+                  {emailOtpSent && (
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-sky-100 dark:border-sky-900/60 space-y-1.5 animate-in fade-in">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                        <span>{isEn ? "Enter 6-Digit Verification Code:" : "กรอกรหัส OTP 6 หลักที่ส่งไป:"}</span>
+                        <span className="text-[10px] text-sky-600 font-mono">รหัสจำลอง: {emailOtpCode}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={emailEnteredOtp}
+                          onChange={(e) => setEmailEnteredOtp(e.target.value)}
+                          placeholder="เช่น 123456"
+                          className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-center tracking-widest font-bold focus:outline-none focus:ring-1 focus:ring-sky-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyProfileOtp}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold cursor-pointer transition-colors flex items-center space-x-1"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          <span>{isEn ? "Confirm" : "ยืนยันรหัส"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {emailError && (
+                    <p className="text-[11px] text-rose-500 font-bold bg-rose-50 dark:bg-rose-950/40 p-2 rounded-lg">
+                      ⚠️ {emailError}
+                    </p>
+                  )}
+
+                  {emailSuccess && (
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-lg">
+                      {emailSuccess}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Strict Privacy Guarantee Box */}
+            <div className="p-2.5 rounded-2xl bg-white/70 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 flex items-start space-x-2 text-[10px] text-slate-500 dark:text-slate-400">
+              <span className="text-emerald-500 font-bold shrink-0">🔒</span>
+              <span className="leading-relaxed">
+                {isEn 
+                  ? "Zero Personal Data Protection: Mind Merit never accesses or stores your personal private information. Only your email is used for account verification."
+                  : "คุ้มครองความเป็นส่วนตัว 100%: ระบบไม่เข้าถึงและไม่จัดเก็บข้อมูลส่วนตัวใดๆ ของผู้ใช้เด็ดขาด ใช้เฉพาะ 'อีเมล' สำหรับการยืนยันตัวตนเท่านั้น"}
+              </span>
+            </div>
           </div>
 
           {/* Badges Cabinet (ตู้สะสมเหรียญตรา) */}

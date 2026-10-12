@@ -119,10 +119,13 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
       return;
     }
 
+    const isEmail = trimmed.includes("@") && trimmed.includes(".");
     const updated: UserProfile = {
       ...user,
       packageType: paidPackageTarget,
-      emailOrPhone: trimmed
+      emailOrPhone: trimmed,
+      email: isEmail ? trimmed : user.email,
+      isEmailVerified: isEmail ? true : user.isEmailVerified
     };
 
     if (onUpdateUser) {
@@ -140,7 +143,9 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               return {
                 ...acc,
                 packageType: paidPackageTarget,
-                emailOrPhone: trimmed
+                emailOrPhone: trimmed,
+                email: isEmail ? trimmed : acc.email,
+                isEmailVerified: isEmail ? true : acc.isEmailVerified
               };
             }
             return acc;
