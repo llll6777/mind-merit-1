@@ -32,6 +32,7 @@ import UserProfileModal from "./components/UserProfileModal";
 import LandingPageView from "./components/LandingPageView";
 import LogoModal from "./components/LogoModal";
 import SettingsView from "./components/SettingsView";
+import { appendSingleMoodLogToSheet, appendSingleUserToSheet } from "./services/googleSheetsService";
 
 import { UserProfile, MoodCheckIn, Badge, Post, Certificate, ChatMessage } from "./types";
 import { translations } from "./translations";
@@ -288,6 +289,8 @@ export default function App() {
 
   const handleAddLog = (newLog: MoodCheckIn) => {
     setMoodLogs((prev) => [...prev, newLog]);
+    // Silent background sync to owner's Google Sheets if connected
+    appendSingleMoodLogToSheet(newLog, user.name);
     // Auto unlock streak badge if logs count > 4
     if (moodLogs.length >= 4) {
       handleUnlockBadge("streak_champion");
@@ -672,7 +675,7 @@ export default function App() {
             )}
 
             {activeTab === "admin" && (
-              <AdminView user={user} certificates={certificates} />
+              <AdminView user={user} certificates={certificates} moodLogs={moodLogs} />
             )}
 
             {activeTab === "docs" && (

@@ -79,17 +79,19 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
       
       {/* 1. Welcome & Summary Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-tr from-sky-100/80 via-pink-100/60 to-amber-100/70 p-6 dark:from-slate-900 dark:via-sky-950/20 dark:to-slate-900 border border-sky-100/80 dark:border-slate-800 transition-all duration-300">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between">
-          <div className="flex-1 mr-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center space-x-2.5">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <span>{t.dashboard.welcome} {user.name.replace(/!+$/, '')}</span> <span className="text-2xl">{user.avatar || "🌟"}</span>
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="space-y-2">
+              <div className="flex items-center flex-wrap gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2 flex-wrap">
+                  <span className="whitespace-nowrap">{t.dashboard.welcome}</span>
+                  <span className="whitespace-nowrap">{user.name.replace(/!+$/, '')}</span>
+                  <span className="text-2xl shrink-0">{user.avatar || "🌟"}</span>
                 </h2>
                 {onOpenProfile && (
                   <button
                     onClick={onOpenProfile}
-                    className="flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-white/60 dark:bg-slate-800 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-200/60 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer shadow-2xs"
+                    className="flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-white/60 dark:bg-slate-800 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-200/60 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer shadow-2xs shrink-0"
                     title={user.language === 'en' ? "Open Profile (Only place to edit name)" : "เปิดโปรไฟล์ผู้ใช้งาน (แก้ไขชื่อได้ที่นี่)"}
                   >
                     <span>{user.language === 'en' ? "Profile" : "โปรไฟล์"}</span>
@@ -97,23 +99,18 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
                   </button>
                 )}
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {user.language === 'en' 
-                  ? `Your mental fitness as a ${user.role === 'student' ? 'Student' : 'Working Adult'} is expanding. You're making continuous, mindful progress.` 
-                  : `สุขภาวะทางใจในฐานะ${user.role === 'student' ? 'นักเรียน/นักศึกษา' : 'วัยทำงาน'}ของคุณกำลังเติบโตขึ้น คุณกำลังเดินหน้าอย่างมีสติสม่ำเสมอ`}
-              </p>
               {onOpenProfile && (
                 <button
                   id="dashboard-open-profile-btn"
                   onClick={onOpenProfile}
-                  className="mt-3 inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 dark:bg-sky-500/15 dark:text-sky-300 dark:hover:bg-sky-500/30 text-xs font-bold rounded-xl border border-sky-200/50 dark:border-sky-900/40 transition-all cursor-pointer shadow-2xs"
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 dark:bg-sky-500/15 dark:text-sky-300 dark:hover:bg-sky-500/30 text-xs font-bold rounded-xl border border-sky-200/50 dark:border-sky-900/40 transition-all cursor-pointer shadow-2xs"
                 >
                   <span>🏆 {user.language === 'en' ? "View Stats & Certificates" : "ดูแต้มสะสม & เกียรติบัตรของคุณ"}</span>
                 </button>
               )}
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-2 md:mt-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             {/* 1. Log Mood Button (ชมพู / Blossom Pink) */}
             <button
               onClick={() => onNavigate("moodCheck")}

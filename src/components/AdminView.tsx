@@ -37,7 +37,9 @@ import {
   Sparkles,
   UserPlus,
   Eye,
-  Check
+  Check,
+  FileSpreadsheet,
+  AlertTriangle
 } from "lucide-react";
 import { 
   UserProfile, 
@@ -49,21 +51,34 @@ import {
   PushNotificationItem, 
   FileAsset, 
   AuditLogEntry, 
-  PdpaConsentRecord 
+  PdpaConsentRecord,
+  MoodCheckIn 
 } from "../types";
+import { initAuth, googleSignIn, logoutGoogle } from "../services/googleAuth";
+import { 
+  createDatabaseSpreadsheet, 
+  syncAllUsersToSheet, 
+  syncMoodLogsToSheet,
+  getSavedSpreadsheetId, 
+  getSpreadsheetUrl,
+  AUTHORIZED_SHEETS_EMAIL,
+  isAuthorizedSheetsEmail
+} from "../services/googleSheetsService";
 
 interface AdminViewProps {
   user: UserProfile;
   certificates: Certificate[];
+  moodLogs?: MoodCheckIn[];
 }
 
-export default function AdminView({ user }: AdminViewProps) {
+export default function AdminView({ user, certificates, moodLogs }: AdminViewProps) {
   const isEn = user.language === "en";
 
-  // Tab navigation for the 4 core sections
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "data" | "security">("overview");
+  // Tab navigation including dedicated Google Sheets Database section
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "sheets" | "data" | "security">("overview");
   const [dataSubTab, setDataSubTab] = useState<"catalog" | "articles" | "promotions" | "reports">("catalog");
   const [securitySubTab, setSecuritySubTab] = useState<"push" | "files" | "audit" | "pdpa">("push");
+  const [sheetPreviewTab, setSheetPreviewTab] = useState<"users" | "moods" | "certs">("users");
 
   // State for simulated backend data
   const [loading, setLoading] = useState(false);
@@ -78,6 +93,150 @@ export default function AdminView({ user }: AdminViewProps) {
   const [filesStats, setFilesStats] = useState<any>(null);
   const [auditLogsList, setAuditLogsList] = useState<AuditLogEntry[]>([]);
   const [pdpaList, setPdpaList] = useState<PdpaConsentRecord[]>([]);
+
+  // Google Sheets Private Database for Owner
+  const [googleUser, setGoogleUser] = useState<any>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isSyncingSheets, setIsSyncingSheets] = useState(false);
+  const [sheetsSyncMsg, setSheetsSyncMsg] = useState("");
+  const [spreadsheetId, setSpreadsheetId] = useState<string | null>(getSavedSpreadsheetId());
+
+  // Strict single-email authorization check
+  const isGoogleAuthorized = Boolean(googleUser && isAuthorizedSheetsEmail(googleUser.email));
+
+  useEffect(() => {
+    const unsub = initAuth(
+      (u) => setGoogleUser(u),
+      () => setGoogleUser(null)
+    );
+    return () => unsub();
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    setSheetsSyncMsg("");
+    try {
+      const res = await googleSignIn();
+      if (res) {
+        if (!isAuthorizedSheetsEmail(res.user.email)) {
+          setGoogleUser(null);
+          setSheetsSyncMsg(`⛔ บัญชี ${res.user.email} ไม่มีสิทธิ์เข้าถึง Google Sheets (อนุญาตเฉพาะ ${AUTHORIZED_SHEETS_EMAIL} เท่านั้น)`);
+          return;
+        }
+        setGoogleUser(res.user);
+        setSheetsSyncMsg(isEn ? `Connected to ${res.user.email} successfully!` : `ยืนยันตัวตนเจ้าของระบบ (${res.user.email}) สำเร็จ!`);
+      }
+    } catch (e: any) {
+      setSheetsSyncMsg(e.message || "Failed to sign in with Google");
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleCreateOrSyncSheet = async () => {
+    if (!isGoogleAuthorized) {
+      setSheetsSyncMsg(`⛔ การเข้าถึงถูกปฏิเสธ: อนุญาตเฉพาะบัญชี ${AUTHORIZED_SHEETS_EMAIL} เท่านั้นที่สามารถซิงค์ Google Sheets ได้`);
+      return;
+    }
+    setIsSyncingSheets(true);
+    setSheetsSyncMsg("");
+    try {
+      let targetId = spreadsheetId;
+      if (!targetId) {
+        const created = await createDatabaseSpreadsheet();
+        targetId = created.spreadsheetId;
+        setSpreadsheetId(targetId);
+      }
+      let allUsers: UserProfile[] = [user];
+      try {
+        const stored = localStorage.getItem("mind_merit_registered_users_v1");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) allUsers = parsed;
+        }
+      } catch (e) {}
+
+      const syncRes = await syncAllUsersToSheet(allUsers, targetId);
+      setSheetsSyncMsg(
+        isEn 
+          ? `Synced ${syncRes.count} user records to your Google Sheet successfully!` 
+          : `ซิงค์ข้อมูลผู้ใช้ ${syncRes.count} รายการลงใน Google Sheet ของคุณเรียบร้อยแล้ว!`
+      );
+    } catch (e: any) {
+      setSheetsSyncMsg(e.message || "Error syncing to Google Sheet");
+    } finally {
+      setIsSyncingSheets(false);
+    }
+  };
+
+  const handleSyncMoodLogs = async () => {
+    if (!isGoogleAuthorized) {
+      setSheetsSyncMsg(`⛔ การเข้าถึงถูกปฏิเสธ: อนุญาตเฉพาะบัญชี ${AUTHORIZED_SHEETS_EMAIL} เท่านั้นที่สามารถซิงค์ข้อมูลอารมณ์ได้`);
+      return;
+    }
+    setIsSyncingSheets(true);
+    setSheetsSyncMsg("");
+    try {
+      let targetId = spreadsheetId;
+      if (!targetId) {
+        const created = await createDatabaseSpreadsheet();
+        targetId = created.spreadsheetId;
+        setSpreadsheetId(targetId);
+      }
+      const logs = moodLogs || [];
+      const res = await syncMoodLogsToSheet(logs, user.name, targetId);
+      setSheetsSyncMsg(
+        isEn
+          ? `Synced ${res.count} mood logs to Google Sheet successfully!`
+          : `ซิงค์ประวัติบันทึกอารมณ์ ${res.count} รายการลงใน Google Sheet เรียบร้อยแล้ว!`
+      );
+    } catch (e: any) {
+      setSheetsSyncMsg(e.message || "Error syncing mood logs");
+    } finally {
+      setIsSyncingSheets(false);
+    }
+  };
+
+  const handleCreateNewSheet = async () => {
+    if (!isGoogleAuthorized) {
+      setSheetsSyncMsg(`⛔ การเข้าถึงถูกปฏิเสธ: อนุญาตเฉพาะบัญชี ${AUTHORIZED_SHEETS_EMAIL} เท่านั้นที่สามารถสร้าง Google Sheet ได้`);
+      return;
+    }
+    setIsSyncingSheets(true);
+    setSheetsSyncMsg("");
+    try {
+      const created = await createDatabaseSpreadsheet();
+      setSpreadsheetId(created.spreadsheetId);
+      let allUsers: UserProfile[] = [user];
+      try {
+        const stored = localStorage.getItem("mind_merit_registered_users_v1");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) allUsers = parsed;
+        }
+      } catch (e) {}
+      await syncAllUsersToSheet(allUsers, created.spreadsheetId);
+      setSheetsSyncMsg(
+        isEn
+          ? `Created new Google Spreadsheet in your Google Drive and synced ${allUsers.length} user records!`
+          : `สร้างไฟล์ Google Spreadsheet ใหม่ใน Google Drive และซิงค์ข้อมูลผู้ใช้ ${allUsers.length} รายการเรียบร้อยแล้ว!`
+      );
+    } catch (e: any) {
+      setSheetsSyncMsg(e.message || "Error creating new Google Sheet");
+    } finally {
+      setIsSyncingSheets(false);
+    }
+  };
+
+  const handleGoogleLogout = async () => {
+    try {
+      await logoutGoogle();
+      setGoogleUser(null);
+      setSheetsSyncMsg(isEn ? "Disconnected Google account." : "ยกเลิกการเชื่อมต่อบัญชี Google เรียบร้อยแล้ว");
+    } catch (e: any) {
+      console.error(e);
+    }
+  };
 
   // Filter states
   const [userSearch, setUserSearch] = useState("");
@@ -514,7 +673,7 @@ export default function AdminView({ user }: AdminViewProps) {
         </div>
 
         {/* Live Infrastructure Quick Ticker */}
-        <div className="mt-6 pt-5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div className="mt-6 pt-5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
           <div className="flex items-center space-x-2">
             <Server className="h-4 w-4 text-emerald-400 shrink-0" />
             <div>
@@ -527,6 +686,19 @@ export default function AdminView({ user }: AdminViewProps) {
             <div>
               <span className="text-[10px] text-slate-400 block font-medium">Database Engine</span>
               <span className="font-bold text-slate-200">PostgreSQL 16 & Redis</span>
+            </div>
+          </div>
+          <div 
+            onClick={() => setActiveTab("sheets")}
+            className="flex items-center space-x-2 cursor-pointer hover:opacity-85 transition-opacity"
+            title="คลิกเพื่อไปที่ฐานข้อมูล Google Sheets"
+          >
+            <FileSpreadsheet className="h-4 w-4 text-emerald-400 shrink-0" />
+            <div>
+              <span className="text-[10px] text-slate-400 block font-medium">Google Sheets DB</span>
+              <span className="font-bold text-emerald-300">
+                {googleUser ? "🟢 ซิงค์แล้ว (Drive)" : "⚪ รอเชื่อมต่อ"}
+              </span>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -548,7 +720,7 @@ export default function AdminView({ user }: AdminViewProps) {
       </div>
 
       {/* =========================================================================
-          MAIN NAVIGATION TABS (โครงสร้าง 4 องค์ประกอบหลักตามคำขอ)
+          MAIN NAVIGATION TABS (โครงสร้างหลักของระบบหลังบ้าน)
           ========================================================================= */}
       <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto scrollbar-none">
         
@@ -578,7 +750,23 @@ export default function AdminView({ user }: AdminViewProps) {
           <span>{isEn ? "2. User Management & Roles" : "2. จัดการผู้ใช้งาน & กำหนดสิทธิ์ (RBAC)"}</span>
         </button>
 
-        {/* Tab 3: จัดการข้อมูล & รายงาน */}
+        {/* Tab 3: ฐานข้อมูล Google Sheets (Private Cloud Database) */}
+        <button
+          onClick={() => setActiveTab("sheets")}
+          className={`flex items-center space-x-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "sheets"
+              ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+              : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+        >
+          <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
+          <span>{isEn ? "3. Google Sheets Database" : "3. ฐานข้อมูล Google Sheets"}</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold">
+            Drive Cloud
+          </span>
+        </button>
+
+        {/* Tab 4: จัดการข้อมูล & รายงาน */}
         <button
           onClick={() => setActiveTab("data")}
           className={`flex items-center space-x-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer whitespace-nowrap ${
@@ -588,10 +776,10 @@ export default function AdminView({ user }: AdminViewProps) {
           }`}
         >
           <Layers className="h-4 w-4" />
-          <span>{isEn ? "3. Data Management & Export" : "3. จัดการข้อมูลแอป & ส่งออกรายงาน"}</span>
+          <span>{isEn ? "4. Data Management & Export" : "4. จัดการข้อมูลแอป & ส่งออกรายงาน"}</span>
         </button>
 
-        {/* Tab 4: ระบบเสริมและความปลอดภัย */}
+        {/* Tab 5: ระบบเสริมและความปลอดภัย */}
         <button
           onClick={() => setActiveTab("security")}
           className={`flex items-center space-x-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer whitespace-nowrap ${
@@ -601,7 +789,7 @@ export default function AdminView({ user }: AdminViewProps) {
           }`}
         >
           <ShieldAlert className="h-4 w-4" />
-          <span>{isEn ? "4. Security, Push & PDPA" : "4. แจ้งเตือน, ไฟล์, บันทึก & PDPA"}</span>
+          <span>{isEn ? "5. Security, Push & PDPA" : "5. แจ้งเตือน, ไฟล์, บันทึก & PDPA"}</span>
         </button>
 
       </div>
@@ -675,6 +863,49 @@ export default function AdminView({ user }: AdminViewProps) {
               </div>
             </div>
 
+          </div>
+
+          {/* Quick Access Card to Google Sheets Database in Admin Simulation */}
+          <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3.5">
+              <div className="p-3 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20 shrink-0">
+                <FileSpreadsheet className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h4 className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100">
+                    {isEn ? "Private Google Sheets Cloud Database" : "ฐานข้อมูล Google Sheets ใน Google Drive ส่วนตัว"}
+                  </h4>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold">
+                    {googleUser ? "🟢 เชื่อมต่อแล้ว" : "⚪ พร้อมซิงค์"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {isEn
+                    ? "Manage and sync user records, mood logs, and certificates to Google Drive."
+                    : "ข้อมูลผู้ใช้และประวัติอารมณ์ถูกจัดเก็บในชีตบน Google Drive เฉพาะเจ้าของระบบ (ไม่อยู่ในหน้าจอผู้ใช้)"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 shrink-0">
+              <button
+                onClick={() => setActiveTab("sheets")}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5 cursor-pointer"
+              >
+                <span>จัดการ Google Sheets ➜</span>
+              </button>
+              {spreadsheetId && (
+                <a
+                  href={getSpreadsheetUrl(spreadsheetId)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="p-2 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 text-xs font-bold transition-all cursor-pointer"
+                  title="เปิดดูใน Google Drive"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
           </div>
 
           {/* SECTION 1.2: Admin Dashboard KPIs (ยอดขาย & ผู้ใช้งานรายวัน) */}
@@ -1013,7 +1244,584 @@ export default function AdminView({ user }: AdminViewProps) {
       )}
 
       {/* =========================================================================
-          TAB 3: จัดการข้อมูล & รายงาน (DATA MANAGEMENT & EXPORT)
+          TAB 3: ฐานข้อมูล GOOGLE SHEETS (PRIVATE CLOUD DATABASE FOR ADMIN)
+          ========================================================================= */}
+      {activeTab === "sheets" && (
+        <div className="space-y-6">
+
+          {/* Banner: Google Sheets Database Hub */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 p-6 sm:p-8 text-white shadow-lg">
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/15 text-emerald-200 text-xs font-bold border border-white/20 backdrop-blur-xs">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  <span>{isEn ? "Google Sheets Cloud Database" : "ระบบฐานข้อมูล Google Sheets ใน Google Drive"}</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
+                  {isEn ? "Private Google Sheets Database" : "ฐานข้อมูล Google Sheets (จำลองระบบหลังบ้าน)"}
+                </h3>
+                <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+                  {isEn
+                    ? "Store all user registrations, subscription packages, mood logs, and certificates in your personal Google Drive spreadsheet. Completely private and restricted exclusively to your authorized email."
+                    : "จัดเก็บข้อมูลสมาชิกผู้ใช้งาน, แพ็กเกจที่เลือก, ประวัติการประเมินอารมณ์ และใบประกาศนียบัตรลงใน Google Sheets บน Google Drive ส่วนตัวของคุณ ปลอดภัย 100% ไม่อยู่ในหน้าจอผู้ใช้ทั่วไป"}
+                </p>
+                <div className="flex flex-wrap items-center gap-2 pt-2 text-[11px] font-semibold text-emerald-200">
+                  <span className="px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-400/40 text-emerald-200 font-bold flex items-center space-x-1.5">
+                    <Lock className="h-3.5 w-3.5 text-emerald-300" />
+                    <span>จำกัดสิทธิ์เฉพาะ: {AUTHORIZED_SHEETS_EMAIL}</span>
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10">📊 3 Structured Sheets: Users / MoodLogs / Certificates</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10">☁️ Real-time Google Drive Sync</span>
+                </div>
+              </div>
+
+              {/* Action Link to Open Sheet (Only if authorized) */}
+              {spreadsheetId && isGoogleAuthorized && (
+                <div className="flex flex-col sm:flex-row items-stretch md:items-center gap-3 shrink-0">
+                  <a
+                    href={getSpreadsheetUrl(spreadsheetId)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center space-x-2 px-5 py-3 rounded-2xl bg-white text-emerald-800 hover:bg-emerald-50 active:scale-95 font-black text-xs sm:text-sm transition-all shadow-md cursor-pointer"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span>{isEn ? "Open in Google Drive ↗" : "เปิดดูใน Google Drive ของคุณ ↗"}</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sync & Connection Status Messages */}
+          {sheetsSyncMsg && (
+            <div className={`p-4 rounded-2xl border text-xs sm:text-sm font-bold flex items-center justify-between shadow-xs animate-in fade-in ${
+              sheetsSyncMsg.startsWith("⛔") || sheetsSyncMsg.toLowerCase().includes("fail") || sheetsSyncMsg.toLowerCase().includes("error")
+                ? "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200"
+                : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200"
+            }`}>
+              <div className="flex items-center space-x-2.5">
+                {sheetsSyncMsg.startsWith("⛔") ? (
+                  <ShieldAlert className="h-5 w-5 text-rose-600 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                )}
+                <span>{sheetsSyncMsg}</span>
+              </div>
+              <button 
+                onClick={() => setSheetsSyncMsg("")}
+                className="text-xs opacity-70 hover:opacity-100 p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Single-Email Whitelist Access Notice Box */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center space-x-3.5">
+              <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                <Lock className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2 flex-wrap">
+                  <span className="font-black text-sm text-slate-100">
+                    นโยบายความปลอดภัย: บัญชีอีเมลเดียวที่ได้รับอนุญาตเข้าถึง Google Sheets
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                    Strict Single Email
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300">
+                  ระบบจะอนุญาตให้เฉพาะบัญชี <span className="font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-800/60">{AUTHORIZED_SHEETS_EMAIL}</span> เท่านั้นที่สามารถสร้าง เชื่อมต่อ ดู หรือซิงค์ข้อมูล Google Sheets นี้ได้
+                </p>
+              </div>
+            </div>
+            <div className="shrink-0 flex items-center space-x-2">
+              {isGoogleAuthorized ? (
+                <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center space-x-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <span>ยืนยันสิทธิ์ถูกต้อง (Verified)</span>
+                </span>
+              ) : (
+                <span className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center space-x-1.5">
+                  <AlertTriangle className="h-4 w-4 text-amber-400" />
+                  <span>รอเข้าสู่ระบบด้วย {AUTHORIZED_SHEETS_EMAIL}</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Main Control Cards Grid */}
+          <div className="grid gap-6 lg:grid-cols-12">
+            
+            {/* Left Card: Account & Connection Status (5 cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40">
+                      <Key className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100">
+                        {isEn ? "Google Account Status" : "สถานะบัญชี Google & สิทธิ์"}
+                      </h4>
+                      <p className="text-[11px] text-slate-400">
+                        {isEn ? "Linked owner account for Sheets creation" : "บัญชี Google สำหรับบันทึกข้อมูล"}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                    isGoogleAuthorized 
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 border border-emerald-200" 
+                      : googleUser
+                      ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 border border-rose-200"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-800"
+                  }`}>
+                    {isGoogleAuthorized ? "🟢 ได้รับอนุญาต" : googleUser ? "🔴 สิทธิ์ไม่ถูกต้อง" : "⚪ ยังไม่เชื่อมต่อ"}
+                  </span>
+                </div>
+
+                {/* Account Details Box */}
+                {googleUser ? (
+                  <div className={`p-4 rounded-2xl border space-y-3 ${
+                    isGoogleAuthorized 
+                      ? "bg-slate-50 dark:bg-slate-800/60 border-slate-200/60 dark:border-slate-700"
+                      : "bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900"
+                  }`}>
+                    <div className="flex items-center space-x-3">
+                      {googleUser.photoURL ? (
+                        <img src={googleUser.photoURL} alt="Google" className="h-10 w-10 rounded-full border border-slate-300" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+                          {googleUser.email ? googleUser.email[0].toUpperCase() : "G"}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100 truncate">
+                          {googleUser.displayName || "Google Account"}
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-mono truncate font-bold">
+                          {googleUser.email}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700 flex justify-between items-center text-[11px]">
+                      <span className="text-slate-500">สิทธิ์การเข้าถึงข้อมูล:</span>
+                      {isGoogleAuthorized ? (
+                        <span className="text-emerald-600 font-bold flex items-center space-x-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>อนุญาตเต็มรูปแบบ (Owner)</span>
+                        </span>
+                      ) : (
+                        <span className="text-rose-600 font-bold flex items-center space-x-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          <span>ปฏิเสธ (ไม่ใช่ {AUTHORIZED_SHEETS_EMAIL})</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-3 text-center">
+                    <div className="text-xs text-amber-800 dark:text-amber-200 font-medium">
+                      {isEn 
+                        ? `Connect with ${AUTHORIZED_SHEETS_EMAIL} to access and sync spreadsheets in your Google Drive.` 
+                        : `เชื่อมต่อด้วยบัญชี ${AUTHORIZED_SHEETS_EMAIL} เพื่อเข้าถึงและซิงค์ข้อมูลลงใน Google Drive`}
+                    </div>
+                    <button
+                      onClick={handleGoogleSignIn}
+                      disabled={isGoogleLoading}
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      <span>{isGoogleLoading ? "กำลังเชื่อมต่อ..." : `เชื่อมต่อด้วย ${AUTHORIZED_SHEETS_EMAIL}`}</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Spreadsheet ID Information */}
+                <div className="space-y-2 pt-2">
+                  <div className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                    <span>Google Spreadsheet ID:</span>
+                    {spreadsheetId && isGoogleAuthorized && (
+                      <span className="text-[10px] text-emerald-600 font-normal">Active Link</span>
+                    )}
+                  </div>
+                  {spreadsheetId && isGoogleAuthorized ? (
+                    <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300 break-all select-all border border-slate-200 dark:border-slate-700">
+                      {spreadsheetId}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-400 italic">
+                      {!isGoogleAuthorized 
+                        ? "ต้องยืนยันตัวตนด้วย alisa.yama2006@gmail.com เพื่อดูรหัสชีต"
+                        : "ยังไม่ได้สร้างไฟล์ชีตใน Drive (กดปุ่มสร้างหรือซิงค์เพื่อเริ่มสร้างทันที)"}
+                    </div>
+                  )}
+                </div>
+
+                {/* Disconnect or switch button */}
+                {googleUser && (
+                  <div className="pt-2 flex items-center justify-between">
+                    <button
+                      onClick={handleGoogleLogout}
+                      className="text-xs text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                    >
+                      ยกเลิกการเชื่อมต่อบัญชีนี้
+                    </button>
+                    {spreadsheetId && isGoogleAuthorized && (
+                      <a
+                        href={getSpreadsheetUrl(spreadsheetId)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center space-x-1"
+                      >
+                        <span>เปิด Drive</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Card: Sync Operations & Live Actions (7 cols) */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+                <div className="flex items-center space-x-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="p-2 rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/40">
+                    <UploadCloud className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100">
+                      {isEn ? "Database Synchronization Actions" : "คำสั่งซิงค์ข้อมูลลง Google Sheets"}
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      {isEn ? "Trigger real-time sync for registered users and mood logs" : "อัปเดตข้อมูลผู้ใช้และประวัติอารมณ์เข้าสู่ตารางชีต (เฉพาะ alisa.yama2006@gmail.com)"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons Grid */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  
+                  {/* Action 1: Sync Users */}
+                  <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 space-y-2">
+                    <div className="flex items-center space-x-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
+                      <Users className="h-4 w-4 shrink-0 text-emerald-600" />
+                      <span>ซิงค์ข้อมูลผู้ใช้งาน (Users)</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">
+                      ส่งข้อมูลบัญชีผู้ใช้, ระดับเลเวล, แพ็กเกจที่สมัคร, และแต้มสะสมทั้งหมดเข้าชีตแท็บ Users
+                    </p>
+                    <button
+                      onClick={handleCreateOrSyncSheet}
+                      disabled={isSyncingSheets || !isGoogleAuthorized}
+                      title={!isGoogleAuthorized ? `อนุญาตเฉพาะ ${AUTHORIZED_SHEETS_EMAIL} เท่านั้น` : undefined}
+                      className="w-full mt-2 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${isSyncingSheets ? 'animate-spin' : ''}`} />
+                      <span>{isSyncingSheets ? "กำลังซิงค์..." : !isGoogleAuthorized ? "ล็อกสิทธิ์เฉพาะเจ้าของ" : "ซิงค์ข้อมูลผู้ใช้ทันที"}</span>
+                    </button>
+                  </div>
+
+                  {/* Action 2: Sync Mood Logs */}
+                  <div className="p-4 rounded-2xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/60 space-y-2">
+                    <div className="flex items-center space-x-2 text-sky-800 dark:text-sky-300 font-bold text-xs">
+                      <Activity className="h-4 w-4 shrink-0 text-sky-600" />
+                      <span>ซิงค์บันทึกอารมณ์ (MoodLogs)</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">
+                      ส่งข้อมูลคะแนนอารมณ์, ดัชนีความเครียด, ชั่วโมงนอน, และการวิเคราะห์ AI เข้าชีตแท็บ MoodLogs
+                    </p>
+                    <button
+                      onClick={handleSyncMoodLogs}
+                      disabled={isSyncingSheets || !isGoogleAuthorized}
+                      title={!isGoogleAuthorized ? `อนุญาตเฉพาะ ${AUTHORIZED_SHEETS_EMAIL} เท่านั้น` : undefined}
+                      className="w-full mt-2 py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${isSyncingSheets ? 'animate-spin' : ''}`} />
+                      <span>{isSyncingSheets ? "กำลังซิงค์..." : !isGoogleAuthorized ? "ล็อกสิทธิ์เฉพาะเจ้าของ" : "ซิงค์บันทึกอารมณ์ทันที"}</span>
+                    </button>
+                  </div>
+
+                  {/* Action 3: Create Brand New Sheet */}
+                  <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 space-y-2">
+                    <div className="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-bold text-xs">
+                      <Plus className="h-4 w-4 shrink-0 text-amber-600" />
+                      <span>สร้าง Google Sheet ไฟล์ใหม่</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">
+                      สร้างสเปรดชีตเล่มใหม่บน Drive ของ {AUTHORIZED_SHEETS_EMAIL} พร้อมเตรียม 3 แท็บมาตรฐาน
+                    </p>
+                    <button
+                      onClick={handleCreateNewSheet}
+                      disabled={isSyncingSheets || !isGoogleAuthorized}
+                      title={!isGoogleAuthorized ? `อนุญาตเฉพาะ ${AUTHORIZED_SHEETS_EMAIL} เท่านั้น` : undefined}
+                      className="w-full mt-2 py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>{!isGoogleAuthorized ? "ล็อกสิทธิ์เฉพาะเจ้าของ" : "สร้างชีตใหม่ใน Drive"}</span>
+                    </button>
+                  </div>
+
+                  {/* Action 4: Direct Link */}
+                  <div className="p-4 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 space-y-2 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center space-x-2 text-purple-800 dark:text-purple-300 font-bold text-xs">
+                        <FileSpreadsheet className="h-4 w-4 shrink-0 text-purple-600" />
+                        <span>เปิดใช้งานผ่าน Google Drive</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight mt-1">
+                        เปิดสเปรดชีตเพื่อแก้ไข กรองข้อมูล หรือดาวน์โหลดเป็นไฟล์ Excel (.xlsx) / CSV
+                      </p>
+                    </div>
+                    {spreadsheetId && isGoogleAuthorized ? (
+                      <a
+                        href={getSpreadsheetUrl(spreadsheetId)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full mt-2 py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 active:scale-95 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>เปิดดูบน Google Sheets ↗</span>
+                      </a>
+                    ) : (
+                      <div className="text-[11px] text-slate-400 italic">
+                        {!isGoogleAuthorized ? "🔒 ล็อกสิทธิ์เฉพาะ alisa.yama2006@gmail.com" : "สร้างหรือซิงค์ข้อมูลก่อนเปิดดู"}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Section 2: Live Schema & Data Preview */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h4 className="font-extrabold text-base text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                  <span>ตัวอย่างโครงสร้างข้อมูลในชีต (Live Schema Preview)</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">
+                    3 Worksheets
+                  </span>
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  โครงสร้างหัวคอลัมน์ที่จะถูกเขียนลงใน Google Sheet จริงบน Google Drive
+                </p>
+              </div>
+
+              {/* Sub-tabs for Preview */}
+              <div className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
+                <button
+                  onClick={() => setSheetPreviewTab("users")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    sheetPreviewTab === "users" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  👥 Users
+                </button>
+                <button
+                  onClick={() => setSheetPreviewTab("moods")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    sheetPreviewTab === "moods" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  🧘 MoodLogs
+                </button>
+                <button
+                  onClick={() => setSheetPreviewTab("certs")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    sheetPreviewTab === "certs" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  🎓 Certificates
+                </button>
+              </div>
+            </div>
+
+            {/* Preview Table: Users */}
+            {sheetPreviewTab === "users" && (
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 font-extrabold uppercase text-[10px] border-b border-emerald-100 dark:border-emerald-900">
+                    <tr>
+                      <th className="p-3">A: Registered At</th>
+                      <th className="p-3">B: Full Name</th>
+                      <th className="p-3">C: Role</th>
+                      <th className="p-3">D: Package</th>
+                      <th className="p-3">E: Email / Phone</th>
+                      <th className="p-3">F: Level</th>
+                      <th className="p-3">G: Total XP</th>
+                      <th className="p-3">H: Streak</th>
+                      <th className="p-3">I: Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="p-3">{new Date().toLocaleDateString("th-TH")}</td>
+                      <td className="p-3 font-sans font-bold">{user.name}</td>
+                      <td className="p-3">{user.role}</td>
+                      <td className="p-3 text-emerald-600 font-bold">{user.packageType || "basic"}</td>
+                      <td className="p-3">{user.emailOrPhone || "-"}</td>
+                      <td className="p-3">Lv.{user.level}</td>
+                      <td className="p-3">{user.xp} XP</td>
+                      <td className="p-3">{user.streak} วัน</td>
+                      <td className="p-3 text-emerald-600">Registered</td>
+                    </tr>
+                    {usersList.slice(0, 3).map((u) => (
+                      <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                        <td className="p-3">{new Date(u.lastLogin).toLocaleDateString("th-TH")}</td>
+                        <td className="p-3 font-sans font-bold">{u.name}</td>
+                        <td className="p-3">{u.role}</td>
+                        <td className="p-3 text-emerald-600 font-bold">Standard</td>
+                        <td className="p-3">{u.email}</td>
+                        <td className="p-3">Lv.1</td>
+                        <td className="p-3">120 XP</td>
+                        <td className="p-3">1 วัน</td>
+                        <td className="p-3 text-slate-500">{u.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Preview Table: MoodLogs */}
+            {sheetPreviewTab === "moods" && (
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-sky-50/60 dark:bg-sky-950/30 text-sky-900 dark:text-sky-300 font-extrabold uppercase text-[10px] border-b border-sky-100 dark:border-sky-900">
+                    <tr>
+                      <th className="p-3">A: Date</th>
+                      <th className="p-3">B: User Name</th>
+                      <th className="p-3">C: Mood Rating</th>
+                      <th className="p-3">D: Stress (1-10)</th>
+                      <th className="p-3">E: Sleep (hrs)</th>
+                      <th className="p-3">F: Exercise (min)</th>
+                      <th className="p-3">G: Gratitude Note</th>
+                      <th className="p-3">H: Journal Entry</th>
+                      <th className="p-3">I: AI Feedback</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                    {moodLogs && moodLogs.length > 0 ? (
+                      moodLogs.slice(0, 5).map((m, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <td className="p-3">{m.date}</td>
+                          <td className="p-3 font-sans font-bold">{user.name}</td>
+                          <td className="p-3 font-bold text-sky-600">{m.mood}</td>
+                          <td className="p-3">{m.stress}/10</td>
+                          <td className="p-3">{m.sleep} ชม.</td>
+                          <td className="p-3">{m.exercise} นาที</td>
+                          <td className="p-3 font-sans truncate max-w-[150px]">{m.gratitude || "-"}</td>
+                          <td className="p-3 font-sans truncate max-w-[150px]">{m.journal || "-"}</td>
+                          <td className="p-3 font-sans text-emerald-600 truncate max-w-[180px]">{m.aiAnalysis || "-"}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={9} className="p-6 text-center text-slate-400 font-sans">
+                          ยังไม่มีบันทึกอารมณ์จากผู้ใช้ในขณะนี้ (เมื่อมีการบันทึก ข้อมูลจะซิงค์มาที่นี่)
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Preview Table: Certificates */}
+            {sheetPreviewTab === "certs" && (
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-purple-50/60 dark:bg-purple-950/30 text-purple-900 dark:text-purple-300 font-extrabold uppercase text-[10px] border-b border-purple-100 dark:border-purple-900">
+                    <tr>
+                      <th className="p-3">A: Issued At</th>
+                      <th className="p-3">B: User Name</th>
+                      <th className="p-3">C: Certificate Title (EN)</th>
+                      <th className="p-3">D: Certificate Title (TH)</th>
+                      <th className="p-3">E: Certificate ID</th>
+                      <th className="p-3">F: Digital Signature</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                    {certificates.length > 0 ? (
+                      certificates.map((c) => (
+                        <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <td className="p-3">{c.date}</td>
+                          <td className="p-3 font-sans font-bold">{c.userName || user.name}</td>
+                          <td className="p-3 font-sans">{c.courseNameEn}</td>
+                          <td className="p-3 font-sans">{c.courseNameTh}</td>
+                          <td className="p-3 text-purple-600 font-bold">{c.certificateId}</td>
+                          <td className="p-3 text-slate-400">{c.digitalSignature || "Dr. Paul MindMerit"}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="p-6 text-center text-slate-400 font-sans">
+                          ยังไม่มีเกียรติบัตรที่ออกให้ในขณะนี้
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+          </div>
+
+          {/* Section 3: Privacy & Security Guarantee FAQ */}
+          <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-4">
+            <h4 className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-500" />
+              <span>ความปลอดภัยและความเป็นส่วนตัวของข้อมูลผู้ใช้ (PDPA & Privacy)</span>
+            </h4>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-1.5">
+                <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+                  <span>🔒 ไม่อยู่ในหน้าจอผู้ใช้</span>
+                </span>
+                <p className="text-[11px]">
+                  ตาราง Google Sheets จะไม่ปรากฏในหน้าเว็บของผู้ใช้ทั่วไป ผู้ใช้อื่นจะไม่สามารถเปิดดูหรือค้นหาข้อมูลของผู้อื่นได้
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-1.5">
+                <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+                  <span>🔐 ล็อกสิทธิ์เฉพาะอีเมลเจ้าของ</span>
+                </span>
+                <p className="text-[11px]">
+                  กำหนดสิทธิ์เข้มงวดให้เฉพาะ <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{AUTHORIZED_SHEETS_EMAIL}</span> เท่านั้นที่มีสิทธิ์เข้าถึงข้อมูล
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-1.5">
+                <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+                  <span>📱 ดูผ่านแอปมือถือได้</span>
+                </span>
+                <p className="text-[11px]">
+                  เจ้าของระบบสามารถติดตั้งแอป Google Sheets หรือ Google Drive บนมือถือ แล้วล็อกอินดูข้อมูลสดได้ตลอดเวลา
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-1.5">
+                <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+                  <span>📥 ส่งออกไฟล์ Excel ได้</span>
+                </span>
+                <p className="text-[11px]">
+                  สามารถดาวน์โหลดข้อมูลเป็นไฟล์ .xlsx, .csv, หรือแชร์ลิงก์ให้เฉพาะทีมงานที่ได้รับอนุญาตได้ทันที
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB 4: จัดการข้อมูล & รายงาน (DATA MANAGEMENT & EXPORT)
           ========================================================================= */}
       {activeTab === "data" && (
         <div className="space-y-6">
@@ -1236,6 +2044,114 @@ export default function AdminView({ user }: AdminViewProps) {
                   </button>
                 </div>
 
+              </div>
+
+              {/* Google Sheets Private Cloud Database Card (เฉพาะเจ้าของระบบ) */}
+              <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-emerald-50/70 via-teal-50/40 to-white dark:from-slate-900 dark:via-emerald-950/20 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-800 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-emerald-100 dark:border-slate-800">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2.5 rounded-2xl bg-emerald-500 text-white shadow-md shadow-emerald-500/20 shrink-0">
+                      <FileSpreadsheet className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h5 className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 flex items-center space-x-2 flex-wrap">
+                        <span>Google Sheets Private Database (สำหรับเจ้าของระบบ)</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold">
+                          Private Owner Only
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 text-emerald-400 font-mono font-bold">
+                          🔒 {AUTHORIZED_SHEETS_EMAIL}
+                        </span>
+                      </h5>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        จัดเก็บข้อมูลสมาชิกและบันทึกอารมณ์ลงใน Google Sheets บน Google Drive ส่วนตัวของคุณ ไม่อยู่ในหน้าจอผู้ใช้ และอนุญาตเฉพาะ {AUTHORIZED_SHEETS_EMAIL}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 shrink-0 self-start sm:self-auto">
+                    <button
+                      onClick={() => setActiveTab("sheets")}
+                      className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>แท็บฐานข้อมูลชีต ➜</span>
+                    </button>
+                    {spreadsheetId && isGoogleAuthorized && (
+                      <a
+                        href={getSpreadsheetUrl(spreadsheetId)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>เปิดใน Drive ↗</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {sheetsSyncMsg && (
+                  <div className={`p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 ${
+                    sheetsSyncMsg.startsWith("⛔")
+                      ? "bg-rose-100/70 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200"
+                      : "bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200"
+                  }`}>
+                    {sheetsSyncMsg.startsWith("⛔") ? (
+                      <ShieldAlert className="h-4 w-4 text-rose-600 shrink-0" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                    )}
+                    <span>{sheetsSyncMsg}</span>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                  <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold">สถานะบัญชี Google:</span>
+                      {isGoogleAuthorized ? (
+                        <span className="text-emerald-600 font-semibold flex items-center space-x-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span>สิทธิ์ถูกต้อง ({googleUser.email})</span>
+                        </span>
+                      ) : googleUser ? (
+                        <span className="text-rose-500 font-semibold flex items-center space-x-1">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          <span>ไม่ใช่บัญชีที่ได้รับอนุญาต ({googleUser.email})</span>
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">ยังไม่ได้เชื่อมต่อ (ต้องใช้ {AUTHORIZED_SHEETS_EMAIL})</span>
+                      )}
+                    </div>
+                    {spreadsheetId && isGoogleAuthorized && (
+                      <div className="text-[11px] text-slate-400 font-mono">
+                        Spreadsheet ID: {spreadsheetId}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-2 shrink-0">
+                    {!googleUser ? (
+                      <button
+                        onClick={handleGoogleSignIn}
+                        disabled={isGoogleLoading}
+                        className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                      >
+                        {isGoogleLoading ? "กำลังเชื่อมต่อ..." : `เข้าสู่ระบบด้วย Google (${AUTHORIZED_SHEETS_EMAIL})`}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleCreateOrSyncSheet}
+                        disabled={isSyncingSheets || !isGoogleAuthorized}
+                        className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-xs font-bold transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1.5"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${isSyncingSheets ? 'animate-spin' : ''}`} />
+                        <span>{isSyncingSheets ? "กำลังส่งข้อมูลเข้าชีต..." : !isGoogleAuthorized ? "ล็อกสิทธิ์เฉพาะเจ้าของ" : "ซิงค์ข้อมูลผู้ใช้เข้า Google Sheet ทันที"}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
