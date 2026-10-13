@@ -57,12 +57,12 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     const result = await signInWithPopup(auth, provider);
     const userEmail = result.user.email;
 
-    // Strict Authorization: ONLY alisa.yama2006@gmail.com is allowed to access Google Sheets
+    // Strict Authorization: Restricted to Administrator only
     if (!isAuthorizedSheetsEmail(userEmail)) {
       await auth.signOut();
       cachedAccessToken = null;
       throw new Error(
-        `⛔ บัญชี ${userEmail || "นี้"} ไม่มีสิทธิ์เข้าถึงข้อมูล Google Sheets (ระบบจำกัดสิทธิ์เฉพาะ ${AUTHORIZED_SHEETS_EMAIL} เท่านั้น)`
+        `⛔ บัญชี ${userEmail || "นี้"} ไม่มีสิทธิ์เข้าถึงข้อมูล Google Sheets (ระบบจำกัดสิทธิ์เฉพาะ ผู้ดูแลระบบ เท่านั้น)`
       );
     }
 

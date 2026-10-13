@@ -31,6 +31,7 @@ import UserGuideView from "./components/UserGuideView";
 import UserProfileModal from "./components/UserProfileModal";
 import LandingPageView from "./components/LandingPageView";
 import LogoModal from "./components/LogoModal";
+import PrototypeModal from "./components/PrototypeModal";
 import SettingsView from "./components/SettingsView";
 import { appendSingleMoodLogToSheet, appendSingleUserToSheet } from "./services/googleSheetsService";
 
@@ -75,6 +76,7 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState<boolean>(false);
+  const [isPrototypeModalOpen, setIsPrototypeModalOpen] = useState<boolean>(false);
   const [splashProgress, setSplashProgress] = useState<number>(0);
   const [splashSecondsLeft, setSplashSecondsLeft] = useState<number>(5);
 
@@ -137,6 +139,13 @@ export default function App() {
         lastVisitDate: todayStr
       };
     });
+  }, []);
+
+  // Event listener for opening Prototype Modal from any view
+  useEffect(() => {
+    const handleOpenProto = () => setIsPrototypeModalOpen(true);
+    window.addEventListener("mind_merit_open_prototype_modal", handleOpenProto);
+    return () => window.removeEventListener("mind_merit_open_prototype_modal", handleOpenProto);
   }, []);
 
   // Sync state changes to localStorage
@@ -546,6 +555,7 @@ export default function App() {
           }
         }}
         onOpenGuide={() => setActiveTab("guide")}
+        onOpenPrototype={() => setIsPrototypeModalOpen(true)}
         onOpenLanding={() => setActiveTab("landing")}
         onOpenAuth={() => {
           setActiveTab("landing");
@@ -852,6 +862,14 @@ export default function App() {
       <LogoModal 
         isOpen={isLogoModalOpen}
         onClose={() => setIsLogoModalOpen(false)}
+        language={user.language}
+      />
+
+      {/* 7. Comprehensive Prototype & Architecture Showcase Modal */}
+      <PrototypeModal 
+        isOpen={isPrototypeModalOpen}
+        onClose={() => setIsPrototypeModalOpen(false)}
+        onNavigateTab={(tab) => setActiveTab(tab)}
         language={user.language}
       />
 

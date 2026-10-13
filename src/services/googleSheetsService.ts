@@ -31,7 +31,7 @@ export const getSpreadsheetUrl = (spreadsheetId: string) => {
  */
 export const createDatabaseSpreadsheet = async (): Promise<SheetDatabaseInfo> => {
   if (!auth.currentUser || !isAuthorizedSheetsEmail(auth.currentUser.email)) {
-    throw new Error(`ไม่อนุญาต: เฉพาะบัญชี ${AUTHORIZED_SHEETS_EMAIL} เท่านั้นที่มีสิทธิ์สร้างหรือเข้าถึง Google Sheets`);
+    throw new Error(`ไม่อนุญาต: ระบบจำกัดสิทธิ์เฉพาะ ผู้ดูแลระบบ เท่านั้นที่มีสิทธิ์สร้างหรือเข้าถึง Google Sheets`);
   }
 
   const token = await getAccessToken();
@@ -151,7 +151,7 @@ export const syncAllUsersToSheet = async (
   spreadsheetId?: string
 ): Promise<{ count: number; spreadsheetUrl: string }> => {
   if (!auth.currentUser || !isAuthorizedSheetsEmail(auth.currentUser.email)) {
-    throw new Error(`ไม่อนุญาต: เฉพาะบัญชี ${AUTHORIZED_SHEETS_EMAIL} เท่านั้นที่มีสิทธิ์ซิงค์ข้อมูล Google Sheets`);
+    throw new Error(`ไม่อนุญาต: ระบบจำกัดสิทธิ์เฉพาะ ผู้ดูแลระบบ เท่านั้นที่มีสิทธิ์ซิงค์ข้อมูล Google Sheets`);
   }
 
   const targetId = spreadsheetId || getSavedSpreadsheetId();

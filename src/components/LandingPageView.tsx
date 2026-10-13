@@ -25,7 +25,8 @@ import {
   UserCheck,
   GraduationCap,
   Briefcase,
-  AlertCircle
+  AlertCircle,
+  Layers
 } from "lucide-react";
 import { UserProfile } from "../types";
 
@@ -382,6 +383,15 @@ export default function LandingPageView({ user, onEnterApp, onNavigateTab, onUpd
               >
                 <UserCheck className="h-4 w-4 text-sky-500" />
                 <span>{isEn ? "Log In" : "เข้าสู่ระบบ"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent("mind_merit_open_prototype_modal"))}
+                className="w-full sm:w-auto px-5 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 dark:from-emerald-950/40 dark:to-teal-950/40 text-emerald-800 dark:text-emerald-200 font-bold text-xs sm:text-sm border border-emerald-300/80 dark:border-emerald-800/80 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
+              >
+                <Layers className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>{isEn ? "View Prototype (Full Functions)" : "ดู Prototype (ครบทุกฟังก์ชัน)"}</span>
               </button>
             </div>
           )}

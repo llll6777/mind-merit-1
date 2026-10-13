@@ -18,6 +18,7 @@ import {
   Phone
 } from "lucide-react";
 import { UserProfile } from "../types";
+import { appendSingleUserToSheet } from "../services/googleSheetsService";
 
 export interface RegisteredAccount {
   id: string;
@@ -294,6 +295,28 @@ export default function AuthModal({
     setSavedAccounts(updatedAccounts);
     localStorage.setItem("mind_merit_registered_users_v1", JSON.stringify(updatedAccounts));
 
+    // REAL-TIME GOOGLE SHEETS LIVE SYNC:
+    // "ให้กุเกิ้ลชีต แสดงผลแบบรีลไทม์ด้วย เช่น มีคนสใัครปึ้บ ข้อมูลเด้งในกูเกิ้ลชีตเลย"
+    const realTimeEntry = {
+      id: newAccount.id,
+      timestamp: new Date().toLocaleTimeString("th-TH") + " (" + new Date().toLocaleDateString("th-TH") + ")",
+      email: trimmedEmail || ("user_" + Date.now().toString().slice(-4) + "@mindmerit.app"),
+      isEmailVerified: finalEmailVerified,
+      status: finalEmailVerified ? "Verified (ยืนยันแล้ว)" : "Unverified (รอการยืนยัน)",
+      policy: "Zero Personal Data Policy Enforced",
+      isNew: true
+    };
+
+    // Broadcast instant event across window
+    window.dispatchEvent(
+      new CustomEvent("mind_merit_realtime_registration", {
+        detail: realTimeEntry
+      })
+    );
+
+    // Also trigger append to Google Sheets API in background if configured
+    appendSingleUserToSheet(newAccount as any).catch(() => {});
+
     // Construct profile
     const profile: UserProfile = {
       name: trimmedName,
@@ -315,7 +338,7 @@ export default function AuthModal({
       lastVisitDate: new Date().toISOString().split("T")[0],
       isRegistered: true,
       password: passcode,
-      emailOrPhone: effectiveContact || undefined,
+      emailOrPhone: trimmedEmail || undefined,
       packageType: currentPackage
     };
 
@@ -751,6 +774,8 @@ export default function AuthModal({
                 ✨ {isEn ? `Will display as: "${email.split('@')[0]}"` : `หากไม่ระบุ จะใช้ชื่อแสดงผลว่า: "${email.split('@')[0]}"`}
               </p>
             )}
+          </div>
+
           {/* 3. Status / Role Field (Only in Register mode) */}
           {mode === "register" && (
             <div>

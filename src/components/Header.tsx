@@ -1,4 +1,4 @@
-import { Sun, Moon, Languages, Award, ShieldAlert, HelpCircle, Home } from "lucide-react";
+import { Sun, Moon, Languages, Award, ShieldAlert, HelpCircle, Home, Layers } from "lucide-react";
 import { UserProfile } from "../types";
 import { translations } from "../translations";
 
@@ -9,6 +9,7 @@ interface HeaderProps {
   onOpenSOS: () => void;
   onOpenProfile: () => void;
   onOpenGuide: () => void;
+  onOpenPrototype?: () => void;
   onOpenLanding?: () => void;
   onOpenAuth?: () => void;
   onViewLogo?: () => void;
@@ -22,6 +23,7 @@ export default function Header({
   onOpenSOS, 
   onOpenProfile, 
   onOpenGuide,
+  onOpenPrototype,
   onOpenLanding,
   onOpenAuth,
   onViewLogo,
@@ -161,6 +163,19 @@ export default function Header({
             <HelpCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 text-sky-500" />
             <span className="text-xs font-bold">{user.language === 'en' ? 'Guide' : 'วิธีใช้'}</span>
           </button>
+
+          {/* Prototype Architecture Showcase Button */}
+          {onOpenPrototype && (
+            <button
+              id="header-prototype-btn"
+              onClick={onOpenPrototype}
+              title={user.language === 'en' ? 'View App Prototype & Architecture' : 'ดูพิมพ์เขียวและภาพ Prototype'}
+              className="flex items-center justify-center space-x-1.5 h-7 sm:h-8 md:h-9 px-2 sm:px-2.5 md:px-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 text-emerald-700 dark:text-emerald-300 shadow-2xs hover:bg-emerald-100 dark:hover:bg-emerald-950/40 transition-all cursor-pointer border border-emerald-300/60 dark:border-emerald-700/60"
+            >
+              <Layers className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-black tracking-tight">{user.language === 'en' ? 'Prototype' : 'Prototype'}</span>
+            </button>
+          )}
 
           {/* Language Toggle */}
           <button
