@@ -5,6 +5,7 @@ import {
   Mail, CheckCircle2, AlertCircle
 } from "lucide-react";
 import { UserProfile, Certificate, Badge } from "../types";
+import { appendSingleUserToSheet } from "../services/googleSheetsService";
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -153,12 +154,31 @@ export default function UserProfileModal({
         console.error("Error syncing email to registered accounts:", e);
       }
 
+      // Broadcast real-time Google Sheets sync
+      const realTimeEntry = {
+        id: "usr-" + Date.now(),
+        timestamp: new Date().toLocaleTimeString("th-TH") + " (" + new Date().toLocaleDateString("th-TH") + ")",
+        email: trimmed,
+        isEmailVerified: true,
+        status: "Verified (ผูกอีเมลสำรองข้อมูลเรียบร้อย)",
+        policy: "Zero Personal Data Policy Enforced",
+        isNew: true
+      };
+
+      window.dispatchEvent(
+        new CustomEvent("mind_merit_realtime_registration", {
+          detail: realTimeEntry
+        })
+      );
+
+      appendSingleUserToSheet(updatedUser).catch(() => {});
+
       setEmailOtpSent(false);
       setIsEditingEmail(false);
       setEmailSuccess(
         user.language === "en"
           ? "Identity successfully verified with email! ✅"
-          : "ยืนยันตัวตนด้วยอีเมลสำเร็จเรียบร้อยแล้ว! ✅"
+          : "ผูกอีเมลสำรองข้อมูลและยืนยันตัวตนสำเร็จแล้ว! ✅"
       );
     } else {
       setEmailError(user.language === "en" ? "Incorrect OTP code. Please try again." : "รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
@@ -203,12 +223,31 @@ export default function UserProfileModal({
       console.error(e);
     }
 
+    // Broadcast real-time Google Sheets sync
+    const realTimeEntry = {
+      id: "usr-" + Date.now(),
+      timestamp: new Date().toLocaleTimeString("th-TH") + " (" + new Date().toLocaleDateString("th-TH") + ")",
+      email: trimmed,
+      isEmailVerified: true,
+      status: "Verified (ผูกอีเมลสำรองข้อมูลเรียบร้อย)",
+      policy: "Zero Personal Data Policy Enforced",
+      isNew: true
+    };
+
+    window.dispatchEvent(
+      new CustomEvent("mind_merit_realtime_registration", {
+        detail: realTimeEntry
+      })
+    );
+
+    appendSingleUserToSheet(updatedUser).catch(() => {});
+
     setIsEditingEmail(false);
     setEmailOtpSent(false);
     setEmailSuccess(
       user.language === "en"
         ? "Identity verified with email successfully! ✅"
-        : "ยืนยันตัวตนด้วยอีเมลสำเร็จเรียบร้อยแล้ว! ✅"
+        : "ผูกอีเมลสำรองข้อมูลและยืนยันตัวตนเรียบร้อยแล้ว! ✅"
     );
   };
 

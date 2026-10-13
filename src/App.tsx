@@ -33,6 +33,7 @@ import LandingPageView from "./components/LandingPageView";
 import LogoModal from "./components/LogoModal";
 import PrototypeModal from "./components/PrototypeModal";
 import SettingsView from "./components/SettingsView";
+import LinkEmailBackupModal from "./components/LinkEmailBackupModal";
 import { appendSingleMoodLogToSheet, appendSingleUserToSheet } from "./services/googleSheetsService";
 
 import { UserProfile, MoodCheckIn, Badge, Post, Certificate, ChatMessage } from "./types";
@@ -74,6 +75,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>("landing");
   const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
+  const [isLinkEmailModalOpen, setIsLinkEmailModalOpen] = useState<boolean>(false);
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState<boolean>(false);
   const [isPrototypeModalOpen, setIsPrototypeModalOpen] = useState<boolean>(false);
@@ -146,6 +148,13 @@ export default function App() {
     const handleOpenProto = () => setIsPrototypeModalOpen(true);
     window.addEventListener("mind_merit_open_prototype_modal", handleOpenProto);
     return () => window.removeEventListener("mind_merit_open_prototype_modal", handleOpenProto);
+  }, []);
+
+  // Event listener for opening Link Email Backup Modal from any view or button
+  useEffect(() => {
+    const handleOpenLinkEmail = () => setIsLinkEmailModalOpen(true);
+    window.addEventListener("mind_merit_open_link_email_modal", handleOpenLinkEmail);
+    return () => window.removeEventListener("mind_merit_open_link_email_modal", handleOpenLinkEmail);
   }, []);
 
   // Sync state changes to localStorage
@@ -554,6 +563,7 @@ export default function App() {
             setActiveTab("landing");
           }
         }}
+        onOpenLinkEmail={() => setIsLinkEmailModalOpen(true)}
         onOpenGuide={() => setActiveTab("guide")}
         onOpenPrototype={() => setIsPrototypeModalOpen(true)}
         onOpenLanding={() => setActiveTab("landing")}
@@ -608,6 +618,7 @@ export default function App() {
                 onNavigate={(tab) => setActiveTab(tab)}
                 onUpdateUser={setUser}
                 onOpenProfile={() => setIsProfileOpen(true)}
+                onOpenLinkEmail={() => setIsLinkEmailModalOpen(true)}
               />
             )}
 
@@ -680,6 +691,7 @@ export default function App() {
                 user={user}
                 onUpdateUser={setUser}
                 onOpenProfile={() => setIsProfileOpen(true)}
+                onOpenLinkEmail={() => setIsLinkEmailModalOpen(true)}
                 onNavigate={(tab) => setActiveTab(tab)}
                 onLogout={handleLogout}
                 onChangeLanguage={(lang) => setUser(prev => ({ ...prev, language: lang }))}
@@ -871,6 +883,14 @@ export default function App() {
         onClose={() => setIsPrototypeModalOpen(false)}
         onNavigateTab={(tab) => setActiveTab(tab)}
         language={user.language}
+      />
+
+      {/* 8. Link Backup Email Modal (ตัวเลือกผูกอีเมลหลังสมัครใช้งาน หากกลัวข้อมูลหาย) */}
+      <LinkEmailBackupModal 
+        isOpen={isLinkEmailModalOpen}
+        onClose={() => setIsLinkEmailModalOpen(false)}
+        user={user}
+        onUpdateUser={setUser}
       />
 
     </div>

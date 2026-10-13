@@ -202,7 +202,7 @@ export default function AuthModal({
     setOtpNotice(isEn ? "✅ Email verified successfully!" : "✅ ยืนยันตัวตนด้วยอีเมลเรียบร้อยแล้ว!");
   };
 
-  // Handle Register
+  // Handle Register (Fast Start - NO email required! Email can be linked later to prevent data loss)
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
@@ -210,24 +210,20 @@ export default function AuthModal({
     const trimmedEmail = email.trim();
     let trimmedName = name.trim();
 
-    // STRICT PRIVACY: Zero personal data required
-    // If user leaves display name blank, derive safe display alias from email prefix
-    if (!trimmedEmail && !trimmedName) {
-      setErrorMessage(
-        isEn ? "Please enter your email address to register." : "กรุณากรอกอีเมลของคุณเพื่อสมัครสมาชิก"
-      );
-      return;
+    // If user leaves display name blank, provide a friendly default alias
+    if (!trimmedName) {
+      if (trimmedEmail) {
+        trimmedName = trimmedEmail.split("@")[0];
+      } else {
+        trimmedName = `ผู้ใช้_${Math.floor(100 + Math.random() * 900)}`;
+      }
     }
 
-    if (!trimmedName && trimmedEmail) {
-      trimmedName = trimmedEmail.split("@")[0];
-    }
-
-    // Validate email if entered
+    // Validate email ONLY if user optionally entered it
     if (trimmedEmail) {
       const hasEmailFormat = trimmedEmail.includes("@") && trimmedEmail.includes(".");
       if (!hasEmailFormat) {
-        setErrorMessage(isEn ? "Invalid email format. (e.g. user@gmail.com)" : "รูปแบบอีเมลไม่ถูกต้อง (เช่น yourname@gmail.com)");
+        setErrorMessage(isEn ? "Invalid email format (e.g. user@gmail.com)." : "รูปแบบอีเมลไม่ถูกต้อง (เช่น yourname@gmail.com)");
         return;
       }
       const existingEmail = savedAccounts.find(
@@ -260,18 +256,8 @@ export default function AuthModal({
       trimmedName = `${trimmedName}_${Math.floor(100 + Math.random() * 900)}`;
     }
 
-    // STRICT PRIVACY: Paid package requires strictly Email (NO personal phone numbers requested)
-    if (currentPackage !== "basic" && !trimmedEmail) {
-      setErrorMessage(
-        isEn 
-          ? "Please provide your email address for this package." 
-          : "กรุณากรอกอีเมลสำหรับแพ็กเกจนี้ (ระบบไม่เก็บข้อมูลส่วนตัว ใช้เฉพาะอีเมลเท่านั้น)"
-      );
-      return;
-    }
-
-    // Determine verification state: if email entered and user verified it, or auto-mark verified if valid email
-    const finalEmailVerified = isEmailVerified || (Boolean(trimmedEmail) && !isOtpSent);
+    // Determine verification state if email provided
+    const finalEmailVerified = Boolean(trimmedEmail && (isEmailVerified || !isOtpSent));
 
     // Create new account
     const newAccount: RegisteredAccount = {
@@ -296,13 +282,16 @@ export default function AuthModal({
     localStorage.setItem("mind_merit_registered_users_v1", JSON.stringify(updatedAccounts));
 
     // REAL-TIME GOOGLE SHEETS LIVE SYNC:
-    // "ให้กุเกิ้ลชีต แสดงผลแบบรีลไทม์ด้วย เช่น มีคนสใัครปึ้บ ข้อมูลเด้งในกูเกิ้ลชีตเลย"
+    // If user provided email, it syncs with email.
+    // If not, it syncs as instant guest entry ready to be linked with email later!
     const realTimeEntry = {
       id: newAccount.id,
       timestamp: new Date().toLocaleTimeString("th-TH") + " (" + new Date().toLocaleDateString("th-TH") + ")",
-      email: trimmedEmail || ("user_" + Date.now().toString().slice(-4) + "@mindmerit.app"),
+      email: trimmedEmail || `${trimmedName} (ยังไม่ผูกอีเมล - เริ่มใช้งานทันที)`,
       isEmailVerified: finalEmailVerified,
-      status: finalEmailVerified ? "Verified (ยืนยันแล้ว)" : "Unverified (รอการยืนยัน)",
+      status: trimmedEmail 
+        ? (finalEmailVerified ? "Verified (ยืนยันแล้ว)" : "Unverified (รอการยืนยัน)") 
+        : "Guest (เข้าใช้ทันที - รอผูกอีเมลสำรองข้อมูล)",
       policy: "Zero Personal Data Policy Enforced",
       isNew: true
     };
@@ -314,8 +303,10 @@ export default function AuthModal({
       })
     );
 
-    // Also trigger append to Google Sheets API in background if configured
-    appendSingleUserToSheet(newAccount as any).catch(() => {});
+    // Also trigger append to Google Sheets API in background if configured and email exists
+    if (trimmedEmail) {
+      appendSingleUserToSheet(newAccount as any).catch(() => {});
+    }
 
     // Construct profile
     const profile: UserProfile = {
@@ -344,14 +335,18 @@ export default function AuthModal({
 
     setSuccessMessage(
       isEn 
-        ? (finalEmailVerified ? "Registration & Email verification successful! Welcome." : "Registration successful! Welcome to MIND MERIT.") 
-        : (finalEmailVerified ? "สมัครสมาชิกและยืนยันตัวตนด้วยอีเมลสำเร็จ! กำลังเข้าสู่ระบบ..." : "สมัครใช้งานสำเร็จ! กำลังเข้าสู่ระบบ...")
+        ? (trimmedEmail 
+            ? "Registration successful with linked email! Welcome to MIND MERIT." 
+            : "Registration successful! You can link your email later anytime to backup data.") 
+        : (trimmedEmail 
+            ? "สมัครใช้งานและผูกอีเมลสำเร็จ! กำลังเข้าสู่ระบบ..." 
+            : "สมัครใช้งานสำเร็จ! เข้าใช้งานได้ทันที (สามารถผูกอีเมลสำรองข้อมูลทีหลังได้ทุกเมื่อ)")
     );
     
     setTimeout(() => {
       onLoginSuccess(profile);
       onClose();
-    }, 1000);
+    }, 900);
   };
 
   // Handle Login (Supports logging in by Registered Name OR Registered Email!)
@@ -627,12 +622,12 @@ export default function AuthModal({
           <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
           <div className="text-[11px] leading-relaxed">
             <span className="font-bold text-emerald-300">
-              {isEn ? "Zero Personal Data Policy: " : "นโยบายความเป็นส่วนตัวสูงสุด (Zero Personal Data): "}
+              {isEn ? "Fast & Private Access: " : "สมัครรวดเร็ว & ปลอดภัยสูงสุด: "}
             </span>
             <span className="text-slate-300">
               {isEn
-                ? "We never access or store personal details. Only email is used for account identity and verification."
-                : "ระบบไม่เข้าถึงและไม่จัดเก็บข้อมูลส่วนตัวใดๆ ของผู้ใช้เด็ดขาด ใช้เฉพาะ 'อีเมล' สำหรับการยืนยันตัวตนและเข้าสู่ระบบเท่านั้น"}
+                ? "No email required to start! If you're afraid of losing your data, you can link an email anytime after signing up to backup your records."
+                : "ไม่ต้องใส่อีเมลตอนสมัครสมาชิก! เริ่มต้นใช้งานได้ทันที แต่ถ้ากลัวข้อมูลหาย สามารถไปผูกอีเมลทีหลังในแอปได้ทุกเมื่อเพื่อสำรองข้อมูล"}
             </span>
           </div>
         </div>
@@ -640,114 +635,12 @@ export default function AuthModal({
         {/* MAIN FORM */}
         <form onSubmit={mode === "register" ? handleRegister : handleLogin} className="mt-4 space-y-3.5">
           
-          {/* 1. Email Address & Identity Verification (สมัครสมาชิกด้วยอีเมล / ยืนยันตัวตนด้วยอีเมล) */}
-          {mode === "register" && (
-            <div className="space-y-2 p-3.5 rounded-2xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/40">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
-                  <Mail className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-                  <span>{isEn ? "Email Address (Sign Up & Verification) *" : "อีเมลสำหรับสมัครสมาชิกและยืนยันตัวตน *"}</span>
-                </label>
-                {isEmailVerified ? (
-                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    <span>{isEn ? "Verified" : "ยืนยันตัวตนแล้ว"}</span>
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-sky-700 dark:text-sky-300 font-medium">
-                    {isEn ? "Verify with OTP" : "ยืนยันตัวตนด้วยรหัส OTP"}
-                  </span>
-                )}
-              </div>
-
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setIsEmailVerified(false);
-                    setIsOtpSent(false);
-                    setErrorMessage("");
-                  }}
-                  placeholder={isEn ? "e.g. yourname@gmail.com" : "เช่น yourname@gmail.com"}
-                  className="w-full pl-9 pr-28 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 font-medium"
-                />
-
-                {/* Email Verification Action Buttons */}
-                {!isEmailVerified && email.trim() && (
-                  <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center space-x-1">
-                    <button
-                      type="button"
-                      onClick={handleSendEmailOtp}
-                      className="px-2 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold cursor-pointer transition-colors shadow-xs"
-                      title={isEn ? "Send verification OTP code" : "ส่งรหัส OTP จำลอง"}
-                    >
-                      {isOtpSent ? (isEn ? "Resend" : "ส่งใหม่") : (isEn ? "Send OTP" : "ส่ง OTP")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleInstantVerifyEmail}
-                      className="px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold cursor-pointer transition-colors shadow-xs"
-                      title={isEn ? "Instantly verify this email" : "ยืนยันทันที"}
-                    >
-                      {isEn ? "Verify" : "ยืนยัน"}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* OTP Input Row if OTP is sent */}
-              {isOtpSent && !isEmailVerified && (
-                <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-sky-200 dark:border-sky-800 space-y-1.5 animate-in fade-in">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                    <span>{isEn ? "Enter 6-Digit OTP from Email:" : "กรอกรหัส OTP 6 หลักที่ได้รับทางอีเมล:"}</span>
-                    <span className="text-[10px] text-sky-600 font-mono">รหัสจำลอง: {verificationOtp}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={enteredOtp}
-                      onChange={(e) => setEnteredOtp(e.target.value)}
-                      placeholder="เช่น 123456"
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-mono text-center tracking-widest font-bold focus:outline-none focus:ring-1 focus:ring-sky-400"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleVerifyOtp}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold cursor-pointer transition-colors flex items-center space-x-1"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      <span>{isEn ? "Confirm" : "ตรวจสอบรหัส"}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* OTP Notice / Feedback */}
-              {otpNotice && (
-                <p className="text-[10px] text-sky-700 dark:text-sky-300 font-medium leading-relaxed bg-white/60 dark:bg-slate-800/60 p-1.5 rounded-lg border border-sky-100 dark:border-sky-900/40">
-                  {otpNotice}
-                </p>
-              )}
-
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                💡 {isEn 
-                  ? "Sign up with email to verify identity and enable login with email." 
-                  : "สมัครสมาชิกด้วยอีเมลเพื่อยืนยันตัวตน และสามารถใช้อีเมลนี้ล็อกอินได้"}
-              </p>
-            </div>
-          )}
-
-          {/* 2. Display Name / Nickname Field (or Login Field) */}
+          {/* 1. Display Name / Nickname Field (or Login Field) */}
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
               {mode === "register" 
-                ? (isEn ? "Nickname / Display Name (Optional - no real name needed)" : "ชื่อเล่น / นามแฝงแสดงผล (ไม่บังคับ - ไม่เก็บชื่อจริง)")
-                : (isEn ? "Registered Email or Nickname *" : "อีเมลที่ลงทะเบียน หรือชื่อเล่นของคุณ *")}
+                ? (isEn ? "Nickname / Display Name (Optional)" : "ชื่อเล่น / นามแฝงแสดงผล (ไม่บังคับ — ไม่เก็บชื่อจริง)")
+                : (isEn ? "Registered Nickname or Email *" : "ชื่อเล่น หรืออีเมลที่ลงทะเบียนไว้ *")}
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -758,25 +651,25 @@ export default function AuthModal({
                 onChange={(e) => setName(e.target.value)}
                 placeholder={
                   mode === "register" 
-                    ? (isEn ? "e.g. Maya (or leave blank to use email prefix)" : "เช่น มายด์, Alex (หรือเว้นว่างเพื่อใช้อีเมลเป็นชื่อ)") 
-                    : (isEn ? "e.g. yourname@gmail.com or Alex" : "เช่น yourname@gmail.com หรือ สมชาย")
+                    ? (isEn ? "e.g. Maya, Alex (or leave blank to auto-generate)" : "เช่น มายด์, Alex (หรือเว้นว่างเพื่อใช้ชื่ออัตโนมัติ)") 
+                    : (isEn ? "e.g. Maya or yourname@gmail.com" : "เช่น มายด์ หรือ yourname@gmail.com")
                 }
                 className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 font-medium"
               />
             </div>
             {mode === "login" && (
               <p className="text-[10px] text-slate-400 mt-1">
-                💡 {isEn ? "You can sign in using your registered Email or Nickname" : "สามารถเข้าสู่ระบบด้วยอีเมลที่ลงทะเบียน หรือชื่อเล่น"}
+                💡 {isEn ? "You can log in using your Nickname or your linked Email" : "สามารถเข้าสู่ระบบด้วยชื่อเล่น หรืออีเมลที่ผูกไว้"}
               </p>
             )}
-            {mode === "register" && !name && email && (
-              <p className="text-[10px] text-sky-600 dark:text-sky-400 mt-1">
-                ✨ {isEn ? `Will display as: "${email.split('@')[0]}"` : `หากไม่ระบุ จะใช้ชื่อแสดงผลว่า: "${email.split('@')[0]}"`}
+            {mode === "register" && !name && (
+              <p className="text-[10px] text-slate-400 mt-1">
+                ✨ {isEn ? "If left empty, a friendly alias will be generated for you" : "หากเว้นว่าง ระบบจะสุ่มชื่อผู้ใช้ให้โดยอัตโนมัติ"}
               </p>
             )}
           </div>
 
-          {/* 3. Status / Role Field (Only in Register mode) */}
+          {/* 2. Status / Role Field (Only in Register mode) */}
           {mode === "register" && (
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
@@ -894,28 +787,129 @@ export default function AuthModal({
             <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
               💡 {mode === "register" 
                 ? (isEn 
-                    ? "This 6-digit code will be used to log in next time without re-registering." 
-                    : "รหัส 6 หลักนี้มีไว้เพื่อจะเข้าใช้ได้ในรอบหน้า เมื่อกดเข้าสู่ระบบ โดยไม่ต้องสมัครและกรอกข้อมูลใหม่")
+                    ? "Remember this 6-character code to log in next time." 
+                    : "จำรหัส 6 หลักนี้ไว้เพื่อใช้เข้าสู่ระบบในรอบหน้า")
                 : (isEn 
                     ? "Enter your 6-digit alphanumeric passcode created during registration." 
                     : "กรอกรหัส 6 หลักที่ตั้งไว้เพื่อเข้าสู่ระบบ")}
             </p>
           </div>
 
+          {/* 5. Optional Email Section (ไม่บังคับ — ค่อยผูกทีหลังได้หากกลัวข้อมูลหาย) */}
+          {mode === "register" && (
+            <div className="space-y-2 p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-900/40">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center space-x-1.5">
+                  <Mail className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <span>{isEn ? "Link Backup Email (Optional)" : "ผูกอีเมลสำรองข้อมูล (ไม่บังคับ — ค่อยผูกทีหลังได้)"}</span>
+                </label>
+                {isEmailVerified ? (
+                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                    <span>{isEn ? "Verified" : "ยืนยันแล้ว"}</span>
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">
+                    {isEn ? "Optional" : "ไม่ใส่ก็ได้"}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                💡 {isEn
+                  ? "You don't need to enter an email right now. But if you're afraid of losing your data, you can fill it here or link it anytime after registration."
+                  : "ไม่ต้องใส่อีเมลตอนสมัครก็ได้ แต่ถ้ากลัวข้อมูลหาย สามารถกรอกตรงนี้เพื่อสำรองข้อมูล หรือค่อยไปผูกทีหลังหลังสมัครใช้งานแล้วได้เช่นกัน"}
+              </p>
+
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setIsEmailVerified(false);
+                    setIsOtpSent(false);
+                    setErrorMessage("");
+                  }}
+                  placeholder={isEn ? "Optional: e.g. yourname@gmail.com" : "ไม่บังคับ: เช่น yourname@gmail.com"}
+                  className="w-full pl-9 pr-28 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 font-medium"
+                />
+
+                {/* Email Verification Action Buttons if user typed an email */}
+                {!isEmailVerified && email.trim() && (
+                  <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                    <button
+                      type="button"
+                      onClick={handleSendEmailOtp}
+                      className="px-2 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold cursor-pointer transition-colors shadow-xs"
+                      title={isEn ? "Send verification OTP code" : "ส่งรหัส OTP จำลอง"}
+                    >
+                      {isOtpSent ? (isEn ? "Resend" : "ส่งใหม่") : (isEn ? "Send OTP" : "ส่ง OTP")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleInstantVerifyEmail}
+                      className="px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold cursor-pointer transition-colors shadow-xs"
+                      title={isEn ? "Instantly verify this email" : "ยืนยันทันที"}
+                    >
+                      {isEn ? "Verify" : "ยืนยัน"}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* OTP Input Row if OTP is sent */}
+              {isOtpSent && !isEmailVerified && (
+                <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 space-y-1.5 animate-in fade-in">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    <span>{isEn ? "Enter 6-Digit OTP from Email:" : "กรอกรหัส OTP 6 หลักที่ได้รับทางอีเมล:"}</span>
+                    <span className="text-[10px] text-amber-700 dark:text-amber-300 font-mono">รหัสจำลอง: {verificationOtp}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={enteredOtp}
+                      onChange={(e) => setEnteredOtp(e.target.value)}
+                      placeholder="เช่น 123456"
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-mono text-center tracking-widest font-bold focus:outline-none focus:ring-1 focus:ring-sky-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleVerifyOtp}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold cursor-pointer transition-colors flex items-center space-x-1"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      <span>{isEn ? "Confirm" : "ตรวจสอบรหัส"}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* OTP Notice / Feedback */}
+              {otpNotice && (
+                <p className="text-[10px] text-amber-800 dark:text-amber-200 font-medium leading-relaxed bg-white/60 dark:bg-slate-800/60 p-1.5 rounded-lg border border-amber-100 dark:border-amber-900/40">
+                  {otpNotice}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Submit Button */}
           <div className="pt-2">
             <button
               type="submit"
-              disabled={!isPasscodeValid || !name.trim()}
+              disabled={!isPasscodeValid}
               className={`w-full py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm text-white shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer ${
-                isPasscodeValid && name.trim()
+                isPasscodeValid
                   ? "bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 hover:scale-[1.02] active:scale-[0.98] shadow-sky-500/20"
                   : "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed opacity-70"
               }`}
             >
               <span>
                 {mode === "register" 
-                  ? (isEn ? "Sign Up & Enter App" : "สมัครใช้งานและเข้าสู่แอป")
+                  ? (isEn ? "Sign Up & Start Now (No Email Required)" : "สมัครใช้งานและเริ่มทันที (ไม่ต้องใช้อีเมล)")
                   : (isEn ? "Log In to MIND MERIT" : "เข้าสู่ระบบทันที")}
               </span>
               <ArrowRight className="h-4 w-4" />

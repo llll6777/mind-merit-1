@@ -25,6 +25,7 @@ interface SettingsViewProps {
   user: UserProfile;
   onUpdateUser: (updated: UserProfile) => void;
   onOpenProfile: () => void;
+  onOpenLinkEmail?: () => void;
   onNavigate: (tab: string) => void;
   onLogout: () => void;
   onChangeLanguage: (lang: "en" | "th") => void;
@@ -35,6 +36,7 @@ export default function SettingsView({
   user,
   onUpdateUser,
   onOpenProfile,
+  onOpenLinkEmail,
   onNavigate,
   onLogout,
   onChangeLanguage,
@@ -172,10 +174,16 @@ export default function SettingsView({
               </div>
 
               <button
-                onClick={onOpenProfile}
-                className="px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[11px] font-bold transition-all cursor-pointer shadow-xs self-start sm:self-auto flex items-center space-x-1"
+                onClick={!user.email && onOpenLinkEmail ? onOpenLinkEmail : onOpenProfile}
+                className={`px-3 py-1.5 rounded-xl text-white text-[11px] font-bold transition-all cursor-pointer shadow-xs self-start sm:self-auto flex items-center space-x-1 ${
+                  !user.email ? "bg-amber-500 hover:bg-amber-600" : "bg-sky-500 hover:bg-sky-600"
+                }`}
               >
-                <span>{user.isEmailVerified ? (isEn ? "Manage Email" : "จัดการอีเมล") : (isEn ? "Verify Identity" : "ยืนยันตัวตนด้วยอีเมล")}</span>
+                <span>
+                  {!user.email 
+                    ? (isEn ? "Link Backup Email" : "ผูกอีเมลสำรองข้อมูล") 
+                    : (user.isEmailVerified ? (isEn ? "Manage Email" : "จัดการอีเมล") : (isEn ? "Verify Identity" : "ยืนยันตัวตนด้วยอีเมล"))}
+                </span>
                 <ChevronRight className="h-3 w-3" />
               </button>
             </div>

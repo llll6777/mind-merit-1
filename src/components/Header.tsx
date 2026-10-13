@@ -1,4 +1,4 @@
-import { Sun, Moon, Languages, Award, ShieldAlert, HelpCircle, Home, Layers } from "lucide-react";
+import { Sun, Moon, Languages, Award, ShieldAlert, HelpCircle, Home, Layers, Mail } from "lucide-react";
 import { UserProfile } from "../types";
 import { translations } from "../translations";
 
@@ -13,6 +13,7 @@ interface HeaderProps {
   onOpenLanding?: () => void;
   onOpenAuth?: () => void;
   onViewLogo?: () => void;
+  onOpenLinkEmail?: () => void;
   activeTab?: string;
 }
 
@@ -196,6 +197,20 @@ export default function Header({
           >
             {user.theme === 'light' ? <Moon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-500" /> : <Sun className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-400" />}
           </button>
+
+          {/* Link Backup Email Button (ตัวเลือกผูกอีเมลสำหรับผู้ใช้ที่ยังไม่ได้ผูกอีเมล เพื่อกันข้อมูลหาย) */}
+          {user.isRegistered && !user.email && onOpenLinkEmail && (
+            <button
+              id="header-link-email-btn"
+              onClick={onOpenLinkEmail}
+              title={user.language === 'en' ? "Link Email to Backup Data" : "ผูกอีเมลกันข้อมูลหาย (สำรองข้อมูล)"}
+              className="flex items-center space-x-1.5 h-7 sm:h-8 md:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200 border border-amber-300 dark:border-amber-700 transition-all cursor-pointer shadow-2xs font-bold text-[10px] sm:text-xs hover:scale-105 active:scale-95 animate-pulse"
+            >
+              <Mail className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="hidden sm:inline">{user.language === 'en' ? "Backup Email" : "ผูกอีเมลกันข้อมูลหาย"}</span>
+              <span className="sm:hidden">{user.language === 'en' ? "Backup" : "ผูกอีเมล"}</span>
+            </button>
+          )}
 
           {/* Mini Avatar Profile Button (จะขึ้นเมื่อสมัครผู้ใช้งานแล้วเท่านั้น) */}
           {user.isRegistered && (

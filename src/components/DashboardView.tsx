@@ -1,4 +1,4 @@
-import { Award, Zap, BookOpen, Calendar, ChevronRight, UserCheck, Compass, HelpCircle, BarChart3, Settings } from "lucide-react";
+import { Award, Zap, BookOpen, Calendar, ChevronRight, UserCheck, Compass, HelpCircle, BarChart3, Settings, Mail } from "lucide-react";
 import { UserProfile, MoodCheckIn, Badge } from "../types";
 import { translations } from "../translations";
 import React from "react";
@@ -10,9 +10,10 @@ interface DashboardViewProps {
   onNavigate: (tab: string) => void;
   onUpdateUser?: (updated: UserProfile) => void;
   onOpenProfile?: () => void;
+  onOpenLinkEmail?: () => void;
 }
 
-export default function DashboardView({ user, moodLogs, badges, onNavigate, onUpdateUser, onOpenProfile }: DashboardViewProps) {
+export default function DashboardView({ user, moodLogs, badges, onNavigate, onUpdateUser, onOpenProfile, onOpenLinkEmail }: DashboardViewProps) {
   const t = translations[user.language];
 
   // Map mood types to score values for rendering
@@ -77,6 +78,42 @@ export default function DashboardView({ user, moodLogs, badges, onNavigate, onUp
   return (
     <div id="dashboard-view-main" className="space-y-6">
       
+      {/* Backup Data Notice if User Has Not Linked Email (ตัวเลือกผูกอีเมลหลังสมัครใช้งาน หากกลัวข้อมูลหาย) */}
+      {user.isRegistered && !user.email && (
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-50 via-amber-100/70 to-orange-50 dark:from-amber-950/40 dark:via-slate-900 dark:to-amber-950/30 p-4 sm:p-5 border border-amber-300/80 dark:border-amber-800/60 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-start sm:items-center space-x-3.5">
+            <div className="p-2.5 rounded-2xl bg-amber-400 text-amber-950 shadow-sm shrink-0">
+              <Mail className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center flex-wrap gap-2">
+                <h3 className="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-100">
+                  {user.language === 'en' ? "Afraid of losing your wellness records? Link email anytime" : "กลัวข้อมูลบันทึกอารมณ์หรือเกียรติบัตรหาย?"}
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-200/90 text-amber-950 dark:bg-amber-900 dark:text-amber-200">
+                  {user.language === 'en' ? "Optional Backup" : "สำรองข้อมูลฟรี"}
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800 dark:text-amber-300/90 mt-1 max-w-xl leading-relaxed">
+                {user.language === 'en'
+                  ? "You started without an email! If you want to make sure your journals, streak, and certificates are safely backed up, you can link your email anytime."
+                  : "คุณเริ่มต้นใช้งานโดยไม่ต้องใช้อีเมล แต่หากต้องการความอุ่นใจในการสำรองข้อมูลบันทึก สถิติ และเกียรติบัตร สามารถผูกอีเมลไว้เพื่อกู้คืนได้ทุกเมื่อ"}
+              </p>
+            </div>
+          </div>
+
+          {onOpenLinkEmail && (
+            <button
+              onClick={onOpenLinkEmail}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0 flex items-center space-x-1.5"
+            >
+              <span>{user.language === 'en' ? "Link Backup Email" : "ผูกอีเมลสำรองข้อมูล"}</span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* 1. Welcome & Summary Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-tr from-sky-100/80 via-pink-100/60 to-amber-100/70 p-6 dark:from-slate-900 dark:via-sky-950/20 dark:to-slate-900 border border-sky-100/80 dark:border-slate-800 transition-all duration-300">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
